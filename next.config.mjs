@@ -7,6 +7,9 @@ const nextConfig = {
             { protocol: 'https', hostname: '*.gravatar.com' },
             { protocol: 'http',  hostname: 'localhost' },
             { protocol: 'http',  hostname: '127.0.0.1' },
+            { protocol: 'https', hostname: 'i0.wp.com' },
+            { protocol: 'https', hostname: 'i1.wp.com' },
+            { protocol: 'https', hostname: 'i2.wp.com' }
         ],
     },
 

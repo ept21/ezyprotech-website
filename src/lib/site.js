@@ -2,27 +2,49 @@
 import { gql } from '@apollo/client'
 import { wp } from './wp'
 
-// גרסת "סייפ" – לא תלויה בשום ACF/Options. מביאה רק generalSettings.
-const SITE_BASICS = gql`
-  query SiteBasics {
-    generalSettings {
+const Q_GLOBAL = gql`
+  query GlobalSettingsViaPage {
+    page(id: "/global-settings/", idType: URI) {
+      id
       title
-      url
-      description
+      globalSettings {
+        siteLogo { mediaItemUrl altText }
+        favicon { mediaItemUrl }
+        defaultOgImage { mediaItemUrl }
+        brandPrimary
+        brandAccent
+        ga4Code
+        metaPixelId
+        headHtml
+        bodyEndHtml
+      }
+      themeOptions {
+        siteLogo { mediaItemUrl altText }
+        favicon { mediaItemUrl }
+        defaultOgImage { mediaItemUrl }
+        brandPrimary
+        brandAccent
+        ga4Code
+        metaPixelId
+        headHtml
+        bodyEndHtml
+      }
     }
+    generalSettings { title description url }
   }
 `
 
 export async function getSiteData() {
     try {
-        const { data } = await wp.query({ query: SITE_BASICS, fetchPolicy: 'no-cache' })
-        return {
-            settings: data?.generalSettings ?? null,
-            // opts מחזיר אובייקט ריק במקום themeOptions כדי שהקוד שלך לא יקרוס
-            opts: {}
-        }
-    } catch (e) {
-        console.warn('getSiteData failed, returning defaults:', e?.message || e)
-        return { settings: null, opts: {} }
+        const { data } = await wp.query({ query: Q_GLOBAL, fetchPolicy: 'no-cache' })
+        const node =
+            data?.page?.globalSettings ??
+            data?.page?.themeOptions ??
+            {}
+
+        const gs = data?.generalSettings ?? {}
+        return { opts: node, gs }
+    } catch {
+        return { opts: {}, gs: { title: 'EzyProTech' } }
     }
 }

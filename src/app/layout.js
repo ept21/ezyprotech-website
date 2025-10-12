@@ -1,28 +1,29 @@
 import './globals.css'
-import Header from '@/components/Header'
-import Footer from '@/components/Footer'
 import { getSiteData } from '@/lib/site'
-
-export const revalidate = 300
+import { getPrimaryMenu } from '@/lib/menu'
+import Header from '@/components/Header'
 
 export default async function RootLayout({ children }) {
-    const { headerMenu, footerMenu, opts } = await getSiteData()
-    const primary = opts?.brandPrimary || '#22d3ee'
-    const accent  = opts?.brandAccent || '#7c3aed'
-    const gradient = { backgroundImage: `linear-gradient(90deg, ${primary}, ${accent})` }
+    const { opts, gs } = await getSiteData()
+    const menu = await getPrimaryMenu().catch(() => ({ items: [] }))
+
+    const faviconUrl = opts?.favicon?.mediaItemUrl || '/favicon.ico' // ← פולבאק
 
     return (
-        <html lang="en" className="h-full">
+        <html lang="en">
         <head>
-            {opts?.trackingHead && <script dangerouslySetInnerHTML={{ __html: opts.trackingHead }} />}
+            <link rel="icon" href={faviconUrl} />
+            <link rel="apple-touch-icon" href={faviconUrl} />
+            {/* GA4 / headHtml כנ״ל... */}
         </head>
-        <body className="min-h-screen bg-base-900 text-white antialiased">
-        <Header menu={headerMenu} logoText={opts?.siteLogoText || 'EzyProTech'} gradient={gradient} />
-        <main className="container mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-10 lg:py-14">
-            {children}
-        </main>
-        <Footer menu={footerMenu} social={opts?.social} gradient={gradient} />
-        {opts?.trackingBody && <script dangerouslySetInnerHTML={{ __html: opts.trackingBody }} />}
+        <body className="bg-slate-950 text-slate-50" suppressHydrationWarning>
+        <Header
+            siteTitle={gs?.title || 'EzyProTech'}
+            menuItems={menu.items}
+            logoUrl={opts?.siteLogo?.mediaItemUrl || null}
+        />
+        <main>{children}</main>
+        {/* Pixel / bodyEndHtml כנ״ל... */}
         </body>
         </html>
     )

@@ -33,3 +33,46 @@
 .neon-ring { box-shadow: 0 0 0 2px rgba(34,211,238,.18); animation: neonPulse 3.5s ease-in-out infinite; }
 
 * { -webkit-tap-highlight-color: rgba(255,255,255,.08); }
+
+
+/*tech blog single post*/
+.tech-single-post h1,
+.tech-single-post h2,
+.tech-single-post h3,
+.tech-single-post h4,
+.tech-single-post h5,
+.tech-single-post h6,
+.tech-single-post p,
+.tech-single-post p strong,
+.tech-single-post strong,
+.tech-single-post li,
+.tech-single-post ul,
+.tech-single-post span {
+    color: #ffffff;
+}
+
+.tech-single-post a {
+    color: #ffffff;
+}
+
+
+
+/* home page*/
+.home-page h1,
+.home-page h2,
+.home-page h3,
+.home-page h4,
+.home-page h5,
+.home-page h6,
+.home-page p,
+.home-page p strong,
+.home-page strong,
+.home-page li,
+.home-page ul,
+.home-page span {
+    color: #ffffff;
+}
+
+.home-page a {
+    color: #ffffff;
+}
