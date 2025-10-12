@@ -4,7 +4,6 @@ import Link from 'next/link'
 function normalizeUri(uri) {
     if (!uri) return '/'
     try {
-        // אם אין NEXT_PUBLIC_SITE_URL ניפול חזרה ל-uri כמו שהוא
         const base = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
         const u = new URL(uri, base)
         return u.pathname + (u.search || '') + (u.hash || '')
@@ -16,21 +15,20 @@ function normalizeUri(uri) {
 export default function Header({
                                    siteTitle = 'EzyProTech',
                                    menuItems = [],
-                                   logoUrl = null,          // ← מקבל לוגו מה-Layout
+                                   logoUrl = '', // נקבל מחרוזת; ריק = אין לוגו
                                }) {
     const items = Array.isArray(menuItems) ? menuItems : []
+    const hasLogo = typeof logoUrl === 'string' && logoUrl.length > 0
 
     return (
         <header className="border-b border-white/10 sticky top-0 z-50 backdrop-blur bg-slate-950/70">
             <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-                <Link href="/" className="flex items-center gap-3">
-                    {logoUrl ? (
+                <Link href="/" className="flex items-center gap-3" aria-label="Home">
+                    {hasLogo ? (
                         <img
                             src={logoUrl}
-                            alt={siteTitle}
-                            width={!logoUrl ? 36 : 150}
-                            height={!logoUrl ? 36 : 200}
-                            className="rounded-full"
+                            alt={siteTitle || 'Logo'}
+                            className="h-8 w-auto"
                             loading="eager"
                             decoding="async"
                         />

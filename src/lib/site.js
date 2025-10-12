@@ -1,14 +1,23 @@
+// src/lib/site.js
 import { gql } from '@apollo/client'
 import { wp } from './wp'
 
-/** שאילתות – קודם globalSettings עם node, אח"כ וריאציות נוספות כגיבוי */
-const Q_GLOBAL_NODE = gql`
+const MEDIA = `
+  mediaItemUrl
+  sourceUrl
+  altText
+`
+
+// זהה לשאילתה שעבדה לך ב-GraphiQL – קבועה, בלי משתנים
+const Q_GLOBAL_SETTINGS = gql`
   query GlobalSettings_Node {
     page(id:"/global-settings/", idType:URI){
+      uri
+      title
       globalSettings{
-        sitelogo       { node { mediaItemUrl sourceUrl altText } }
-        favicon        { node { mediaItemUrl sourceUrl altText } }
-        defaultogimage { node { mediaItemUrl sourceUrl altText } }
+        sitelogo       { node { ${MEDIA} } }
+        favicon        { node { ${MEDIA} } }
+        defaultogimage { node { ${MEDIA} } }
         brandprimary
         brandaccent
         ga4code
@@ -29,90 +38,21 @@ const Q_GLOBAL_NODE = gql`
   }
 `
 
-// ✅ FIXED
-const Q_GLOBAL_ITEM = gql`
-  query GlobalSettings_Item {
-    page(id: "/global-settings/", idType: URI) {
-      globalSettings {
-        sitelogo       { mediaItemUrl sourceUrl altText }
-        favicon        { mediaItemUrl sourceUrl altText }
-        defaultogimage { mediaItemUrl sourceUrl altText }
-        brandprimary
-        brandaccent
-        ga4code
-        metapixelid
-        headhtml
-        bodyendhtml
-        facebook_address
-        instagram_address
-        x_address
-        tiktok_address
-        linkdine_address
-        phone_number
-        email
-        whatsapp
-      }
-    }
-    generalSettings { title url }
-  }
-`
-
-// ✅ FIXED
-const Q_GLOBAL_EDGES = gql`
-  query GlobalSettings_Edges {
-    page(id: "/global-settings/", idType: URI) {
-      globalSettings {
-        sitelogo       { edges { node { mediaItemUrl sourceUrl altText } } }
-        favicon        { edges { node { mediaItemUrl sourceUrl altText } } }
-        defaultogimage { edges { node { mediaItemUrl sourceUrl altText } } }
-        brandprimary
-        brandaccent
-        ga4code
-        metapixelid
-        headhtml
-        bodyendhtml
-        facebook_address
-        instagram_address
-        x_address
-        tiktok_address
-        linkdine_address
-        phone_number
-        email
-        whatsapp
-      }
-    }
-    generalSettings { title url }
-  }
-`
-
-const Q_GENERAL_ONLY = gql`
-  query GeneralOnly {
-    generalSettings{ title description url }
-  }
-`
-
-/** מאחד שלוש צורות אפשריות לשדה תמונה לאובייקט אחיד { url, alt } */
 function pickFirstMedia(item) {
     if (!item) return null
-    // 1) MediaItem ישיר
     if (item.mediaItemUrl || item.sourceUrl) {
-        return { url: item.mediaItemUrl || item.sourceUrl || null, alt: item.altText || '' }
+        return { url: item.mediaItemUrl || item.sourceUrl || '', alt: item.altText || '' }
     }
-    // 2) Edge יחיד: { node: {...} }
     if (item.node) {
         const n = item.node
-        return { url: n.mediaItemUrl || n.sourceUrl || null, alt: n.altText || '' }
+        return { url: n.mediaItemUrl || n.sourceUrl || '', alt: n.altText || '' }
     }
-    // 3) Connection: { edges: [{ node: {...} }] }
     const n = item?.edges?.[0]?.node
-    if (n) {
-        return { url: n.mediaItemUrl || n.sourceUrl || null, alt: n.altText || '' }
-    }
+    if (n) return { url: n.mediaItemUrl || n.sourceUrl || '', alt: n.altText || '' }
     return null
 }
 
-/** ממפה שמות השדות באותיות קטנות למבנה תקני */
-function normalizeTheme(node) {
+function normalizeFromPage(node) {
     if (!node) return {}
     return {
         siteLogo:       pickFirstMedia(node.sitelogo),
@@ -124,43 +64,34 @@ function normalizeTheme(node) {
         metaPixelId:    node.metapixelid  || null,
         headHtml:       node.headhtml     || null,
         bodyEndHtml:    node.bodyendhtml  || null,
-        facebookAddress: node.facebook_address || null,
-        instagramAddress: node.instagram_address || null,
-        xAddress: node.x_address || null,
-        tiktokAddress: node.tiktok_address || null,
-        linkdineAddress: node.linkdine_address || null,
-        phoneNumber: node.phone_number || null,
-        email: node.email || null,
-        whatsApp: node.whatsapp || null
+        social: {
+            facebook:  node.facebook_address  || null,
+            instagram: node.instagram_address || null,
+            x:         node.x_address         || null,
+            tiktok:    node.tiktok_address    || null,
+            linkedin:  node.linkdine_address  || null,
+            phone:     node.phone_number      || null,
+            email:     node.email             || null,
+            whatsapp:  node.whatsapp          || null,
+        },
     }
 }
 
 export async function getSiteData() {
-    // 1) globalSettings – node
     try {
-        const { data } = await wp.query({ query: Q_GLOBAL_NODE, fetchPolicy: 'no-cache' })
-        const opts = normalizeTheme(data?.page?.globalSettings)
+        const { data } = await wp.query({ query: Q_GLOBAL_SETTINGS, fetchPolicy: 'no-cache' })
+        const page = data?.page
+        const opts = normalizeFromPage(page?.globalSettings)
         const gs   = data?.generalSettings ?? {}
-        if (opts && (opts.siteLogo || opts.favicon || opts.brandPrimary || opts.ga4Code)) return { opts, gs }
-    } catch {}
 
-    // 2) globalSettings – item
-    try {
-        const { data } = await wp.query({ query: Q_GLOBAL_ITEM, fetchPolicy: 'no-cache' })
-        const opts = normalizeTheme(data?.page?.globalSettings)
-        const gs   = data?.generalSettings ?? {}
-        if (opts && (opts.siteLogo || opts.favicon || opts.brandPrimary || opts.ga4Code)) return { opts, gs }
-    } catch {}
+        // לוגים בצד השרת לזיהוי מהיר
+        console.log('[site.js] page.uri=', page?.uri,
+            ' logo=', opts?.siteLogo?.url,
+            ' favicon=', opts?.favicon?.url)
 
-    // 3) globalSettings – edges
-    try {
-        const { data } = await wp.query({ query: Q_GLOBAL_EDGES, fetchPolicy: 'no-cache' })
-        const opts = normalizeTheme(data?.page?.globalSettings)
-        const gs   = data?.generalSettings ?? {}
-        if (opts && (opts.siteLogo || opts.favicon || opts.brandPrimary || opts.ga4Code)) return { opts, gs }
-    } catch {}
-
-    // 4) פולבאק
-    const { data } = await wp.query({ query: Q_GENERAL_ONLY, fetchPolicy: 'no-cache' })
-    return { opts: {}, gs: data?.generalSettings ?? {} }
+        return { opts: opts || {}, gs }
+    } catch (e) {
+        console.log('[site.js] ERROR:', e?.message || e)
+        return { opts: {}, gs: {} }
+    }
 }

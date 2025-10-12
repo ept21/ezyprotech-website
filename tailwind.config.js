@@ -26,5 +26,5 @@ module.exports = {
             backgroundSize: { 'grid-size':'18px 18px' },
         },
     },
-    plugins: [require('@tailwindcss/typography'), require('@tailwindcss/line-clamp')],
+    plugins: [require('@tailwindcss/typography')]
 }
