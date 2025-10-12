@@ -6,8 +6,8 @@ import { sanitizeHtml, absolutizeCmsUrls } from '@/lib/sanitize'
 import { yoastToMetadata } from '@/lib/seo'
 
 const Q = gql`
-  query CategoryBySlug($slug: ID!, $first:Int=12) {
-    category(id: $slug, idType: SLUG) {
+  query TagBySlug($slug: ID!, $first:Int=12) {
+    tag(id: $slug, idType: SLUG) {
       name
       slug
       seo { title metaDesc canonical }
@@ -30,17 +30,17 @@ export async function generateMetadata({ params }) {
         variables: { slug: params.slug },
         fetchPolicy: 'no-cache',
     })
-    return yoastToMetadata(data?.category?.seo)
+    return yoastToMetadata(data?.Tag?.seo)
 }
 
-export default async function CategoryPage({ params }) {
+export default async function TagPage({ params }) {
     const { data } = await wp.query({
         query: Q,
         variables: { slug: params.slug },
         fetchPolicy: 'no-cache',
     })
-    const cat = data?.category
-    if (!cat) return <section className="container py-12"><h1>Category not found</h1></section>
+    const cat = data?.Tag
+    if (!cat) return <section className="container py-12"><h1>Tag not found</h1></section>
 
     const posts = cat.posts?.nodes ?? []
     return (

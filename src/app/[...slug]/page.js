@@ -4,6 +4,19 @@ import { gql } from '@apollo/client'
 import { wp } from '../../lib/wp'              // נתיב יחסי, לא אליאס
 import { sanitizeHtml, absolutizeCmsUrls } from '../../lib/sanitize'
 
+
+import { SEO_PAGE, yoastToMetadata } from '@/lib/seo'
+export async function generateMetadata({ params }) {
+    const uri = '/' + (params?.slug?.join('/') || '') + '/'
+    try {
+        const { data } = await wp.query({ query: SEO_PAGE, variables: { uri }, fetchPolicy: 'no-cache' })
+        return yoastToMetadata(data?.page?.seo)
+    } catch {
+        return {}
+    }
+}
+
+
 export const dynamic = 'force-dynamic'
 export const revalidate = 300
 
@@ -17,6 +30,7 @@ const PAGE_BY_URI = gql`
     }
   }
 `
+
 
 export default async function GenericPage({ params }) {
     const uri = '/' + (params?.slug?.join('/') || '') + '/'
@@ -44,6 +58,8 @@ export default async function GenericPage({ params }) {
 
     const safeTitle = sanitizeHtml(page.title)
     const safeBody  = absolutizeCmsUrls(sanitizeHtml(page.content))
+
+
 
     return (
         <section className="container py-10">

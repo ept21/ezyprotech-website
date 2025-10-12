@@ -3,6 +3,17 @@ import { wp } from '../../../lib/wp'
 import Image from 'next/image'
 import { sanitizeHtml } from '../../../lib/sanitize'
 import '../../globals.css'
+import { SEO_POST, yoastToMetadata } from '@/lib/seo'
+
+export async function generateMetadata({ params }) {
+    try {
+        const { data } = await wp.query({ query: SEO_POST, variables: { slug: params.slug }, fetchPolicy: 'no-cache' })
+        return yoastToMetadata(data?.post?.seo)
+    } catch {
+        return {}
+    }
+}
+
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 300

@@ -15,16 +15,25 @@ const Q_GLOBAL_NODE = gql`
         metapixelid
         headhtml
         bodyendhtml
+        facebook_address
+        instagram_address
+        x_address
+        tiktok_address
+        linkdine_address
+        phone_number
+        email
+        whatsapp
       }
     }
     generalSettings{ title url }
   }
 `
 
+// ✅ FIXED
 const Q_GLOBAL_ITEM = gql`
   query GlobalSettings_Item {
-    page(id:"/global-settings/", idType:URI){
-      globalSettings{
+    page(id: "/global-settings/", idType: URI) {
+      globalSettings {
         sitelogo       { mediaItemUrl sourceUrl altText }
         favicon        { mediaItemUrl sourceUrl altText }
         defaultogimage { mediaItemUrl sourceUrl altText }
@@ -34,16 +43,25 @@ const Q_GLOBAL_ITEM = gql`
         metapixelid
         headhtml
         bodyendhtml
+        facebook_address
+        instagram_address
+        x_address
+        tiktok_address
+        linkdine_address
+        phone_number
+        email
+        whatsapp
       }
     }
-    generalSettings{ title url }
+    generalSettings { title url }
   }
 `
 
+// ✅ FIXED
 const Q_GLOBAL_EDGES = gql`
   query GlobalSettings_Edges {
-    page(id:"/global-settings/", idType:URI){
-      globalSettings{
+    page(id: "/global-settings/", idType: URI) {
+      globalSettings {
         sitelogo       { edges { node { mediaItemUrl sourceUrl altText } } }
         favicon        { edges { node { mediaItemUrl sourceUrl altText } } }
         defaultogimage { edges { node { mediaItemUrl sourceUrl altText } } }
@@ -53,9 +71,17 @@ const Q_GLOBAL_EDGES = gql`
         metapixelid
         headhtml
         bodyendhtml
+        facebook_address
+        instagram_address
+        x_address
+        tiktok_address
+        linkdine_address
+        phone_number
+        email
+        whatsapp
       }
     }
-    generalSettings{ title url }
+    generalSettings { title url }
   }
 `
 
@@ -98,6 +124,14 @@ function normalizeTheme(node) {
         metaPixelId:    node.metapixelid  || null,
         headHtml:       node.headhtml     || null,
         bodyEndHtml:    node.bodyendhtml  || null,
+        facebookAddress: node.facebook_address || null,
+        instagramAddress: node.instagram_address || null,
+        xAddress: node.x_address || null,
+        tiktokAddress: node.tiktok_address || null,
+        linkdineAddress: node.linkdine_address || null,
+        phoneNumber: node.phone_number || null,
+        email: node.email || null,
+        whatsApp: node.whatsapp || null
     }
 }
 
