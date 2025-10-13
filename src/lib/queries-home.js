@@ -2,15 +2,14 @@
 import { gql } from '@apollo/client'
 
 /**
- * שדות דף הבית (ACF group: homepage) מהדף הראשי.
- * אם אצלך הדף הראשי הוא ב-URI "/home/" – שנה את המשתנה HOME_URI למטה בקובץ getHomeData.js.
+ * שדות דף הבית (ACF: homepage)
+ * שים לב: כאן השמות בפורמט camelCase כפי שה-Schema שלך החזיר לנו ב-GraphiQL.
  */
 export const Q_HOME_FIELDS = gql`
-  query HomeFields($uri: ID!) {
-    page(id: $uri, idType: URI) {
+  query HomeFields {
+    page(id: "/", idType: URI) {
       id
       title
-      uri
       homepage {
         heroEnable
         heroLayout
@@ -70,17 +69,6 @@ export const Q_HOME_FIELDS = gql`
         faqCategorySlug
         faqLimit
 
-        contactEnable
-        contactTitle
-        contactSubtitle
-        contactFormProvider
-        contactFormEmbed
-        contactFormId
-        contactEndpointSlug
-        contactSuccessMessage
-        contactConsentLabel
-        contactPrivacyLinkOverride
-
         mediaEnable
         mediaTitle
         mediaSource
@@ -95,74 +83,64 @@ export const Q_HOME_FIELDS = gql`
 `
 
 /**
- * שים לב: $cat אופציונלי! limit נקבל תמיד בקוד (דיפולט).
- * אם $cat=null – WPGraphQL יתעלם מהפילטר categoryName.
+ * פוסטים לפי קטגוריה (לכל הסקשנים שמוגדרים "posts_category")
  */
-export const Q_HERO_SLIDES = gql`
-  query HeroSlides($cat: String, $limit: Int!) {
-    posts(where: { categoryName: $cat }, first: $limit) {
-      nodes {
-        id
-        title
-        uri
-        featuredImage { node { sourceUrl mediaItemUrl altText } }
-      }
-    }
-  }
-`
-
 export const Q_POSTS_BY_CATEGORY = gql`
-  query PostsByCategory($cat: String, $limit: Int!) {
-    posts(where: { categoryName: $cat }, first: $limit) {
+  query PostsByCategory($cat: String!, $limit: Int!) {
+    posts(
+      where: {
+        categoryName: $cat
+        orderby: { field: DATE, order: DESC }
+        status: PUBLISH
+      }
+      first: $limit
+    ) {
       nodes {
         id
         title
         uri
-        featuredImage { node { sourceUrl mediaItemUrl altText } }
-        date
         excerpt
+        content
+        featuredImage { node { sourceUrl mediaItemUrl altText } }
       }
     }
   }
 `
 
-/** שירותים (CPT) – עדכן את שם ה־CPT אם אצלך שונה מ-"service" */
+/**
+ * CPTs — שמות טיפוסיים ב-WPGraphQL לפי labels שהקמנו:
+ * Services, Projects, Testimonials, FAQs, Badges, Hero Slides
+ * (אם שמך שונה מעט — עידכן לי ונחליף)
+ */
 export const Q_SERVICES = gql`
-  query ServicesList($limit: Int!) {
-    services(first: $limit) {
+  query Services($limit: Int!) {
+    services(first: $limit, where: { orderby: { field: DATE, order: DESC }, status: PUBLISH }) {
       nodes {
-        id
-        title
-        uri
+        id title uri
+        excerpt
         featuredImage { node { sourceUrl mediaItemUrl altText } }
-        date
       }
     }
   }
 `
 
-/** פרויקטים (CPT) – עדכן את שם ה־CPT אם אצלך שונה מ-"project" */
 export const Q_PROJECTS = gql`
-  query ProjectsList($limit: Int!) {
-    projects(first: $limit) {
+  query Projects($limit: Int!) {
+    projects(first: $limit, where: { orderby: { field: DATE, order: DESC }, status: PUBLISH }) {
       nodes {
-        id
-        title
-        uri
+        id title uri
+        excerpt
         featuredImage { node { sourceUrl mediaItemUrl altText } }
-        date
       }
     }
   }
 `
 
-/** המלצות – לפי קטגוריה */
 export const Q_TESTIMONIALS = gql`
-  query TestimonialsByCategory($cat: String, $limit: Int!) {
-    posts(where: { categoryName: $cat }, first: $limit) {
+  query Testimonials($limit: Int!) {
+    testimonials(first: $limit, where: { orderby: { field: DATE, order: DESC }, status: PUBLISH }) {
       nodes {
-        id
-        title
+        id title uri
         content
         featuredImage { node { sourceUrl mediaItemUrl altText } }
       }
@@ -170,14 +148,37 @@ export const Q_TESTIMONIALS = gql`
   }
 `
 
-/** שאלות ותשובות – לפי קטגוריה */
 export const Q_FAQ = gql`
-  query FaqByCategory($cat: String, $limit: Int!) {
-    posts(where: { categoryName: $cat }, first: $limit) {
+  query FAQs($limit: Int!) {
+    faqs(first: $limit, where: { orderby: { field: DATE, order: DESC }, status: PUBLISH }) {
       nodes {
-        id
-        title
+        id title uri
         content
+      }
+    }
+  }
+`
+
+export const Q_BADGES = gql`
+  query Badges($limit: Int!) {
+    badges(first: $limit, where: { orderby: { field: DATE, order: DESC }, status: PUBLISH }) {
+      nodes {
+        id title uri
+        content
+        featuredImage { node { sourceUrl mediaItemUrl altText } }
+      }
+    }
+  }
+`
+
+export const Q_HERO_SLIDES = gql`
+  query HeroSlides($limit: Int!) {
+    heroSlides(first: $limit, where: { orderby: { field: DATE, order: DESC }, status: PUBLISH }) {
+      nodes {
+        id title uri
+        excerpt
+        content
+        featuredImage { node { sourceUrl mediaItemUrl altText } }
       }
     }
   }
