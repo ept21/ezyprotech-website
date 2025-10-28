@@ -1,4 +1,16 @@
 @import "tailwindcss";
+@import './electric-xtra.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+/* טיפוגרפיה עדינה ל-WYSIWYG */
+.prose p { margin: .75rem 0; }
+
+
 
 :root {
   --background: #ffffff;
