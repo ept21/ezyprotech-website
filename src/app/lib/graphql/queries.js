@@ -273,11 +273,30 @@ export const GLOBALS_QUERY = gql`
       globalSettings {
         sitelogo { node { mediaItemUrl sourceUrl altText } }
         favicon { node { mediaItemUrl sourceUrl } }
+        defaultogimage { node { mediaItemUrl sourceUrl } }
+        brandaccent
+        brandprimary
+        bodyendhtml
+        headhtml
+        ga4code
+        metapixelid
+        phoneNumber
+        whatsapp 
+        email
+        facebookAddress { target title url } 
+        instagramAddress { target title url } 
+        tiktokAddress { target title url } 
+        linkdine { target title url } 
+        xAddress { target title url } 
+
+        
       }
+      
     }
     generalSettings {
       title
       url
+     
     }
   }
 `

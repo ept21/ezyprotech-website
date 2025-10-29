@@ -1,88 +1,144 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useMemo, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
 import { isInternalUrl } from '../../lib/wp'
 
-export default function Header({ menu = [], siteTitle = 'Site', logoUrl = null, siteUrl = '' }) {
+export default function Header({
+                                   menu = [],
+                                   siteTitle = 'EzyProTech',
+                                   faviconUrl = null,
+                                   siteUrl = '',
+                               }) {
     const pathname = usePathname()
     const [open, setOpen] = useState(false)
 
-    const NavItem = ({ item }) => {
-        const active = item?.url && (item.url === siteUrl ? pathname === '/' : pathname === new URL(item.url, siteUrl).pathname)
-        const baseClass = 'px-3 py-2 rounded-md text-sm font-medium transition-colors'
-        const cls = active ? `${baseClass} bg-white/10` : `${baseClass} hover:bg-white/10`
+    // פריטי תפריט שורש (לפי WP)
+    const topLevel = useMemo(() => {
+        return (menu || []).filter(i => !i.parentId).sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    }, [menu])
 
-        if (isInternalUrl(item.url, siteUrl)) {
-            return <Link href={item.url} className={cls}>{item.label}</Link>
+    // סימון active לפי עוגנים/סקשנים + pathname
+    useEffect(() => {
+        const navbar = document.getElementById('navbar')
+        const navLinks = document.getElementById('navLinks')
+
+        // אפקט scroll (bar shrink + highlight)
+        const onScroll = () => {
+            if (!navbar) return
+            if (window.scrollY > 50) navbar.classList.add('scrolled')
+            else navbar.classList.remove('scrolled')
+
+            // עדכון אקטיביות לפי סקשנים
+            const sections = document.querySelectorAll('section[id]')
+            const scrollPosition = window.pageYOffset + 100
+            sections.forEach((section) => {
+                const top = section.offsetTop
+                const height = section.offsetHeight
+                const id = section.getAttribute('id')
+                if (scrollPosition >= top && scrollPosition < top + height) {
+                    document.querySelectorAll('.nav-link').forEach((a) => a.classList.remove('active'))
+                    const current = document.querySelector(`.nav-link[href="#${id}"]`)
+                    if (current) current.classList.add('active')
+                }
+            })
         }
+
+        window.addEventListener('scroll', onScroll)
+        onScroll()
+        return () => window.removeEventListener('scroll', onScroll)
+    }, [pathname])
+
+    // Smooth scroll לעוגנים
+    useEffect(() => {
+        const anchors = document.querySelectorAll('a[href^="#"]')
+        const handler = (e) => {
+            const href = e.currentTarget.getAttribute('href')
+            if (!href) return
+            const target = document.querySelector(href)
+            if (!target) return
+            e.preventDefault()
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            setOpen(false)
+        }
+        anchors.forEach(a => a.addEventListener('click', handler))
+        return () => anchors.forEach(a => a.removeEventListener('click', handler))
+    }, [])
+
+    // קישור (פנימי/חיצוני) – כמו בקוד שלך, רק שומר על className המקורי של הטמפלייט
+    const NavItem = ({ item }) => {
+        const label = item?.label ?? ''
+        const href = item?.url ?? '#'
+        const classes = 'nav-link' // הסטיילינג מגיע מה־CSS של הטמפלייט
+
+        if (isInternalUrl(href, siteUrl)) {
+            // השאר כתובת מלאה/יחסית — אם זו כתובת עוגן (#about), נשאיר כך כדי שסקריפט ה־smooth scroll יעבוד
+            const url = href?.startsWith('http') ? new URL(href, siteUrl).pathname : href
+            return <Link href={url} className={classes}>{label}</Link>
+        }
+
         return (
-            <a href={item.url} target="_blank" rel="noopener" className={cls}>
-                {item.label}
+            <a href={href} className={classes} target="_blank" rel="noopener noreferrer">
+                {label}
             </a>
         )
     }
 
     return (
-        <header className="sticky top-0 z-50 bg-gray-900/80 backdrop-blur supports-[backdrop-filter]:bg-gray-900/60 text-white">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div className="h-16 flex items-center justify-between">
-                    {/* Branding */}
-                    <div className="flex items-center gap-3">
-                        {logoUrl ? (
-                            <Link href="/" aria-label={siteTitle} className="inline-flex items-center">
-                                <img src={logoUrl} alt={siteTitle} className="h-48 w-48" />
-                            </Link>
-                        ) : (
-                            <Link href="/" className="text-lg font-semibold">{siteTitle}</Link>
-                        )}
-                    </div>
+        <header className="sticky top-0 z-50 text-white">
+            {/* רקעים ואפקטים – בדיוק כמו הטמפלייט */}
+            <div className="grid-bg" />
+            <div className="gradient-overlay" />
+            <div className="scanlines" />
 
-                    {/* Desktop nav */}
-                    <nav className="hidden md:flex items-center gap-1">
-                        {menu.map((item) => (
-                            <div key={item.id} className="relative">
-                                <NavItem item={item} />
-                                {/* אם יש ילדים – בהמשך אפשר להוסיף dropdown */}
-                            </div>
-                        ))}
-                    </nav>
-
-                    {/* Mobile toggle */}
-                    <button
-                        className="md:hidden inline-flex items-center justify-center rounded-md p-2 hover:bg-white/10"
-                        onClick={() => setOpen(!open)}
-                        aria-label="Toggle menu"
-                    >
-                        <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden className="inline-block">
-                            {open ? (
-                                <path fill="currentColor" d="M18 6L6 18M6 6l12 12"/>
-                            ) : (
-                                <path fill="currentColor" d="M4 7h16M4 12h16M4 17h16"/>
-                            )}
-                        </svg>
-                    </button>
-                </div>
+            <div className="shapes-container">
+                <div className="shape shape-circle" />
+                <div className="shape shape-triangle" />
+                <div className="shape shape-square" />
             </div>
 
-            {/* Mobile panel */}
-            {open && (
-                <div className="md:hidden border-t border-white/10">
-                    <nav className="px-4 py-3 space-y-1">
-                        {menu.map((item) => (
-                            <div key={item.id}>
+            <div id="particles" />
+
+            {/* ניווט (מבנה זהה) */}
+            <nav id="navbar">
+                <div className="nav-container">
+                    <Link href="/" className="logo-link">
+                        {faviconUrl ? (
+                            <img src={faviconUrl} alt={siteTitle} className="w-8 h-8" />
+                        ) : (
+                            <div className="w-8 h-8 rounded" style={{ background: 'linear-gradient(45deg, var(--brand-primary), var(--brand-accent))' }} />
+                        )}
+                        <span className="logo-text font-heading">
+              {/* וורדמרק מפוצל לפי ספר המותג */}
+                            <span className="logo-ezy">EzyPro</span><span className="logo-tech">Tech</span>
+            </span>
+                    </Link>
+
+                    {/* קישורי תפריט – בלי utility classes כדי שה-CSS של הטמפלייט ישלוט */}
+                    <ul className={`nav-links ${open ? 'active' : ''}`} id="navLinks">
+                        {topLevel.map((item) => (
+                            <li key={item.id}>
                                 <NavItem item={item} />
-                                {item.children?.length ? (
-                                    <div className="pl-4 mt-1 space-y-1">
-                                        {item.children.map(child => <NavItem key={child.id} item={child} />)}
-                                    </div>
-                                ) : null}
-                            </div>
+                            </li>
                         ))}
-                    </nav>
+                    </ul>
+
+                    {/* המבורגר – אותו HTML, רק נשלט ב-state */}
+                    <div
+                        className={`menu-toggle ${open ? 'active' : ''}`}
+                        id="menuToggle"
+                        role="button"
+                        aria-label="Toggle navigation"
+                        aria-expanded={open}
+                        onClick={() => setOpen(v => !v)}
+                    >
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
                 </div>
-            )}
+            </nav>
         </header>
     )
 }

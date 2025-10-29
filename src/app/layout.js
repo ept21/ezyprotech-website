@@ -16,7 +16,7 @@ export async function generateMetadata() {
     const faviconUrl = getAcfImageUrl(globals?.page?.globalSettings?.favicon)
 
     return {
-        title: 'EzyProTech | We Help Businesses Build the Future',
+        title: 'EzyProTech | AI Driven Growth',
         description: 'Official website of EzyProTech — Smart business solutions powered by WordPress & Next.js.',
         icons: {
             icon: [
@@ -42,6 +42,7 @@ export default async function RootLayout({ children }) {
     const siteTitle = res?.generalSettings?.title || 'Site'
     const siteUrl = res?.generalSettings?.url || ''
 
+
     const tree = buildMenuTree(allItems, { onlySlug: 'main' })
     const menu = tree.length ? tree : buildMenuTree(allItems)
 
@@ -49,6 +50,7 @@ export default async function RootLayout({ children }) {
     const globals = await client.request(GLOBALS_QUERY).catch(() => null)
     const logoUrl = getAcfImageUrl(globals?.page?.globalSettings?.sitelogo) || '/logo.svg'
 
+    const faviconUrl = getAcfImageUrl(globals?.page?.globalSettings?.favicon)
     return (
         <html lang="en" suppressHydrationWarning>
         <body className="bg-gray-950 text-gray-100 antialiased">
@@ -57,7 +59,10 @@ export default async function RootLayout({ children }) {
             siteTitle={siteTitle}
             logoUrl={logoUrl}
             siteUrl={siteUrl}
+            faviconUrl={faviconUrl}
         />
+
+
         {children}
         </body>
         </html>
