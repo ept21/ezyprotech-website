@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { isInternalUrl } from '@//lib/wp'
+import { isInternalUrl } from '@/lib/wp'
 
 
 
