@@ -1,7 +1,7 @@
 export const revalidate = 60
 
-import { getClient } from '@/app/lib/graphql/client'
-import { PAGE_BY_SLUG_QUERY } from '@/app/lib/graphql/queries'
+import { getClient } from '@/lib/graphql/client'
+import { PAGE_BY_SLUG_QUERY } from '@/lib/graphql/queries'
 
 function joinUri(slugArray) {
     if (!slugArray || !slugArray.length) return '/'
