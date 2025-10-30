@@ -31,5 +31,8 @@
     "prettier": "^3.6.2",
     "tailwindcss": "^4.1.16",
     "vitest": "^4.0.4"
+  },
+  "engines": {
+    "node": ">=20.9.0"
   }
 }

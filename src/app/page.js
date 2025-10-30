@@ -78,30 +78,27 @@ export default async function HomePage() {
           const bg = getAcfImageUrl(h?.heroBgImage)
           const bgMobile = getAcfImageUrl(h?.heroBgImageMobile)
 
+          // כפתורים מתוך שני שדות ה-Link בלבד
           const ctas = []
-
-          // CTA1: אין שדה טקסט נפרד, נשתמש בכותרת מהלינק או ברירת מחדל
           if (h?.herocta1url?.url) {
             ctas.push({
               title: h.herocta1url.title || 'Get Started',
-              url: h.herocta1url.url,
-              target: h.herocta1url.target
+              url:   h.herocta1url.url,
+              target: h.herocta1url.target || '_self',
             })
           }
-
-          // CTA2: יש גם טקסט (cta2) וגם לינק (cta2url)
           if (h?.cta2url?.url) {
             ctas.push({
-              title: h.cta2 || h.cta2url.title || 'Learn More',
-              url: h.cta2url.url,
-              target: h.cta2url.target
+              title: h.cta2url.title || 'Learn More',
+              url:   h.cta2url.url,
+              target: h.cta2url.target || '_self',
             })
           }
 
-          const getTarget = (t, url) => t || (url?.startsWith('http') ? '_blank' : '_self')
+          const getRel = (t) => (t === '_blank' ? 'noopener noreferrer' : undefined)
 
           return (
-              <section id="home" className="hero" style={bg ? { backgroundImage: `url(${bg})` } : undefined}>
+              <section id="home" className="hero bg-fixed bg-cover bg-center w-full" style={bg ? { backgroundImage: `url(${bg})` } : undefined}>
                 {bgMobile && (
                     <style
                         dangerouslySetInnerHTML={{
@@ -109,7 +106,7 @@ export default async function HomePage() {
               @media (max-width: 768px) {
                 #home.hero { background-image: url(${bgMobile}) !important; }
               }
-            `
+            `,
                         }}
                     />
                 )}
@@ -123,10 +120,7 @@ export default async function HomePage() {
                   </div>
 
                   {h.heroContent && (
-                      <div
-                          className="prose mt-6 max-w-3xl mx-auto text-center"
-                          dangerouslySetInnerHTML={{ __html: h.heroContent }}
-                      />
+                      <div className="prose mt-6  mx-auto text-center" dangerouslySetInnerHTML={{ __html: h.heroContent }} />
                   )}
                 </div>
 
@@ -137,8 +131,8 @@ export default async function HomePage() {
                               key={idx}
                               href={btn.url}
                               className={`cta-button ${idx === 0 ? 'cta-primary' : 'cta-secondary'}`}
-                              target={getTarget(btn.target, btn.url)}
-                              rel={getTarget(btn.target, btn.url) === '_blank' ? 'noopener noreferrer' : undefined}
+                              target={btn.target}
+                              rel={getRel(btn.target)}
                           >
                             {btn.title}
                           </a>

@@ -23,9 +23,8 @@ hero {
   heroVideoUrl
   heroVideoUrlMobile
 
-  herocta1url { url title target }
-  cta2
-  cta2url { url title target }
+  herocta1url { url title target } 
+  cta2url     { url title target } 
 }
 
         services {
