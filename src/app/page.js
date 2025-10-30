@@ -1,9 +1,9 @@
 export const revalidate = 60
 
-import Container from '@/app/components/common/Container'
-import { getClient } from '@/app/lib/graphql/client'
-import { HOME_QUERY, FRONT_PAGE_QUERY } from '@/app/lib/graphql/queries'
-import { getAcfImageUrl } from '@/app/lib/wp'
+import Container from '@/components/common/Container'
+import { getClient } from '@/lib/graphql/client'
+import { HOME_QUERY, FRONT_PAGE_QUERY } from '@/lib/graphql/queries'
+import { getAcfImageUrl } from '@/lib/wp'
 
 // Cache פנימי למניעת בקשות כפולות (שרת בלבד)
 let cachedHomePageId = null
