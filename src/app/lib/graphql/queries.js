@@ -1,5 +1,7 @@
-import { gql } from 'graphql-request'
+// lib/queries.js
+import {gql} from 'graphql-request'
 
+/* ---------- Home / Pages ---------- */
 export const HOME_QUERY = gql`
   query Home(
     $id: ID!,
@@ -12,16 +14,19 @@ export const HOME_QUERY = gql`
       uri
       seo { title metaDesc }
       homePageFields {
-        hero {
-          heroTitle
-          heroSubtitle
-          heroContent
-          heroBgImage { node { mediaItemUrl sourceUrl altText } }
-          heroBgImageMobile { node { mediaItemUrl sourceUrl altText } }
-          heroVideoUrl
-          heroVideoUrlMobile
-          heroCtas { ctaLink { url title target } }
-        }
+hero {
+  heroTitle
+  heroSubtitle
+  heroContent
+  heroBgImage { node { mediaItemUrl sourceUrl altText } }
+  heroBgImageMobile { node { mediaItemUrl sourceUrl altText } }
+  heroVideoUrl
+  heroVideoUrlMobile
+
+  herocta1url { url title target }
+  cta2
+  cta2url { url title target }
+}
 
         services {
           showServices
@@ -173,7 +178,20 @@ export const HOME_QUERY = gql`
   }
 `
 
+export const PAGE_BY_SLUG_QUERY = gql`
+  query PageBySlug($slug: ID!) {
+    page(id: $slug, idType: URI) {
+      id
+      title
+      uri
+      content
+      featuredImage { node { mediaItemUrl sourceUrl altText } }
+      seo { title metaDesc }
+    }
+  }
+`
 
+/* (משאיר גם לשימוש עתידי אם צריך) */
 export const SERVICE_QUERY = gql`
   query Service($slug: ID!) {
     service(id: $slug, idType: SLUG) {
@@ -193,78 +211,8 @@ export const PROJECT_QUERY = gql`
     }
   }
 `
-// רשימת דפים (לבדיקה/תפריט עתידי)
-export const PAGES_QUERY = gql`
-  query Pages($first: Int! = 20) {
-    pages(first: $first, where: { status: PUBLISH, orderby: { field: MENU_ORDER, order: ASC } }) {
-      nodes {
-        id
-        title
-        uri
-        slug
-      }
-    }
-  }
-`
 
-export const FRONT_PAGE_QUERY = gql`
-  query GetFrontPage {
-    pages(first: 50) {
-      nodes {
-        id
-        title
-        uri
-        isFrontPage
-      }
-    }
-  }
-`
-
-// דף יחיד לפי slug
-export const PAGE_BY_SLUG_QUERY = gql`
-  query PageBySlug($slug: ID!) {
-    page(id: $slug, idType: URI) {
-      id
-      title
-      uri
-      content
-      featuredImage { node { mediaItemUrl sourceUrl altText } }
-      seo { title metaDesc }
-    }
-  }
-`
-
-/*  Menus*/
-
-export const MAIN_MENU_QUERY = gql`
-  query MainMenu {
-    # כל פריטי התפריט (נטפל בהיררכיה בצד ה-Next)
-    menuItems(first: 100) {
-      nodes {
-        id
-        databaseId
-        label
-        url
-        parentId
-        order
-        menu {
-          node {
-            id
-            name
-            slug
-          }
-        }
-      }
-    }
-
-    # זה תמיד קיים ב-WPGraphQL – נשתמש כגיבוי לכותרת אם אין לוגו
-    generalSettings {
-      title
-      url
-    }
-  }
- `
-
+/* ---------- Globals ---------- */
 export const GLOBALS_QUERY = gql`
   query Globals {
     page(id: 39, idType: DATABASE_ID) {
@@ -281,23 +229,46 @@ export const GLOBALS_QUERY = gql`
         ga4code
         metapixelid
         phoneNumber
-        whatsapp 
+        whatsapp
         email
-        facebookAddress { target title url } 
-        instagramAddress { target title url } 
-        tiktokAddress { target title url } 
-        linkdine { target title url } 
-        xAddress { target title url } 
-
-        
+        facebookAddress { target title url }
+        instagramAddress { target title url }
+        tiktokAddress { target title url }
+        linkdine { target title url }
+        xAddress { target title url }
       }
-      
     }
-    generalSettings {
-      title
-      url
-     
-    }
+    generalSettings { title url }
   }
 `
 
+/* ---------- Menus by Location (אין יותר ערבוב) ---------- */
+export const MAIN_MENU_BY_LOCATION = gql`
+  query MainMenuByLocation {
+    menuItems(first: 100, where: { location: PRIMARY }) {
+      nodes { id databaseId label url parentId order }
+    }
+    generalSettings { title url }
+  }
+`
+
+export const FOOTER_MENU_BY_LOCATION = gql`
+  query FooterMenuByLocation {
+    menuItems(first: 100, where: { location: FOOTER }) {
+      nodes { id databaseId label url parentId order }
+    }
+    generalSettings { title url }
+  }
+`
+export const FRONT_PAGE_QUERY = gql`
+  query GetFrontPage {
+    pages(first: 50) {
+      nodes {
+        id
+        title
+        uri
+        isFrontPage
+      }
+    }
+  }
+`

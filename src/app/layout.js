@@ -1,69 +1,70 @@
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+// app/layout.js
+import { request } from 'graphql-request'
+import { MAIN_MENU_BY_LOCATION, FOOTER_MENU_BY_LOCATION, GLOBALS_QUERY } from '@/app/lib/graphql/queries'
+import { buildMenuTree, getAcfImageUrl } from '@/app/lib/wp'
+import Header from '@/app/components/layout/Header'
+import Footer from '@/app/components/layout/Footer'
+import Analytics from '@/app/components/analytics/Analytics'
+import HeadMeta from '@/app/components/seo/HeadMeta'
 
-import './styles/globals.css'
-import Header from './components/layout/Header'
-import { getClient } from './lib/graphql/client'
-import { MAIN_MENU_QUERY, GLOBALS_QUERY } from './lib/graphql/queries'
-import { buildMenuTree, getAcfImageUrl } from './lib/wp'
+import '@/app/styles/electric-xtra.css'
+import '@/app/styles/globals.css'
 
-/**
- * ✅ פונקציה לניהול מטאדאטה דינמית כולל favicon
- */
-export async function generateMetadata() {
-    const client = getClient()
-    const globals = await client.request(GLOBALS_QUERY).catch(() => null)
-    const faviconUrl = getAcfImageUrl(globals?.page?.globalSettings?.favicon)
+const endpoint = process.env.NEXT_PUBLIC_CMS_URL
 
-    return {
-        title: 'EzyProTech | AI Driven Growth',
-        description: 'Official website of EzyProTech — Smart business solutions powered by WordPress & Next.js.',
-        icons: {
-            icon: [
-                { url: faviconUrl || '/favicon.png', sizes: '32x32', type: 'image/png' },
-                { url: faviconUrl || '/favicon.png', sizes: '192x192', type: 'image/png' },
-            ],
-            shortcut: [faviconUrl || '/favicon.png'],
-            apple: [faviconUrl || '/favicon.png'],
-        },
-    }
-}
-
-
-/**
- * ✅ Root Layout
- */
 export default async function RootLayout({ children }) {
-    const client = getClient()
+    if (!endpoint) {
+        throw new Error('Missing NEXT_PUBLIC_CMS_URL env var')
+    }
 
-    // --- Menu + Site basics ---
-    const res = await client.request(MAIN_MENU_QUERY)
-    const allItems = res?.menuItems?.nodes || []
-    const siteTitle = res?.generalSettings?.title || 'Site'
-    const siteUrl = res?.generalSettings?.url || ''
+    const [globalsRes, mainRes, footerRes] = await Promise.all([
+        request(endpoint, GLOBALS_QUERY),
+        request(endpoint, MAIN_MENU_BY_LOCATION),
+        request(endpoint, FOOTER_MENU_BY_LOCATION),
+    ])
 
+    const siteTitle   = globalsRes?.generalSettings?.title ?? 'EzyProTech'
+    const siteUrl     = globalsRes?.generalSettings?.url   ?? ''
+    const gs          = globalsRes?.page?.globalSettings
+    const faviconUrl  = getAcfImageUrl(gs?.favicon)
+    const defaultOg   = getAcfImageUrl(gs?.defaultogimage)
+    const ga4Code     = gs?.ga4code || ''           // דוגמה: G-XXXXXXX
+    const metaPixelId = gs?.metapixelid || ''       // דוגמה: 1234567890
 
-    const tree = buildMenuTree(allItems, { onlySlug: 'main' })
-    const menu = tree.length ? tree : buildMenuTree(allItems)
+    const mainItems   = mainRes?.menuItems?.nodes   ?? []
+    const footerItems = footerRes?.menuItems?.nodes ?? []
 
-    // --- Globals (logo בלבד) ---
-    const globals = await client.request(GLOBALS_QUERY).catch(() => null)
-    const logoUrl = getAcfImageUrl(globals?.page?.globalSettings?.sitelogo) || '/logo.svg'
+    const mainMenuTree = buildMenuTree(mainItems)
+    const footerLinks  = footerItems
+        .filter(n => !n.parentId)
+        .sort((a,b) => (a.order ?? 0) - (b.order ?? 0))
+        .map(n => ({ id: n.id, label: n.label, url: n.url }))
 
-    const faviconUrl = getAcfImageUrl(globals?.page?.globalSettings?.favicon)
     return (
-        <html lang="en" suppressHydrationWarning>
-        <body className="bg-gray-950 text-gray-100 antialiased">
+        <html lang="en">
+        <head>
+            <HeadMeta
+                siteTitle={siteTitle}
+                siteUrl={siteUrl}
+                faviconUrl={faviconUrl}
+                defaultOgImage={defaultOg}
+                tagline="Build the Future of Your Business"
+            />
+        </head>
+        <body>
         <Header
-            menu={menu}
+            menu={mainMenuTree}
             siteTitle={siteTitle}
-            logoUrl={logoUrl}
-            siteUrl={siteUrl}
             faviconUrl={faviconUrl}
+            siteUrl={siteUrl}
         />
-
-
         {children}
+        <Footer
+            links={footerLinks}
+            siteTitle={siteTitle}
+            siteUrl={siteUrl}
+        />
+        <Analytics ga4Code={ga4Code} metaPixelId={metaPixelId} />
         </body>
         </html>
     )

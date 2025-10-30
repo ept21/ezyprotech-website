@@ -290,7 +290,6 @@ https://templatemo.com/tm-596-electric-xtra
         .menu-toggle span {
             width: 25px;
             height: 2px;
-            background: #FF5E00;
             transition: all 0.3s ease;
         }
 
@@ -974,7 +973,6 @@ https://templatemo.com/tm-596-electric-xtra
         }
 
         .footer-links a {
-            color: #FF5E00;
             text-decoration: none;
             transition: all 0.3s ease;
             font-weight: 500;

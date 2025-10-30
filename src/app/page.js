@@ -5,13 +5,13 @@ import { getClient } from '@/app/lib/graphql/client'
 import { HOME_QUERY, FRONT_PAGE_QUERY } from '@/app/lib/graphql/queries'
 import { getAcfImageUrl } from '@/app/lib/wp'
 
-// Cache פנימי למניעת בקשות כפולות
+// Cache פנימי למניעת בקשות כפולות (שרת בלבד)
 let cachedHomePageId = null
 
 export default async function HomePage() {
   const client = getClient()
 
-  // 1️⃣ משוך את ה-ID של דף הבית (רק פעם אחת)
+  // 1) משוך את ה-ID של דף הבית (רק פעם אחת לכל ריסטארט של השרת)
   if (!cachedHomePageId) {
     const frontData = await client.request(FRONT_PAGE_QUERY)
     const allPages = frontData?.pages?.nodes || []
@@ -30,7 +30,7 @@ export default async function HomePage() {
     )
   }
 
-  // 2️⃣ משוך נתוני דף הבית בפועל
+  // 2) משוך נתוני דף הבית
   const vars = {
     id: homePageId,
     servicesFirst: 6,
@@ -45,12 +45,9 @@ export default async function HomePage() {
   const data = await client.request(HOME_QUERY, vars)
   const hp = data?.page?.homePageFields
 
-
-  // 3️⃣ הוצא תמונות Hero (ACF)
   const heroBgUrl = getAcfImageUrl(hp?.hero?.heroBgImage)
   const heroBgMobileUrl = getAcfImageUrl(hp?.hero?.heroBgImageMobile)
 
-  // 4️⃣ שירותים (Services)
   const servicesConf = hp?.services
   let servicesList = data?.services?.nodes || []
 
@@ -72,32 +69,91 @@ export default async function HomePage() {
       n?.featuredImage?.node?.sourceUrl ||
       null
 
-  // 5️⃣ הצגה
   return (
       <main>
-        {/*<h1 className="text-white">✅ דף הבית נטען בהצלחה!</h1>*/}
 
-        {/* HERO */}
-        {hp?.hero?.heroTitle && (
-            <section
-                className="relative"
-                style={
-                  heroBgUrl
-                      ? { backgroundImage: `url(${heroBgUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-                      : undefined
-                }
-            >
-              <Container className="py-16 text-white">
-                <h1 className="text-4xl font-bold">{hp.hero.heroTitle}</h1>
-                {hp.hero.heroSubtitle && (
-                    <p className="mt-2 text-lg opacity-80">{hp.hero.heroSubtitle}</p>
+        {/* HERO (match schema you posted) */}
+        {hp?.hero?.heroTitle && (() => {
+          const h = hp.hero
+          const bg = getAcfImageUrl(h?.heroBgImage)
+          const bgMobile = getAcfImageUrl(h?.heroBgImageMobile)
+
+          const ctas = []
+
+          // CTA1: אין שדה טקסט נפרד, נשתמש בכותרת מהלינק או ברירת מחדל
+          if (h?.herocta1url?.url) {
+            ctas.push({
+              title: h.herocta1url.title || 'Get Started',
+              url: h.herocta1url.url,
+              target: h.herocta1url.target
+            })
+          }
+
+          // CTA2: יש גם טקסט (cta2) וגם לינק (cta2url)
+          if (h?.cta2url?.url) {
+            ctas.push({
+              title: h.cta2 || h.cta2url.title || 'Learn More',
+              url: h.cta2url.url,
+              target: h.cta2url.target
+            })
+          }
+
+          const getTarget = (t, url) => t || (url?.startsWith('http') ? '_blank' : '_self')
+
+          return (
+              <section id="home" className="hero" style={bg ? { backgroundImage: `url(${bg})` } : undefined}>
+                {bgMobile && (
+                    <style
+                        dangerouslySetInnerHTML={{
+                          __html: `
+              @media (max-width: 768px) {
+                #home.hero { background-image: url(${bgMobile}) !important; }
+              }
+            `
+                        }}
+                    />
                 )}
-                {hp.hero.heroContent && (
-                    <div className="prose mt-4" dangerouslySetInnerHTML={{ __html: hp.hero.heroContent }} />
+
+                <div className="hero-content">
+                  <div className="text-rotator">
+                    <div className="text-set active">
+                      <h1 className="glitch-text" data-text={h.heroTitle}>{h.heroTitle}</h1>
+                      {h.heroSubtitle && <p className="subtitle">{h.heroSubtitle}</p>}
+                    </div>
+                  </div>
+
+                  {h.heroContent && (
+                      <div
+                          className="prose mt-6 max-w-3xl mx-auto text-center"
+                          dangerouslySetInnerHTML={{ __html: h.heroContent }}
+                      />
+                  )}
+                </div>
+
+                {ctas.length > 0 && (
+                    <div className="cta-container">
+                      {ctas.map((btn, idx) => (
+                          <a
+                              key={idx}
+                              href={btn.url}
+                              className={`cta-button ${idx === 0 ? 'cta-primary' : 'cta-secondary'}`}
+                              target={getTarget(btn.target, btn.url)}
+                              rel={getTarget(btn.target, btn.url) === '_blank' ? 'noopener noreferrer' : undefined}
+                          >
+                            {btn.title}
+                          </a>
+                      ))}
+                    </div>
                 )}
-              </Container>
-            </section>
-        )}
+              </section>
+          )
+        })()}
+
+
+
+
+
+
 
 
         {/* SERVICES */}
@@ -168,9 +224,6 @@ export default async function HomePage() {
               </Container>
             </section>
         )}
-
-
-
       </main>
   )
 }
