@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { isInternalUrl } from '@/app/lib/wp'
+import { isInternalUrl } from '@/lib/wp'
 
 export default function Footer({
                                    links = [],
