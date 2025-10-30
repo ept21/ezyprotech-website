@@ -1,7 +1,7 @@
 export const revalidate = 60
 
-import { getClient } from '@/lib/graphql/client'
-import { PROJECT_QUERY } from '@/lib/graphql/queries'
+import { getClient } from '../../../lib/graphql/client'
+import { PROJECT_QUERY } from '../../../lib/graphql/queries'
 
 export default async function Page({ params }) {
     const data = await getClient().request(PROJECT_QUERY, { slug: params.slug })
