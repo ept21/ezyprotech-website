@@ -79,7 +79,7 @@ export default function Header({
     }
 
     return (
-        <header className="sticky top-0 z-50 text-white ">
+        <header  id="header" className="sticky top-0 z-50 text-white ">
             {/* רקעי הטמפלייט */}
             <div className="grid-bg" />
             <div className="scanlines" />
