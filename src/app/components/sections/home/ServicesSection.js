@@ -35,7 +35,7 @@ export default function ServicesSection({
     return (
         <section
             id="services"
-            className="relative isolate py-28 md:py-36 lg:py-40"
+            className=" relative isolate py-28 md:py-36 lg:py-40"
             style={
                 bgImage
                     ? {backgroundImage: `url(${bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center'}
@@ -48,9 +48,9 @@ export default function ServicesSection({
                 className="absolute inset-0 -z-10 pointer-events-none bg-[linear-gradient(transparent_95%,rgba(255,255,255,0.05)_96%),linear-gradient(90deg,transparent_95%,rgba(255,255,255,0.05)_96%)] bg-[length:24px_24px] opacity-20"/>
             <div className="svc-scanlines absolute inset-0 -z-10 pointer-events-none opacity-[0.07]"/>
             <div
-                className="absolute inset-0 -z-10 pointer-events-none bg-gradient-to-b from-transparent via-transparent to-black/40"/>
+                className=" abslute inset-0 -z-10 pointer-events-none bg-gradient-to-b from-transparent via-transparent to-black/40"/>
 
-            <Container className="relative z-10 mx-auto max-w-7xl px-6 text-[var(--text-primary,#C9D1D9)]">
+            <Container className="service-section-container relative z-10 mx-auto max-w-7xl px-6 text-[var(--text-primary,#C9D1D9)]">
                 {/* HEADER */}
                 <div className="mx-auto max-w-3xl text-center">
                     {title && (

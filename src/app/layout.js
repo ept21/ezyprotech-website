@@ -27,6 +27,7 @@ export default async function RootLayout({ children }) {
     const siteUrl     = globalsRes?.generalSettings?.url   ?? ''
     const gs          = globalsRes?.page?.globalSettings
     const faviconUrl  = getAcfImageUrl(gs?.favicon)
+    const sitelogo  = getAcfImageUrl(gs?.sitelogo)
     const defaultOg   = getAcfImageUrl(gs?.defaultogimage)
     const ga4Code     = gs?.ga4code || ''           // דוגמה: G-XXXXXXX
     const metaPixelId = gs?.metapixelid || ''       // דוגמה: 1234567890
@@ -57,6 +58,7 @@ export default async function RootLayout({ children }) {
             siteTitle={siteTitle}
             faviconUrl={faviconUrl}
             siteUrl={siteUrl}
+            sitelogo={sitelogo}
         />
         {children}
         <Footer

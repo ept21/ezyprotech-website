@@ -12,6 +12,7 @@ export default function Header({
                                    siteTitle = 'EzyProTech',
                                    faviconUrl = null,
                                    siteUrl = '',
+                                   sitelogo=''
                                }) {
     const pathname = usePathname()
     const [open, setOpen] = useState(false)
@@ -82,7 +83,7 @@ export default function Header({
         <header  id="header" className="sticky top-0 z-50 text-white ">
             {/* רקעי הטמפלייט */}
             <div className="grid-bg" />
-            <div className="scanlines" />
+            {/*  <div className="scanlines" /> */}
             <div className="shapes-container">
                 <div className="shape shape-circle" />
                 <div className="shape shape-triangle" />
@@ -93,14 +94,12 @@ export default function Header({
             <nav id="navbar">
                 <div className="nav-container">
                     <Link href="/" className="logo-link">
-                        {faviconUrl ? (
-                            <img src={faviconUrl} alt={siteTitle} className="w-8 h-8" />
+                        {sitelogo ? (
+                            <img src={sitelogo} alt={siteTitle} className="w-full h-12" />
                         ) : (
                             <div className="w-8 h-8 rounded" style={{ background: 'linear-gradient(45deg, var(--brand-primary), var(--brand-accent))' }} />
                         )}
-                        <span className="logo-text font-heading">
-              <span className="logo-ezy">EzyPro</span><span className="logo-tech">Tech</span>
-            </span>
+                        {/*<span className="logo-text font-heading"><span className="logo-ezy">VELT</span><span className="logo-tech">IQO</span></span> */ }
                     </Link>
 
                     <ul className={`nav-links ${open ? 'active' : ''}`} id="navLinks">

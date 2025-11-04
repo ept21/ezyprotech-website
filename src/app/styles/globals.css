@@ -200,7 +200,27 @@ nav { z-index: 50; position: fixed; }
 /* אם יש מצבי מובייל שפותחים תפריט "על כל המסך", ודא שהוא לא נשאר פתוח בטעות מעל העמוד */
 @media (min-width: 769px) {
   .nav-links { position: static !important; height: auto !important; left: auto !important; background: transparent !important; }
+
+
 }
+
+/* אם יש מצבי מובייל שפותחים תפריט "על כל המסך", ודא שהוא לא נשאר פתוח בטעות מעל העמוד */
+@media (max-width: 769px) {
+  .service-section-container {
+    padding: 20px!important;
+  }
+
+}
+
+
 
 /* ביטול סלקטורים מהטמפלייט שעלולים להסתיר את הפאנלים שלך */
 .features, .feature-tabs, .content-panel { all: unset; }
+
+@media (min-width: 1025px) {
+  /* Desktop specific styles */
+  .service-section-container {
+    padding: 55px;
+  }
+}
+
