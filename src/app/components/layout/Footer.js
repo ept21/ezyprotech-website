@@ -1,64 +1,146 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { isInternalUrl } from '@/lib/wp'
+import Link from "next/link";
+import Image from "next/image";
+import { Facebook, Instagram, Linkedin, Youtube } from "lucide-react";
 
-export default function Footer({
-                                   links = [],
-                                   siteTitle = 'EzyProTech',
-                                   year = new Date().getFullYear(),
-                                   credit = 'Building the future of your business.',
-                                   siteUrl = ''
-                               }) {
-    const NavA = ({ href, children, className = '' }) => {
-        const cls = `block ${className}` // block כדי ש-w-1/2 יעבוד במובייל
-        if (isInternalUrl(href, siteUrl)) {
-            const url = href?.startsWith('http') ? new URL(href, siteUrl).pathname : href
-            return <Link href={url} className={cls}>{children}</Link>
-        }
-        return <a href={href} className={cls} target="_blank" rel="noopener noreferrer">{children}</a>
-    }
+// קישורים סטטיים כרגע (אפשר להחליף ל-JSON/CMS)
+const NAV_GROUPS = [
+    {
+        title: "Company",
+        links: [
+            { href: "/#about", label: "About" },
+            { href: "/#services", label: "Services" },
+            { href: "/#pricing", label: "Pricing" },
+            { href: "/contact", label: "Contact" },
+        ],
+    },
+    {
+        title: "Resources",
+        links: [
+            { href: "/#faq", label: "FAQ" },
+            { href: "/#testimonials", label: "Testimonials" },
+            { href: "/privacy", label: "Privacy Policy" },
+            { href: "/terms", label: "Terms of Service" },
+        ],
+    },
+];
+
+const SOCIAL = [
+    { href: "https://facebook.com", label: "Facebook", Icon: Facebook },
+    { href: "https://instagram.com", label: "Instagram", Icon: Instagram },
+    { href: "https://linkedin.com", label: "LinkedIn", Icon: Linkedin },
+    { href: "https://youtube.com", label: "YouTube", Icon: Youtube },
+];
+
+export default function Footer() {
+    const year = new Date().getFullYear();
 
     return (
-        <footer>
-            <div className="footer-content mx-auto max-w-7xl px-4 py-6 sm:py-8">
-                {/* קישורי הפוטר */}
-                <div
-                    className="
-            footer-links
-            flex flex-wrap
-            gap-x-4 gap-y-2
-            justify-center sm:justify-start
-            text-xs sm:text-sm
-          "
-                >
-                    {links?.length > 0 ? (
-                        links.map(item => (
-                            <NavA
-                                key={item.id || item.url}
-                                href={item.url}
-                                className="
-                  w-1/2 text-center
-                  sm:w-auto sm:text-left
-                "
-                            >
-                                {item.label}
-                            </NavA>
-                        ))
-                    ) : (
-                        <>
-                            <Link className="block w-1/2 text-center sm:w-auto sm:text-left" href="#privacy">Privacy Policy</Link>
-                            <Link className="block w-1/2 text-center sm:w-auto sm:text-left" href="#terms">Terms of Service</Link>
-                            <Link className="block w-1/2 text-center sm:w-auto sm:text-left" href="#careers">Careers</Link>
-                        </>
-                    )}
-                </div>
+        <footer
+            className="
+        mt-20 border-t border-[var(--border-subtle)]
+        bg-[color-mix(in_oklab,var(--bg-elevated)_85%,transparent)]
+        backdrop-blur-md
+      "
+            aria-labelledby="footer-heading"
+        >
+            <h2 id="footer-heading" className="sr-only">Website footer</h2>
 
-                {/* זכויות יוצרים */}
-                <p className="copyright mt-4 text-center text-xs sm:text-sm">
-                    © {year} {siteTitle}. All rights reserved. {credit ? `| ${credit}` : null}
-                </p>
+            {/* עליון: לוגו + תקציר + סושיאל */}
+            <div className="mx-auto max-w-7xl px-4 md:px-6 py-10">
+                <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
+                    {/* לוגו + תיאור קצר */}
+                    <div className="max-w-md">
+                        <Link
+                            href="/"
+                            className="inline-flex items-center gap-3 focus:outline-none focus-visible:ring ring-[var(--brand-primary)] rounded-lg"
+                            aria-label="Veitiqo home"
+                        >
+                            <Image
+                                src="/logo-veitiqo-light.svg"
+                                alt="Veitiqo"
+                                width={150}
+                                height={30}
+                                className="block dark:hidden h-8 w-auto"
+                                priority
+                            />
+                            <Image
+                                src="/logo-veitiqo-dark.svg"
+                                alt="Veitiqo"
+                                width={150}
+                                height={30}
+                                className="hidden dark:block h-8 w-auto"
+                                priority
+                            />
+                        </Link>
+                        <p className="mt-4 text-sm text-[var(--text-secondary)]">
+                            AI-driven web & growth systems. We design and ship headless websites,
+                            automations, and marketing ops that move the needle.
+                        </p>
+
+                        {/* סושיאל */}
+                        <ul className="mt-4 flex justify-center" aria-label="Social media">
+                            {SOCIAL.map(({ href, label, Icon }) => (
+                                <li key={label}>
+                                    <Link
+                                        href={href}
+                                        aria-label={label}
+                                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border-subtle)]
+                               text-[var(--text-secondary)] hover:text-[var(--foreground)]
+                               hover:border-[var(--brand-primary)] focus:outline-none focus-visible:ring ring-[var(--brand-primary)]"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <Icon className="h-5 w-5" />
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    {/* קבוצות קישורים */}
+                    <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
+                        {NAV_GROUPS.map((group) => (
+                            <nav key={group.title} aria-label={group.title}>
+                                <h3 className="text-sm font-semibold text-[var(--foreground)]">
+                                    {group.title}
+                                </h3>
+                                <ul className="mt-3 space-y-2">
+                                    {group.links.map((l) => (
+                                        <li key={l.href}>
+                                            <Link
+                                                href={l.href}
+                                                className="text-sm text-[var(--text-secondary)] hover:text-[var(--foreground)]
+                                   focus:outline-none focus-visible:ring ring-[var(--brand-primary)] rounded"
+                                            >
+                                                {l.label}
+                                            </Link>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </nav>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* תחתון: זכויות + לינקים קטנים */}
+            <div className="border-t border-[var(--border-subtle)]">
+                <div className="mx-auto max-w-7xl px-4 md:px-6 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <p className="text-xs text-[var(--text-secondary)]">
+                        © {year} Veitiqo. All rights reserved.
+                    </p>
+                    <div className="flex justify-center gap-4">
+                        <Link href="/privacy" className="text-xs text-[var(--text-secondary)] hover:text-[var(--foreground)]">
+                            Privacy
+                        </Link>
+                        <Link href="/terms" className="text-xs text-[var(--text-secondary)] hover:text-[var(--foreground)]">
+                            Terms
+                        </Link>
+                    </div>
+                </div>
             </div>
         </footer>
-    )
+    );
 }

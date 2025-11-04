@@ -9,6 +9,7 @@ import HeadMeta from '@/components/seo/HeadMeta'
 
 import '@/styles/electric-xtra.css'
 import '@/styles/globals.css'
+import "@/styles/globals.css";
 
 const endpoint = process.env.NEXT_PUBLIC_CMS_URL
 
@@ -23,7 +24,7 @@ export default async function RootLayout({ children }) {
         request(endpoint, FOOTER_MENU_BY_LOCATION),
     ])
 
-    const siteTitle   = globalsRes?.generalSettings?.title ?? 'EzyProTech'
+    const siteTitle   = globalsRes?.generalSettings?.title ?? 'Veitiqo'
     const siteUrl     = globalsRes?.generalSettings?.url   ?? ''
     const gs          = globalsRes?.page?.globalSettings
     const faviconUrl  = getAcfImageUrl(gs?.favicon)
@@ -65,6 +66,7 @@ export default async function RootLayout({ children }) {
             links={footerLinks}
             siteTitle={siteTitle}
             siteUrl={siteUrl}
+            faviconUrl={faviconUrl}
         />
         <Analytics ga4Code={ga4Code} metaPixelId={metaPixelId} />
         </body>

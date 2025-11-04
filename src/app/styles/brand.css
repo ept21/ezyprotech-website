@@ -1,0 +1,56 @@
+:root {
+    /* Veitiqo – Light (Electric Vector) */
+    --brand-primary: #0A84FF;
+    --brand-accent:  #00C2FF;
+    --text-primary:  #0B1220;
+    --text-secondary:#5E6975;
+    --bg-default:    #F5F7FA;
+    --bg-elevated:   #E9ECEF;
+    --border-subtle: #D9E2EC;
+
+    /* Typography tokens */
+    --font-h: "Plus Jakarta Sans", ui-sans-serif, system-ui;
+    --font-b: "Inter", ui-sans-serif, system-ui;
+    --font-code: "Fira Code", ui-monospace, SFMono-Regular;
+
+    --track-h1: -0.02em;
+    --track-h:  -0.01em;
+    --track-body: 0;
+    --track-sm:   0.01em;
+
+    /* Radii & shadows */
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --shadow-soft: 0 10px 30px rgba(0,0,0,.20);
+    --shadow-strong: 0 18px 40px rgba(0,0,0,.35);
+}
+
+:root.dark {
+    /* Veitiqo – Dark (Cyber Mint) */
+    --brand-primary: #00C293;
+    --brand-accent:  #00E0A6;
+    --text-primary:  #C9D1D9;
+    --text-secondary:#8B949E;
+    --bg-default:    #0D1117;
+    --bg-elevated:   #161B22;
+    --border-subtle: #30363D;
+}
+
+/* ערכת נושא לפי data-theme (אופציונלי, אם תרצה טוגל ידני) */
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"]  { color-scheme: dark; }
+
+/* Tailwind v4 @theme inline – מחבר משתנים לשמות טוקנים */
+@theme inline {
+    --color-background: var(--bg-default);
+    --color-foreground: var(--text-primary);
+    --color-muted:      var(--text-secondary);
+    --color-border:     var(--border-subtle);
+
+    --font-sans:   var(--font-b);
+    --font-heading:var(--font-h);
+    --font-mono:   var(--font-code);
+
+    --radius-lg: var(--radius-lg);
+    --radius-xl: var(--radius-xl);
+}

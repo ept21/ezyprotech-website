@@ -1,116 +1,75 @@
 /* ==== Tailwind v4 core ==== */
 @import "tailwindcss";
 
-/* אם אתה עדיין צריך את ה-CSS של ה-Electric template: */
-@import "./electric-xtra.css";
+/* ==== Brand tokens ==== */
+@import "./brand.css";
 
-/* ==== Design tokens (Light/Dark) ==== */
-:root {
-  /* Electric Vector (Light) — אפשר לצבוע אוטומטית אם תעבור למצב בהיר */
-  --background: #ffffff;
-  --foreground: #171717;
-
-  /* Brand tokens */
-  --brand-primary: #0A84FF; /* Electric Vector primary */
-  --brand-accent:  #00C2FF; /* Electric Vector accent */
-  --text-primary:  #0B1220; /* Light text */
-  --text-secondary:#5E6975;
-
-  /* Dark tokens (נגזרות ברירת מחדל לשימוש עם טוקנים מותנים) */
-  --bg-default:   #0D1117;
-  --bg-elevated:  #161B22;
-  --border-dark:  #30363D;
-
-  /* Text for dark UI */
-  --text-primary-dark:   #C9D1D9;
-  --text-secondary-dark: #8B949E;
-}
-
-/* Dark-first (כפי שביקשתם לעבוד קודם כל בדארק) */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: var(--bg-default);
-    --foreground: var(--text-primary-dark);
-  }
-}
-
-/* ==== Tailwind theme inline (v4) ==== */
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-  --font-heading: "Plus Jakarta Sans", var(--font-sans);
-  --font-mono: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-}
-
-/* ==== Base ==== */
-html, body {
-  height: 100%;
-}
+/* ==== Base Resets (עדין, שלא יתנגש ב-TW) ==== */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+html { scroll-behavior: smooth; }
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
+  background: var(--bg-default);
+  color: var(--text-primary);
+  font-family: var(--font-b);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* WYSIWYG spacing */
+h1,h2,h3,h4 { letter-spacing: var(--track-h); font-family: var(--font-h); }
+h1 { letter-spacing: var(--track-h1); }
+small { letter-spacing: var(--track-sm); }
+
+/* קישורים ניטרליים – צבע דרך Utilities בד״כ */
+a { text-underline-offset: 2px; }
+
+/* Prose – ריווחים עדינים */
 .prose p { margin: .75rem 0; }
 
-/* ==== Header/Nav (מותאם צבעי מותג) ==== */
-.logo-text{
-  background: linear-gradient(45deg, var(--brand-primary), var(--brand-accent));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-.logo-ezy { color: #fff; -webkit-text-fill-color: initial; } /* “EzyPro” */
-.logo-tech{ color: var(--brand-primary); }                   /* “Tech” */
+/* ==== Utilities כלליים ממותגים (ללא חפיפה לסקשנים) ==== */
 
-nav{
-  background: rgba(13,17,23,0.80);
-  border-bottom: 1px solid color-mix(in oklab, var(--border-dark) 60%, transparent);
-  backdrop-filter: blur(10px);
+/* כפתור ממותג */
+.btn-brand {
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px; padding: .7rem 1rem; font-weight: 600; color: #fff;
+  background-image: linear-gradient(90deg, var(--brand-primary), var(--brand-accent));
+  transition: filter .2s ease, transform .2s ease, box-shadow .25s ease;
+  box-shadow: var(--shadow-soft);
 }
-nav.scrolled{
-  background: rgba(13,17,23,0.95);
-  box-shadow: 0 5px 30px color-mix(in oklab, var(--brand-primary) 18%, transparent);
-}
+.btn-brand:hover { transform: translateY(-2px); filter: saturate(1.05) brightness(1.04); box-shadow: var(--shadow-strong); }
 
-.nav-links a.active{ color: var(--brand-primary); }
-.nav-links a::before{ border-color: transparent; }
-.nav-links a:hover::before, .nav-links a.active::before{
-  border-color: color-mix(in oklab, var(--brand-primary) 65%, transparent);
-  box-shadow: inset 0 0 10px color-mix(in oklab, var(--brand-primary) 45%, transparent);
+/* כפתור קווי */
+.btn-brand-outline {
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px; padding: .65rem 1rem; font-weight: 600;
+  border: 1px solid color-mix(in oklab, var(--brand-primary) 70%, white);
+  color: var(--text-secondary);
+  background: rgba(255,255,255,.04);
+  transition: background .2s ease, color .2s ease, border-color .2s ease, transform .2s ease;
 }
-.nav-links a::after{
-  background: linear-gradient(90deg, var(--brand-primary), var(--brand-accent));
-  box-shadow: 0 0 10px color-mix(in oklab, var(--brand-accent) 60%, transparent);
-}
-.menu-toggle span{ background: var(--brand-accent); }
-
-/* ==== Background FX ==== */
-.scanlines {
-  background-image: repeating-linear-gradient(
-          to bottom,
-          rgba(255,255,255,0.08) 0px,
-          rgba(255,255,255,0.08) 1px,
-          transparent 2px,
-          transparent 4px
-  );
-  mix-blend-mode: soft-light;
+.btn-brand-outline:hover{
+  background: rgba(10,132,255,.08);
+  color: #fff;
+  border-color: var(--brand-primary);
+  transform: translateY(-2px);
 }
 
-/* ==== Cards & Buttons (ללא כפילויות) ==== */
+/* כרטיס זכוכית */
 .glass-card{
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-soft);
   transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
 }
 .glass-card:hover{
   transform: translateY(-4px);
-  box-shadow: 0 18px 40px rgba(0,0,0,.5);
+  box-shadow: var(--shadow-strong);
   border-color: color-mix(in oklab, white 10%, var(--brand-primary) 90%);
 }
+
+/* טבעת ניאון – לשימוש ייעודי סביב תמונות/כפתורים */
 .neon-ring{
   box-shadow:
           0 0 0 1px color-mix(in oklab, var(--brand-primary) 55%, transparent) inset,
@@ -118,109 +77,111 @@ nav.scrolled{
           0 0 64px color-mix(in oklab, var(--brand-accent) 25%, transparent);
 }
 
-/* כפתורים — Tailwind v4 utilities + gradient ממותג */
-.btn-brand {
-  display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 999px; padding: .7rem 1rem; font-weight: 600; color: #fff;
-  transition: filter .2s ease, transform .2s ease, box-shadow .25s ease;
-  background-image: linear-gradient(90deg, var(--brand-primary), var(--brand-accent));
-}
-.btn-brand:hover { transform: translateY(-2px); filter: saturate(1.1) brightness(1.05); }
+/* ==== זינדקס ושקיפות-קליקים (בעיה שהייתה לך) ==== */
+/* כל שכבות הרקע ש״מצוירות״ מקבלות z-index נמוך ושקופות לקליקים */
+.fx-layer { z-index: 0 !important; pointer-events: none !important; }
 
-.btn-brand-outline {
-  display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 999px; padding: .65rem 1rem; font-weight: 600;
-  border: 1px solid color-mix(in oklab, var(--brand-primary) 70%, white);
-  color: var(--text-secondary-dark, #8B949E);
-  background: rgba(255,255,255,.04);
-  transition: background .2s ease, color .2s ease, border-color .2s ease;
+/* הניווט תמיד מעל, אבל לא חוסם יותר מדי */
+.site-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 50; }
+
+/* אזורי תוכן חשובים מקבלים הקשר שכבות ברור */
+.section { position: relative; z-index: 1; }
+
+
+/* === TEMP SHIM: Electric → Veitiqo (use tokens, keep old classnames) === */
+
+/* Base layout bits */
+.hero{
+  min-height:80vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:80px 20px 20px; position:relative;
 }
-.btn-brand-outline:hover{
-  background: rgba(10,132,255,.08);
-  color: #fff;
+@media (max-width:640px){ .hero{ min-height:100vh } }
+
+.hero-content{ text-align:center; max-width:1200px; margin-inline:auto }
+.subtitle{ font-size:1.125rem; margin:20px 0; color: var(--text-secondary) }
+
+/* Buttons */
+.cta-container{ margin-top:24px; display:flex; gap:16px; flex-wrap:wrap; justify-content:center }
+.cta-button{
+  padding:12px 24px; border-radius:999px; font-weight:700; text-transform:uppercase; letter-spacing:.08em;
+  border:1px solid transparent; transition:transform .2s ease, box-shadow .25s ease, filter .2s ease;
+  font-family: var(--font-h); font-size:.95rem;
+}
+.cta-primary{
+  color:#fff; background-image:linear-gradient(90deg,var(--brand-primary),var(--brand-accent));
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+}
+.cta-primary:hover{ transform:translateY(-2px); filter:saturate(1.05) brightness(1.04); box-shadow:0 18px 40px rgba(0,0,0,.35) }
+.cta-secondary{
+  background:transparent; color:var(--text-primary);
+  border-color: color-mix(in oklab, var(--brand-primary) 70%, white);
+}
+.cta-secondary:hover{
+  color:#fff; border-color:var(--brand-primary);
+  background: color-mix(in oklab, var(--brand-primary) 10%, transparent);
+  transform:translateY(-2px)
+}
+
+/* Sections */
+.features,.about,.contact{ padding:100px 20px; max-width:1200px; margin:0 auto }
+.section-title{
+  font-family: var(--font-h); font-weight:800; text-transform:uppercase; text-align:center;
+  font-size: clamp(1.8rem, 4.2vw, 3rem);
+  background:linear-gradient(45deg,var(--brand-primary),var(--brand-accent));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:48px;
+}
+.features-container{ display:grid; gap:40px; align-items:start }
+@media (min-width:1024px){ .features-container{ grid-template-columns:300px 1fr } }
+
+/* Cards / panels */
+.feature-tabs,.feature-content,.contact-form{
+  background: color-mix(in oklab, var(--bg-elevated) 85%, transparent);
+  border:1px solid var(--border-subtle); border-radius: var(--radius-xl);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  padding:24px;
+}
+.tab-item{
+  padding:12px 16px; margin-bottom:10px; border:1px solid transparent; border-radius:10px; cursor:pointer;
+  transition:background .2s ease, border-color .2s ease, box-shadow .2s ease; display:flex; gap:12px; align-items:center;
+  color:var(--text-primary)
+}
+.tab-item:hover{ background: color-mix(in oklab, var(--brand-primary) 8%, transparent); border-color: color-mix(in oklab, var(--brand-primary) 25%, transparent) }
+.tab-item.active{
+  background: linear-gradient(45deg, color-mix(in oklab, var(--brand-primary) 12%, transparent), color-mix(in oklab, var(--brand-accent) 12%, transparent));
   border-color: var(--brand-primary);
+  box-shadow:0 10px 30px rgba(0,0,0,.25)
 }
 
-/* ==== Footer ==== */
+.content-panel{ display:none; animation: fadeIn .35s ease }
+.content-panel.active{ display:block }
+.content-panel h3{
+  font-family:var(--font-h); font-size: clamp(1.25rem, 2.2vw, 2rem); margin-bottom:14px;
+  color:var(--text-primary)
+}
+.content-panel p{ line-height:1.75; color:var(--text-secondary); margin-bottom:16px }
+
+/* Contact form fields */
+.form-group{ margin-bottom:18px }
+.form-group label{
+  display:block; margin-bottom:8px; color:var(--text-secondary);
+  text-transform:uppercase; font-size:.8rem; letter-spacing:.08em;
+}
+.form-group input,.form-group textarea{
+  width:100%; padding:14px; border-radius:12px; border:1px solid var(--border-subtle);
+  background: color-mix(in oklab, var(--bg-elevated) 80%, transparent);
+  color:var(--text-primary); transition:border-color .2s ease, box-shadow .2s ease, background .2s ease
+}
+.form-group input:focus,.form-group textarea:focus{
+  outline:none; border-color:var(--brand-primary);
+  box-shadow:0 0 0 3px color-mix(in oklab, var(--brand-primary) 20%, transparent)
+}
+.submit-btn{ composes: cta-button; } /* אם PostCSS לא תומך, פשוט תן גם class="cta-button cta-primary" ב-HTML */
+
+/* Footer */
 footer{
-  background: rgba(13,17,23,0.80);
-  border-top: 1px solid var(--border-dark, #30363D);
+  background: color-mix(in oklab, #000 85%, transparent);
+  border-top:1px solid var(--border-subtle); padding:40px 20px; text-align:center
 }
-.footer-links a{
-  color: var(--brand-accent);
-  font-family: var(--font-heading);
-  font-weight: 600; letter-spacing: .02em;
-}
-.footer-links a:hover{
-  color: var(--brand-accent);
-  text-shadow: 0 0 10px currentColor;
-}
-footer .copyright{ color: var(--text-secondary-dark, #8B949E); font-family: var(--font-sans); }
-footer .copyright a{ color: var(--brand-primary); }
-footer .copyright a:hover{ color: var(--brand-accent); text-shadow: 0 0 10px currentColor; }
-
-@media (max-width: 640px) {
-  .footer-links { display: flex; flex-wrap: wrap; }
-  .footer-links a { white-space: normal; }
-}
-
-/* ========= Z-Index / Pointer Events Fixes ========= */
-
-/* שים את כל שכבות הרקע הגלובאליות מאחורי התוכן, ותדאג שלא יתפסו קליקים */
-.grid-bg,
-.shapes-container,
-.gradient-overlay,
-.particle,
-.scanlines {
-  z-index: 0 !important;
-  pointer-events: none !important;
-}
-
-/* ההירו לא צריך לייצר שכבת על */
-.hero { z-index: 0; position: relative; }
-
-/* ההדר תמיד מעל התוכן אך רק בגובה שלו */
-nav { z-index: 50; position: fixed; }
-
-/* אזור השירותים מקבל קונטקסט שכבות ברור, אבל לא "דורס" את ההדר */
-#services { position: relative; z-index: 1; }
-
-/* הגרסה המקומית לסרגל סריטות (שלא תתנגש עם הטמפלייט) */
-.svc-scanlines {
-  background-image: repeating-linear-gradient(
-          to bottom,
-          rgba(255,255,255,0.08) 0px,
-          rgba(255,255,255,0.08) 1px,
-          transparent 2px,
-          transparent 4px
-  );
-  mix-blend-mode: soft-light;
-}
-
-/* אם יש מצבי מובייל שפותחים תפריט "על כל המסך", ודא שהוא לא נשאר פתוח בטעות מעל העמוד */
-@media (min-width: 769px) {
-  .nav-links { position: static !important; height: auto !important; left: auto !important; background: transparent !important; }
-
-
-}
-
-/* אם יש מצבי מובייל שפותחים תפריט "על כל המסך", ודא שהוא לא נשאר פתוח בטעות מעל העמוד */
-@media (max-width: 769px) {
-  .service-section-container {
-    padding: 20px!important;
-  }
-
-}
-
-
-
-/* ביטול סלקטורים מהטמפלייט שעלולים להסתיר את הפאנלים שלך */
-.features, .feature-tabs, .content-panel { all: unset; }
-
-@media (min-width: 1025px) {
-  /* Desktop specific styles */
-  .service-section-container {
-    padding: 55px;
-  }
-}
-
+.footer-links{ display:flex; justify-content:center; gap:24px; margin-bottom:16px }
+.footer-links a{ transition: color .2s ease, text-shadow .25s ease }
+.footer-links a:hover{ color:var(--brand-accent); text-shadow:0 0 10px currentColor }

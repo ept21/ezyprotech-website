@@ -1,127 +1,139 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
-import { usePathname } from 'next/navigation'
-import { isInternalUrl } from '@/lib/wp'
+import Link from "next/link";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { Menu, X } from "lucide-react";
 
+/** @typedef {{ href: string, label: string, aria?: string }} NavItem */
 
+/** @type {NavItem[]} */
+const NAV = [
+    { href: "/", label: "Home" },
+    { href: "/#services", label: "Services" },
+    { href: "/#pricing", label: "Pricing" },
+    { href: "/#about", label: "About" },
+    { href: "/contact", label: "Contact" },
+];
 
-export default function Header({
-                                   menu = [],
-                                   siteTitle = 'EzyProTech',
-                                   faviconUrl = null,
-                                   siteUrl = '',
-                                   sitelogo=''
-                               }) {
-    const pathname = usePathname()
-    const [open, setOpen] = useState(false)
+export default function Header() {
+    const [open, setOpen] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
+    const pathname = usePathname();
 
-    const topLevel = useMemo(() => {
-        return (menu || [])
-            .filter(i => !i.parentId)
-            .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-    }, [menu])
-
-    // scroll & active section
     useEffect(() => {
-        const navbar = document.getElementById('navbar')
+        const onScroll = () => setScrolled(window.scrollY > 8);
+        onScroll();
+        window.addEventListener("scroll", onScroll, { passive: true });
+        return () => window.removeEventListener("scroll", onScroll);
+    }, []);
 
-        const onScroll = () => {
-            if (navbar) {
-                if (window.scrollY > 50) navbar.classList.add('scrolled')
-                else navbar.classList.remove('scrolled')
-            }
-            const sections = document.querySelectorAll('section[id]')
-            const scrollPosition = window.pageYOffset + 100
-            sections.forEach(section => {
-                const top = section.offsetTop
-                const height = section.offsetHeight
-                const id = section.getAttribute('id')
-                if (scrollPosition >= top && scrollPosition < top + height) {
-                    document.querySelectorAll('.nav-link').forEach(a => a.classList.remove('active'))
-                    const current = document.querySelector(`.nav-link[href="#${id}"]`)
-                    if (current) current.classList.add('active')
-                }
-            })
-        }
+    useEffect(() => setOpen(false), [pathname]);
 
-        window.addEventListener('scroll', onScroll)
-        onScroll()
-        return () => window.removeEventListener('scroll', onScroll)
-    }, [pathname])
-
-    // smooth anchors + סגירת מובייל אחרי לחיצה
-    useEffect(() => {
-        const anchors = document.querySelectorAll('a[href^="#"]')
-        const handler = (e) => {
-            const href = e.currentTarget.getAttribute('href')
-            if (!href) return
-            const target = document.querySelector(href)
-            if (!target) return
-            e.preventDefault()
-            target.scrollIntoView({ behavior: 'smooth', block: 'start' })
-            setOpen(false)
-        }
-        anchors.forEach(a => a.addEventListener('click', handler))
-        return () => anchors.forEach(a => a.removeEventListener('click', handler))
-    }, [])
-
-    const NavItem = ({ item }) => {
-        const label = item?.label ?? ''
-        const href = item?.url ?? '#'
-        const classes = 'nav-link'
-
-        if (isInternalUrl(href, siteUrl)) {
-            const url = href?.startsWith('http') ? new URL(href, siteUrl).pathname : href
-            return <Link href={url} className={classes}>{label}</Link>
-        }
-        return <a href={href} className={classes} target="_blank" rel="noopener noreferrer">{label}</a>
-    }
+    const navBg = scrolled
+        ? "backdrop-blur-md bg-[color-mix(in_oklab,var(--bg-default)_70%,transparent)] border-b border-[var(--border-subtle)] py-2"
+        : "bg-transparent py-3";
 
     return (
-        <header  id="header" className="sticky top-0 z-50 text-white ">
-            {/* רקעי הטמפלייט */}
-            <div className="grid-bg" />
-            {/*  <div className="scanlines" /> */}
-            <div className="shapes-container">
-                <div className="shape shape-circle" />
-                <div className="shape shape-triangle" />
-                <div className="shape shape-square" />
-            </div>
-            <div id="particles" />
+        <header className={`site-nav transition-all duration-300 ${navBg}`} role="banner">
+            <nav className="mx-auto flex items-center justify-between px-4 md:px-6 max-w-7xl" aria-label="Primary">
+                {/* לוגו */}
+                <Link href="/" className="flex items-center gap-3 focus:outline-none focus-visible:ring ring-[var(--brand-primary)] rounded-lg">
+                    <Image
+                        src="/logo-veitiqo-light.svg"
+                        alt="Veitiqo"
+                        width={140}
+                        height={28}
+                        className="block dark:hidden h-7 w-25"
+                        priority
+                    />
+                    <Image
+                        src="/logo-veitiqo-dark.svg"
+                        alt="Veitiqo"
+                        width={1400}
+                        height={28}
+                        className="hidden dark:block h-7 w-25"
+                        priority
+                    />
+                </Link>
 
-            <nav id="navbar">
-                <div className="nav-container">
-                    <Link href="/" className="logo-link">
-                        {sitelogo ? (
-                            <img src={sitelogo} alt={siteTitle} className="w-full h-12" />
-                        ) : (
-                            <div className="w-8 h-8 rounded" style={{ background: 'linear-gradient(45deg, var(--brand-primary), var(--brand-accent))' }} />
-                        )}
-                        {/*<span className="logo-text font-heading"><span className="logo-ezy">VELT</span><span className="logo-tech">IQO</span></span> */ }
-                    </Link>
-
-                    <ul className={`nav-links ${open ? 'active' : ''}`} id="navLinks">
-                        {topLevel.map(item => (
-                            <li key={item.id}>
-                                <NavItem item={item} />
+                {/* דסקטופ */}
+                <ul className="hidden md:flex items-center gap-1">
+                    {NAV.map((item) => {
+                        const active =
+                            item.href === "/"
+                                ? pathname === "/"
+                                : pathname === item.href || (item.href.startsWith("/#") && pathname === "/");
+                        return (
+                            <li key={item.href}>
+                                <Link
+                                    href={item.href}
+                                    aria-label={item.aria || item.label}
+                                    className={`px-3 py-2 rounded-lg text-sm font-medium transition
+                    ${active ? "text-[var(--brand-primary)]" : "text-[var(--text-secondary)] hover:text-[var(--foreground)]"}
+                    focus:outline-none focus-visible:ring ring-[var(--brand-primary)]`}
+                                >
+                                    {item.label}
+                                </Link>
                             </li>
-                        ))}
-                    </ul>
+                        );
+                    })}
+                    <li>
+                        <Link href="/contact" className="ml-1 btn-brand" aria-label="Get in touch">
+                            Get in touch
+                        </Link>
+                    </li>
+                </ul>
 
-                    <div
-                        className={`menu-toggle ${open ? 'active' : ''}`}
-                        id="menuToggle"
-                        role="button"
-                        aria-label="Toggle navigation"
-                        aria-expanded={open}
-                        onClick={() => setOpen(v => !v)}
-                    >
-                        <span></span><span></span><span></span>
-                    </div>
-                </div>
+                {/* מובייל: כפתור תפריט */}
+                <button
+                    type="button"
+                    className="md:hidden inline-flex items-center justify-center rounded-lg p-2 focus:outline-none focus-visible:ring ring-[var(--brand-primary)]"
+                    aria-controls="mobile-menu"
+                    aria-expanded={open}
+                    aria-label={open ? "Close menu" : "Open menu"}
+                    onClick={() => setOpen((v) => !v)}
+                >
+                    <span className="sr-only">{open ? "Close menu" : "Open menu"}</span>
+                    {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                </button>
             </nav>
+
+            {/* מובייל: מגירה */}
+            <div
+                id="mobile-menu"
+                className={`md:hidden transition-[max-height,opacity] duration-300 overflow-hidden
+        ${open ? "max-h-[480px] opacity-100" : "max-h-0 opacity-0"}`}
+            >
+                <div className="mx-4 mt-2 rounded-2xl border border-[var(--border-subtle)] bg-[color-mix(in_oklab,var(--bg-elevated)_85%,transparent)] backdrop-blur-md p-2 glass-card">
+                    <ul className="flex flex-col">
+                        {NAV.map((item) => {
+                            const active =
+                                item.href === "/"
+                                    ? pathname === "/"
+                                    : pathname === item.href || (item.href.startsWith("/#") && pathname === "/");
+                            return (
+                                <li key={item.href}>
+                                    <Link
+                                        href={item.href}
+                                        className={`block w-full px-4 py-3 rounded-xl text-base transition
+                      ${active ? "text-[var(--brand-primary)] bg-[color-mix(in_oklab,var(--brand-primary)_8%,transparent)]" : "text-[var(--foreground)] hover:bg-[rgba(255,255,255,.04)]"}
+                      focus:outline-none focus-visible:ring ring-[var(--brand-primary)]`}
+                                    >
+                                        {item.label}
+                                    </Link>
+                                </li>
+                            );
+                        })}
+                        <li className="px-2 pt-2 pb-1">
+                            <Link href="/contact" className="btn-brand w-full">
+                                Get in touch
+                            </Link>
+                        </li>
+                    </ul>
+                </div>
+            </div>
         </header>
-    )
+    );
 }
