@@ -38,25 +38,26 @@ export default function Header() {
     return (
         <header className={`site-nav transition-all duration-300 ${navBg}`} role="banner">
             <nav className="mx-auto flex items-center justify-between px-4 md:px-6 max-w-7xl" aria-label="Primary">
-                {/* לוגו */}
-                <Link href="/" className="flex items-center gap-3 focus:outline-none focus-visible:ring ring-[var(--brand-primary)] rounded-lg">
-                    <Image
-                        src="/logo-veitiqo-light.svg"
-                        alt="Veitiqo"
-                        width={140}
-                        height={28}
-                        className="block dark:hidden h-7 w-25"
-                        priority
-                    />
-                    <Image
-                        src="/logo-veitiqo-dark.svg"
-                        alt="Veitiqo"
-                        width={1400}
-                        height={28}
-                        className="hidden dark:block h-7 w-25"
-                        priority
-                    />
+
+                {/* logo */}
+                <Link
+                    href="/"
+                    className="flex items-center gap-3 focus:outline-none focus-visible:ring ring-[var(--brand-primary)] rounded-lg"
+                >
+                    <picture>
+                        <source srcSet="/veltiqo-logo.webp" media="(prefers-color-scheme: dark)" />
+                        {/* fallback ללייט */}
+                        <Image
+                            src="/veltiqo-logo.webp"
+                            alt="Veitiqo"
+                            width={140}
+                            height={28}
+                            className="h-7 w-25"
+                            priority
+                        />
+                    </picture>
                 </Link>
+
 
                 {/* דסקטופ */}
                 <ul className="hidden md:flex items-center gap-1">
@@ -86,10 +87,10 @@ export default function Header() {
                     </li>
                 </ul>
 
-                {/* מובייל: כפתור תפריט */}
+                {/* mobile menu */}
                 <button
                     type="button"
-                    className="md:hidden inline-flex items-center justify-center rounded-lg p-2 focus:outline-none focus-visible:ring ring-[var(--brand-primary)]"
+                    className="text-[#0A84FF] md:hidden inline-flex items-center justify-center rounded-lg p-2 focus:outline-none focus-visible:ring ring-[var(--brand-primary)]"
                     aria-controls="mobile-menu"
                     aria-expanded={open}
                     aria-label={open ? "Close menu" : "Open menu"}

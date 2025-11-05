@@ -54,3 +54,77 @@
     --radius-lg: var(--radius-lg);
     --radius-xl: var(--radius-xl);
 }
+
+
+/* ===== Base reset (safe) ===== */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+    margin: 0;
+    font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    background: #0C0C0D; /* fallback behind your inline styles */
+    color: #fff;
+}
+
+/* images behave */
+img { display: block; max-width: 100%; height: auto; }
+
+/* ===== Design tokens (optional but nice) ===== */
+:root{
+    /* Light “Electric Vector” (from your brand memory) */
+    --brand-primary: #0A84FF;
+    --brand-accent:  #00C2FF;
+    --text-primary:  #0B1220;
+    --text-secondary:#5E6975;
+
+    /* Dark “Cyber Mint” (also available if you switch) */
+    --dark-primary:  #00C293;
+    --dark-accent:   #00E0A6;
+
+    /* Neutrals */
+    --bg-dark: #0C0C0D;
+    --white:   #FFFFFF;
+}
+
+/* ===== Reusable helpers (so you can stop repeating inline) ===== */
+.nav-link {
+    font: 400 18px/27px Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    color: var(--Color-Scheme-1-Text, #fff);
+    text-decoration: none;
+}
+
+.btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 6px 12px; border-radius: 100px; cursor: pointer; border: 0;
+    font: 500 18px/27px Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+.btn-primary {
+    background: var(--Color-Azure-Radiance, var(--brand-primary));
+    color: var(--white);
+    outline: 1px solid var(--Color-Azure-Radiance, var(--brand-primary));
+}
+
+.btn-secondary {
+    background: transparent; color: var(--text-primary);
+    outline: 2px solid var(--text-primary);
+}
+
+.h-hero {
+    font-family: "Plus Jakarta Sans", Urbanist, Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-weight: 700;
+    font-size: 60px; line-height: 72px;
+    text-align: center;
+    margin: 0;
+}
+
+.p-lead {
+    font: 400 20px/30px Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    text-align: center;
+    margin: 0;
+    overflow-wrap: anywhere; /* instead of word-wrap */
+}

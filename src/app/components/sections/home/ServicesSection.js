@@ -1,66 +1,60 @@
 "use client";
 
-import * as React from "react";
-import { Cpu, Rocket, ShieldCheck, LineChart, Zap, Cog, Sparkles } from "lucide-react";
-
-const ICONS = { Cpu, Rocket, ShieldCheck, LineChart, Zap, Cog, Sparkles };
-const getIcon = (name) => ICONS[name] || Sparkles;
+import Link from "next/link";
 
 export default function ServicesSection({ eyebrow, title, subtitle, items = [] }) {
     return (
-        <section id="services" aria-labelledby="services-heading" className="section">
-            <div className="mx-auto max-w-7xl px-4 md:px-6 py-16 md:py-24">
-                {/* Header */}
-                <div className="mx-auto max-w-3xl text-center">
-                    {eyebrow && (
-                        <p className="text-xs uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-                            {eyebrow}
-                        </p>
-                    )}
-                    <h2
-                        id="services-heading"
-                        className="mt-2 text-3xl md:text-4xl font-extrabold tracking-[-0.01em]"
-                    >
-                        {title || "Our Services"}
-                    </h2>
-                    {subtitle && (
-                        <p className="mt-3 text-base md:text-lg text-[var(--text-secondary)]">
-                            {subtitle}
-                        </p>
-                    )}
+        <section id="services" className="v-sec v-sec--scheme-2">
+            <div className="v-sec__container">
+                <header className="v-head v-head--center">
+                    <div className="v-kicker v-kicker--dark">Accelerate</div>
+                    <div className="v-title-xl">Our core services</div>
+                    <p className="v-sub">Innovative solutions designed to drive your business forward with precision
+                        and intelligence.</p>
+                </header>
+                <div className="v-grid-3">
+                    <article className="v-card v-card--lg v-card--overlay bg-624x335">
+                        <div className="v-card__head">
+                            <span className="v-kicker v-kicker--light">AI</span>
+                            <h3 className="v-card__title">AI consulting</h3>
+                            <p className="v-card__text">
+                                Strategic AI implementation to unlock transformative business potential and
+                                competitive advantage.
+                            </p>
+                        </div>
+                        <div className="v-card__actions">
+                            <a href="#contact" className="btn-pill">Explore</a>
+                            <a href="#services" className="btn-link">Learn</a>
+                        </div>
+                    </article>
+
+
+                    <article className="v-card v-card--sm v-card--overlay bg-296x339">
+                        <div className="v-card__head">
+                            <div className="v-logo v-logo--tall" aria-hidden="true"></div>
+                            <h4 className="v-card__title-sm">Data analytics</h4>
+                            <p className="v-card__text">Advanced data insights to drive strategic decision
+                                making.</p>
+                        </div>
+                        <div className="v-card__actions">
+                            <a href="#services" className="btn-link">Learn</a>
+                        </div>
+                    </article>
+
+
+                    <article className="v-card v-card--sm v-card--overlay bg-296x339">
+                        <div className="v-card__head">
+                            <div className="v-logo v-logo--tall" aria-hidden="true"></div>
+                            <h4 className="v-card__title-sm">Enterprise solutions</h4>
+                            <p className="v-card__text">Scalable technology frameworks tailored for complex
+                                organizational needs.</p>
+                        </div>
+                        <div className="v-card__actions">
+                            <a href="#services" className="btn-link">Learn</a>
+                        </div>
+                    </article>
                 </div>
 
-                {/* Cards Grid */}
-                <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                    {items.map((item, i) => {
-                        const Icon = getIcon(item.icon);
-                        return (
-                            <article
-                                key={i}
-                                className="glass-card h-full p-6 md:p-7 bg-[color-mix(in_oklab,var(--bg-elevated)_85%,transparent)]"
-                            >
-                                <div className="flex items-start gap-4">
-                                    <div
-                                        className="neon-ring inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
-                                        aria-hidden="true"
-                                    >
-                                        <Icon className="h-5 w-5" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-lg md:text-xl font-semibold tracking-[-0.01em]">
-                                            {item.title}
-                                        </h3>
-                                        {item.description && (
-                                            <p className="mt-1.5 text-sm leading-relaxed text-[var(--text-secondary)]">
-                                                {item.description}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-                            </article>
-                        );
-                    })}
-                </div>
             </div>
         </section>
     );

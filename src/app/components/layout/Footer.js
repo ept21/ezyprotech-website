@@ -57,23 +57,19 @@ export default function Footer() {
                             className="inline-flex items-center gap-3 focus:outline-none focus-visible:ring ring-[var(--brand-primary)] rounded-lg"
                             aria-label="Veitiqo home"
                         >
-                            <Image
-                                src="/logo-veitiqo-light.svg"
-                                alt="Veitiqo"
-                                width={150}
-                                height={30}
-                                className="block dark:hidden h-8 w-auto"
-                                priority
-                            />
-                            <Image
-                                src="/logo-veitiqo-dark.svg"
-                                alt="Veitiqo"
-                                width={150}
-                                height={30}
-                                className="hidden dark:block h-8 w-auto"
-                                priority
-                            />
+                            <picture>
+                                <source srcSet="/veltiqo-logo.webp" media="(prefers-color-scheme: dark)" />
+                                <Image
+                                    src="/veltiqo-logo.webp"
+                                    alt="Veitiqo"
+                                    width={140}
+                                    height={28}
+                                    className="h-7 w-25"
+                                    priority
+                                />
+                            </picture>
                         </Link>
+
                         <p className="mt-4 text-sm text-[var(--text-secondary)]">
                             AI-driven web & growth systems. We design and ship headless websites,
                             automations, and marketing ops that move the needle.
@@ -82,7 +78,7 @@ export default function Footer() {
                         {/* סושיאל */}
                         <ul className="mt-4 flex justify-center" aria-label="Social media">
                             {SOCIAL.map(({ href, label, Icon }) => (
-                                <li key={label}>
+                                <li key={label} className="m-1">
                                     <Link
                                         href={href}
                                         aria-label={label}
