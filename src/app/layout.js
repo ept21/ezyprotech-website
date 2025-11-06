@@ -1,5 +1,5 @@
 // app/layout.js
-import { request } from 'graphql-request'
+import { gqlRequest } from '@/lib/graphql/client'
 import { MAIN_MENU_BY_LOCATION, FOOTER_MENU_BY_LOCATION, GLOBALS_QUERY } from '@/lib/graphql/queries'
 import { buildMenuTree, getAcfImageUrl } from '@/lib/wp'
 import Header from '@/components/layout/Header'
@@ -9,38 +9,49 @@ import HeadMeta from '@/components/seo/HeadMeta'
 
 import '@/styles/electric-xtra.css'
 import '@/styles/globals.css'
-import "@/styles/globals.css";
-
-const endpoint = process.env.NEXT_PUBLIC_CMS_URL
 
 export default async function RootLayout({ children }) {
-    if (!endpoint) {
-        throw new Error('Missing NEXT_PUBLIC_CMS_URL env var')
+    let globalsRes = null, mainRes = null, footerRes = null;
+
+    // Fetch globals
+    try {
+        globalsRes = await gqlRequest(GLOBALS_QUERY);
+    } catch (err) {
+        console.warn("[WP] Globals fetch failed:", err.message, err.graphQLErrors ? JSON.stringify(err.graphQLErrors, null, 2) : "");
     }
 
-    const [globalsRes, mainRes, footerRes] = await Promise.all([
-        request(endpoint, GLOBALS_QUERY),
-        request(endpoint, MAIN_MENU_BY_LOCATION),
-        request(endpoint, FOOTER_MENU_BY_LOCATION),
-    ])
+    // Fetch main menu
+    try {
+        mainRes = await gqlRequest(MAIN_MENU_BY_LOCATION);
+    } catch (err) {
+        console.warn("[WP] Main menu fetch failed:", err.message);
+    }
 
-    const siteTitle   = globalsRes?.generalSettings?.title ?? 'Veitiqo'
-    const siteUrl     = globalsRes?.generalSettings?.url   ?? ''
-    const gs          = globalsRes?.page?.globalSettings
-    const faviconUrl  = getAcfImageUrl(gs?.favicon)
-    const sitelogo  = getAcfImageUrl(gs?.sitelogo)
-    const defaultOg   = getAcfImageUrl(gs?.defaultogimage)
-    const ga4Code     = gs?.ga4code || ''           // דוגמה: G-XXXXXXX
-    const metaPixelId = gs?.metapixelid || ''       // דוגמה: 1234567890
+    // Fetch footer menu
+    try {
+        footerRes = await gqlRequest(FOOTER_MENU_BY_LOCATION);
+    } catch (err) {
+        console.warn("[WP] Footer menu fetch failed:", err.message);
+    }
 
-    const mainItems   = mainRes?.menuItems?.nodes   ?? []
-    const footerItems = footerRes?.menuItems?.nodes ?? []
+    const siteTitle = globalsRes?.generalSettings?.title ?? 'Veitiqo';
+    const siteUrl   = globalsRes?.generalSettings?.url   ?? '';
+    const gs        = globalsRes?.page?.globalSettings;
 
-    const mainMenuTree = buildMenuTree(mainItems)
-    const footerLinks  = footerItems
+    const faviconUrl = getAcfImageUrl(gs?.favicon);
+    const sitelogo   = getAcfImageUrl(gs?.sitelogo);
+    const defaultOg  = getAcfImageUrl(gs?.defaultogimage);
+    const ga4Code    = gs?.ga4code || '';
+    const metaPixelId= gs?.metapixelid || '';
+
+    const mainItems   = mainRes?.menuItems?.nodes   ?? [];
+    const footerItems = footerRes?.menuItems?.nodes ?? [];
+
+    const mainMenuTree = buildMenuTree(mainItems);
+    const footerLinks = footerItems
         .filter(n => !n.parentId)
         .sort((a,b) => (a.order ?? 0) - (b.order ?? 0))
-        .map(n => ({ id: n.id, label: n.label, url: n.url }))
+        .map(n => ({ id: n.id, label: n.label, url: n.url }));
 
     return (
         <html lang="en">
@@ -71,5 +82,5 @@ export default async function RootLayout({ children }) {
         <Analytics ga4Code={ga4Code} metaPixelId={metaPixelId} />
         </body>
         </html>
-    )
+    );
 }

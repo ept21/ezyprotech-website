@@ -1,182 +1,32 @@
 // lib/queries.js
-import {gql} from 'graphql-request'
+import { gql } from 'graphql-request'
 
-/* ---------- Home / Pages ---------- */
-export const HOME_QUERY = gql`
-  query Home(
-    $id: ID!,
-    $servicesFirst: Int!, $projectsFirst: Int!, $bundlesFirst: Int!,
-    $articlesFirst: Int!, $techNewsFirst: Int!, $eventsFirst: Int!, $faqFirst: Int!
-  ) {
-    page(id: $id, idType: ID) {
+/* ---------- Hero (Home) ---------- */
+/* Fetch only the hero slice from the Home page (by database ID). */
+export const HERO_QUERY = gql`
+  query HeroPage($id: ID!) {
+    page(id: $id, idType: DATABASE_ID) {
       id
-      title
-      uri
-      seo { title metaDesc }
       homePageFields {
-hero {
-  heroTitle
-  heroSubtitle
-  heroContent
-  heroBgImage { node { mediaItemUrl sourceUrl altText } }
-  heroBgImageMobile { node { mediaItemUrl sourceUrl altText } }
-  heroVideoUrl
-  heroVideoUrlMobile
-
-  herocta1url { url title target } 
-  cta2url     { url title target } 
-}
-
-        services {
-          showServices
-          servicesBgImage { node { mediaItemUrl sourceUrl altText } }
-          servicesTitle
-          servicesSubtitle
-          servicesContent
-          servicesSource
-          servicesItems { nodes { id uri } }
-          servicesDisplayLimit
-          servicesOrderBy
-          servicesOrder
-        }
-
-        bundles {
-          showBundles
-          bundlesBgImage { node { mediaItemUrl sourceUrl altText } }
-          bundlesTitle
-          bundlesSubtitle
-          bundlesContent
-          bundlesSource
-          bundlesItems { nodes { id uri } }
-          bundlesDisplayLimit
-          bundlesOrderBy
-          bundlesOrder
-        }
-
-        projects {
-          showProjects
-          projectsBgImage { node { mediaItemUrl sourceUrl altText } }
-          projectsTitle
-          projectsSubtitle
-          projectsContent
-          projectsSource
-          projectsItems { nodes { id uri } }
-          projectsDisplayLimit
-          projectsOrderBy
-          projectsOrder
-        }
-
-        testimonials {
-          showTestimonials
-          testimonialsBgImage { node { mediaItemUrl sourceUrl altText } }
-          testimonialsTitle
-          testimonialsSubtitle
-          testimonialsContent
-          testimonialsSource
-          testimonialsItems { nodes { id uri } }
-          testimonialsDisplayLimit
-          testimonialsOrderBy
-          testimonialsOrder
-        }
-
-        articles {
-          showArticles
-          articlesBgImage { node { mediaItemUrl sourceUrl altText } }
-          articlesTitle
-          articlesSubtitle
-          articlesContent
-          articlesSource
-          articlesItems { nodes { id uri } }
-          articlesDisplayLimit
-          articlesOrderBy
-          articlesOrder
-        }
-
-        techNews {
-          showTechNews
-          tech_newsBgImage { node { mediaItemUrl sourceUrl altText } }
-          tech_newsTitle
-          tech_newsSubtitle
-          tech_newsContent
-          tech_newsSource
-          tech_newsItems { nodes { id uri } }
-          tech_newsDisplayLimit
-          tech_newsOrderBy
-          tech_newsOrder
-        }
-
-        events {
-          showEvents
-          eventsBgImage { node { mediaItemUrl sourceUrl altText } }
-          eventsTitle
-          eventsSubtitle
-          eventsContent
-          eventsSource
-          eventsItems { nodes { id uri } }
-          eventsDisplayLimit
-          eventsOrderBy
-          eventsOrder
-        }
-
-        faq {
-          showFaq
-          faqBgImage { node { mediaItemUrl sourceUrl altText } }
-          faqTitle
-          faqSubtitle
-          faqContent
-          faqSource
-          faqItems { nodes { id uri } }
-          faqDisplayLimit
-          faqOrderBy
-          faqOrder
-        }
-
-        about {
-          aboutBgImage { node { mediaItemUrl sourceUrl altText } }
-          aboutTitle
-          aboutSubtitle
-          aboutContent
-          showabout
-        }
-
-        contact {
-          contactBgImage { node { mediaItemUrl sourceUrl altText } }
-          contactTitle
-          contactSubtitle
-          contactContent
-          useGlobalContact
-          contactPhone
-          contactEmail
-          contactAddress
-          contactMapUrl
+        hero {
+          heroTitle
+          kicker
+          heroSubtitle
+          heroContent
+          heroBgImage { node { mediaItemUrl sourceUrl altText } }
+          heroBgImageMobile { node { mediaItemUrl sourceUrl altText } }
+          heroVideoUrl
+          heroVideoUrlMobile
+          herocta1url { url title target }
+          herocta2url { url title target }
         }
       }
-    }
-
-    services(first: $servicesFirst, where: { orderby: { field: DATE, order: DESC } }) {
-      nodes { id title uri featuredImage { node { mediaItemUrl sourceUrl } } }
-    }
-    projects(first: $projectsFirst, where: { orderby: { field: DATE, order: DESC } }) {
-      nodes { id title uri featuredImage { node { mediaItemUrl sourceUrl } } }
-    }
-    bundles(first: $bundlesFirst, where: { orderby: { field: DATE, order: DESC } }) {
-      nodes { id title uri featuredImage { node { mediaItemUrl sourceUrl } } }
-    }
-    posts(first: $articlesFirst, where: { orderby: { field: DATE, order: DESC } }) {
-      nodes { id title uri excerpt featuredImage { node { mediaItemUrl sourceUrl } } }
-    }
-    techNews(first: $techNewsFirst, where: { orderby: { field: DATE, order: DESC } }) {
-      nodes { id title uri featuredImage { node { mediaItemUrl sourceUrl } } }
-    }
-    events(first: $eventsFirst, where: { orderby: { field: DATE, order: DESC } }) {
-      nodes { id title uri featuredImage { node { mediaItemUrl sourceUrl } } }
-    }
-    faqs(first: $faqFirst, where: { orderby: { field: DATE, order: DESC } }) {
-      nodes { id title uri }
     }
   }
 `
 
+
+/* ---------- Generic Pages ---------- */
 export const PAGE_BY_SLUG_QUERY = gql`
   query PageBySlug($slug: ID!) {
     page(id: $slug, idType: URI) {
@@ -190,11 +40,13 @@ export const PAGE_BY_SLUG_QUERY = gql`
   }
 `
 
-/* (משאיר גם לשימוש עתידי אם צריך) */
+/* ---------- Example Single (kept for future wiring) ---------- */
 export const SERVICE_QUERY = gql`
   query Service($slug: ID!) {
     service(id: $slug, idType: SLUG) {
-      title content uri
+      title
+      content
+      uri
       featuredImage { node { mediaItemUrl } }
       seo { title metaDesc }
     }
@@ -204,14 +56,18 @@ export const SERVICE_QUERY = gql`
 export const PROJECT_QUERY = gql`
   query Project($slug: ID!) {
     project(id: $slug, idType: SLUG) {
-      title content uri
+      title
+      content
+      uri
       featuredImage { node { mediaItemUrl } }
       seo { title metaDesc }
     }
   }
 `
 
-/* ---------- Globals ---------- */
+
+/* ---------- Globals (brand + social + default assets) ---------- */
+/* NOTE: "linkdine" is kept as-is to match current ACF field key. */
 export const GLOBALS_QUERY = gql`
   query Globals {
     page(id: 39, idType: DATABASE_ID) {
@@ -241,13 +97,13 @@ export const GLOBALS_QUERY = gql`
   }
 `
 
-/* ---------- Menus by Location (אין יותר ערבוב) ---------- */
+
+/* ---------- Menus by Location (no extra generalSettings here) ---------- */
 export const MAIN_MENU_BY_LOCATION = gql`
   query MainMenuByLocation {
     menuItems(first: 100, where: { location: PRIMARY }) {
       nodes { id databaseId label url parentId order }
     }
-    generalSettings { title url }
   }
 `
 
@@ -256,9 +112,11 @@ export const FOOTER_MENU_BY_LOCATION = gql`
     menuItems(first: 100, where: { location: FOOTER }) {
       nodes { id databaseId label url parentId order }
     }
-    generalSettings { title url }
   }
 `
+
+
+/* ---------- Front page discovery (optional helper) ---------- */
 export const FRONT_PAGE_QUERY = gql`
   query GetFrontPage {
     pages(first: 50) {

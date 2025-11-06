@@ -1,5 +1,50 @@
-import 'server-only'
-import { GraphQLClient } from 'graphql-request'
+// lib/graphql/client.js
+// All comments in English only.
 
-export const getClient = () =>
-    new GraphQLClient(process.env.WP_GRAPHQL_ENDPOINT, { headers: {} })
+export async function gqlRequest(query, variables = {}) {
+    const ENDPOINT = process.env.NEXT_PUBLIC_CMS_URL;
+    const WP_APP_USER = process.env.WP_APP_USER || "";
+    const WP_APP_PASS_RAW = process.env.WP_APP_PASS || "";
+
+    if (!ENDPOINT) throw new Error("Missing NEXT_PUBLIC_CMS_URL");
+
+    // WP Application Passwords are shown with spaces; strip them just in case.
+    const WP_APP_PASS = WP_APP_PASS_RAW.replace(/\s+/g, "");
+
+    const headers = { "Content-Type": "application/json" };
+    if (WP_APP_USER && WP_APP_PASS) {
+        const basic = Buffer.from(`${WP_APP_USER}:${WP_APP_PASS}`).toString("base64");
+        headers["Authorization"] = `Basic ${basic}`;
+    }
+
+    const res = await fetch(ENDPOINT, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ query, variables }),
+        cache: "no-store",
+    });
+
+    // Try to parse JSON; if server returned HTML (login page etc) show a helpful error.
+    let json;
+    try {
+        json = await res.json();
+    } catch (e) {
+        const text = await res.text();
+        const err = new Error(
+            `Non-JSON response from GraphQL. HTTP ${res.status}. Body: ${text.slice(0, 200)}`
+        );
+        err.request = { query, variables };
+        throw err;
+    }
+
+    if (json.errors?.length) {
+        const firstMsg = json.errors[0]?.message || "GraphQL error";
+        const err = new Error(firstMsg);
+        err.graphQLErrors = json.errors;
+        err.request = { query, variables };
+        err.response = json;
+        throw err;
+    }
+
+    return json.data;
+}

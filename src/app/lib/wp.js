@@ -1,10 +1,16 @@
-export function getAcfImageUrl(acfImage) {
-    if (!acfImage) return null
-    if (acfImage.node) return acfImage.node.mediaItemUrl || acfImage.node.sourceUrl || null
-    if (acfImage.mediaItemUrl || acfImage.sourceUrl) return acfImage.mediaItemUrl || acfImage.sourceUrl
-    if (acfImage.url) return acfImage.url // ← הוספה חשובה
-    return null
+export function getAcfImageUrl(img) {
+    if (!img) return null;
+    // supports both: { mediaItemUrl } OR { node { mediaItemUrl } }
+    const n = img.node ?? img;
+    return n.mediaItemUrl || n.sourceUrl || null;
 }
+
+export function getAcfLinkUrl(link) {
+    if (!link) return null;
+    if (typeof link === "string") return link;
+    return link.url || null;
+}
+
 
 
 // בונה עץ תפריט מתוך רשימה שטוחה של menuItems
