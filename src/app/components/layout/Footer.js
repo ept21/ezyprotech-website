@@ -1,40 +1,72 @@
+// src/components/layout/Footer.jsx
 "use client";
 
 import Link from "next/link";
 import Image from "next/image";
-import { Facebook, Instagram, Linkedin, Youtube } from "lucide-react";
+import { Facebook, Instagram, Linkedin, Youtube, Twitter } from "lucide-react";
 
-// קישורים סטטיים כרגע (אפשר להחליף ל-JSON/CMS)
-const NAV_GROUPS = [
-    {
-        title: "Company",
-        links: [
-            { href: "/#about", label: "About" },
-            { href: "/#services", label: "Services" },
-            { href: "/#pricing", label: "Pricing" },
-            { href: "/contact", label: "Contact" },
-        ],
-    },
-    {
-        title: "Resources",
-        links: [
-            { href: "/#faq", label: "FAQ" },
-            { href: "/#testimonials", label: "Testimonials" },
-            { href: "/privacy", label: "Privacy Policy" },
-            { href: "/terms", label: "Terms of Service" },
-        ],
-    },
-];
+/**
+ * NOTE: All comments must remain in English only.
+ * Footer renders:
+ *  - Brand (logo + short blurb)
+ *  - Links from WP FOOTER menu (flat list, auto-sliced to 2–3 columns)
+ *  - Social links from globals (optional)
+ */
 
-const SOCIAL = [
-    { href: "https://facebook.com", label: "Facebook", Icon: Facebook },
-    { href: "https://instagram.com", label: "Instagram", Icon: Instagram },
-    { href: "https://linkedin.com", label: "LinkedIn", Icon: Linkedin },
-    { href: "https://youtube.com", label: "YouTube", Icon: Youtube },
-];
+function normalizeUrl(url = "") {
+    try {
+        const base = typeof window !== "undefined" ? window.location.origin : "http://localhost";
+        const u = new URL(url, base);
+        // Internal links → use relative path
+        return u.origin === base ? (u.pathname + (u.search || "") + (u.hash || "")) : url;
+    } catch {
+        return url || "#";
+    }
+}
 
-export default function Footer() {
+// Slice a flat list into N columns with similar length
+function toColumns(items = [], cols = 3) {
+    if (!items.length) return Array.from({ length: cols }, () => []);
+    const per = Math.ceil(items.length / cols);
+    return Array.from({ length: cols }, (_, i) => items.slice(i * per, (i + 1) * per));
+}
+
+export default function Footer({
+                                   // from layout
+                                   links = [],                    // [{id,label,url}]
+                                   siteTitle = "Veltiqo",
+                                   sitelogo,
+                                   // socials from globals (all optional)
+                                   socials = {
+                                       facebook: null,
+                                       instagram: null,
+                                       tiktok: null,
+                                       linkedin: null,
+                                       x: null,
+                                       youtube: null, // just in case in future
+                                   },
+                               }) {
     const year = new Date().getFullYear();
+
+    const flatLinks = (links || []).map((n) => ({
+        id: n.id ?? String(n.url),
+        label: n.label ?? "",
+        url: normalizeUrl(n.url ?? "#"),
+    }));
+
+    // 2–3 columns depending on link count
+    const colCount = flatLinks.length <= 10 ? 2 : 3;
+    const columns = toColumns(flatLinks, colCount);
+
+    const SOCIAL_ICONS = [
+        { key: "facebook", label: "Facebook", Icon: Facebook },
+        { key: "instagram", label: "Instagram", Icon: Instagram },
+        { key: "linkedin", label: "LinkedIn", Icon: Linkedin },
+        { key: "x", label: "X (Twitter)", Icon: Twitter },
+        { key: "tiktok", label: "TikTok", Icon: Youtube }, // placeholder icon; replace if you add a TikTok SVG
+    ];
+
+    const hasAnySocial = SOCIAL_ICONS.some(({ key }) => socials?.[key]);
 
     return (
         <footer
@@ -47,27 +79,35 @@ export default function Footer() {
         >
             <h2 id="footer-heading" className="sr-only">Website footer</h2>
 
-            {/* עליון: לוגו + תקציר + סושיאל */}
+            {/* Top: brand + socials + link columns */}
             <div className="mx-auto max-w-7xl px-4 md:px-6 py-10">
                 <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
-                    {/* לוגו + תיאור קצר */}
+                    {/* Brand block */}
                     <div className="max-w-md">
                         <Link
                             href="/"
                             className="inline-flex items-center gap-3 focus:outline-none focus-visible:ring ring-[var(--brand-primary)] rounded-lg"
-                            aria-label="Veitiqo home"
+                            aria-label={`${siteTitle} home`}
                         >
-                            <picture>
-                                <source srcSet="/veltiqo-logo.webp" media="(prefers-color-scheme: dark)" />
+                            {sitelogo ? (
                                 <Image
-                                    src="/veltiqo-logo.webp"
-                                    alt="Veitiqo"
+                                    src={sitelogo}
+                                    alt={siteTitle}
                                     width={140}
                                     height={28}
                                     className="h-7 w-25"
                                     priority
                                 />
-                            </picture>
+                            ) : (
+                                <Image
+                                    src="/veltiqo-logo.webp"
+                                    alt={siteTitle}
+                                    width={140}
+                                    height={28}
+                                    className="h-8 w-25"
+                                    priority
+                                />
+                            )}
                         </Link>
 
                         <p className="mt-4 text-sm text-[var(--text-secondary)]">
@@ -75,38 +115,44 @@ export default function Footer() {
                             automations, and marketing ops that move the needle.
                         </p>
 
-                        {/* סושיאל */}
-                        <ul className="mt-4 flex justify-center" aria-label="Social media">
-                            {SOCIAL.map(({ href, label, Icon }) => (
-                                <li key={label} className="m-1">
-                                    <Link
-                                        href={href}
-                                        aria-label={label}
-                                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border-subtle)]
-                               text-[var(--text-secondary)] hover:text-[var(--foreground)]
-                               hover:border-[var(--brand-primary)] focus:outline-none focus-visible:ring ring-[var(--brand-primary)]"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        <Icon className="h-5 w-5" />
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
+                        {/* Socials (optional) */}
+                        {hasAnySocial && (
+                            <ul className="mt-4 flex justify-center" aria-label="Social media">
+                                {SOCIAL_ICONS.map(({key, label, Icon}) => {
+                                    const href = socials?.[key]?.url || socials?.[key];
+                                    if (!href) return null;
+                                    return (
+                                        <li key={key} className="mr-2">
+                                            <Link
+                                                href={href}
+                                                aria-label={label}
+                                                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border-subtle)]
+                                   text-[var(--text-secondary)] hover:text-[var(--foreground)]
+                                   hover:border-[var(--brand-primary)] focus:outline-none focus-visible:ring ring-[var(--brand-primary)]"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                <Icon className="h-5 w-5"/>
+                                            </Link>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        )}
+
+
                     </div>
 
-                    {/* קבוצות קישורים */}
-                    <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
-                        {NAV_GROUPS.map((group) => (
-                            <nav key={group.title} aria-label={group.title}>
-                                <h3 className="text-sm font-semibold text-[var(--foreground)]">
-                                    {group.title}
-                                </h3>
-                                <ul className="mt-3 space-y-2">
-                                    {group.links.map((l) => (
-                                        <li key={l.href}>
+
+                    {/* Link columns from FOOTER menu */}
+                    <div className={`grid gap-8 grid-cols-2 sm:grid-cols-${colCount}`}>
+                        {columns.map((col, idx) => (
+                            <nav key={`col-${idx}`} aria-label={`Footer links ${idx + 1}`}>
+                                <ul className="space-y-2">
+                                    {col.map((l) => (
+                                        <li key={l.id}>
                                             <Link
-                                                href={l.href}
+                                                href={l.url}
                                                 className="text-sm text-[var(--text-secondary)] hover:text-[var(--foreground)]
                                    focus:outline-none focus-visible:ring ring-[var(--brand-primary)] rounded"
                                             >
@@ -121,11 +167,12 @@ export default function Footer() {
                 </div>
             </div>
 
-            {/* תחתון: זכויות + לינקים קטנים */}
+            {/* Bottom bar */}
             <div className="border-t border-[var(--border-subtle)]">
-                <div className="mx-auto max-w-7xl px-4 md:px-6 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div
+                    className="mx-auto max-w-7xl px-4 md:px-6 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <p className="text-xs text-[var(--text-secondary)]">
-                        © {year} Veitiqo. All rights reserved.
+                        © {year} {siteTitle}. All rights reserved.
                     </p>
                     <div className="flex justify-center gap-4">
                         <Link href="/privacy" className="text-xs text-[var(--text-secondary)] hover:text-[var(--foreground)]">

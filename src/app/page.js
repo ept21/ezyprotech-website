@@ -11,16 +11,38 @@ import CtaWideSection from "@/components/sections/home/CtaWideSection";
 import ContactSection from "@/components/sections/home/ContactSection";
 
 import { gqlRequest } from "@/lib/graphql/client";
-import { HERO_QUERY } from "@/lib/graphql/queries";
+import { HERO_QUERY, SERVICES_HOME_PAGE_QUERY } from "@/lib/graphql/queries";
 import { getAcfImageUrl } from "@/lib/wp";
 
 import "@/styles/electric-xtra.css";
 
-/** Helper to normalize ACF link fields */
+/** NOTE: All comments must remain in English only. */
 const getAcfLinkUrl = (l) => (typeof l === "string" ? l : (l?.url ?? null));
+const stripHtml = (html) =>
+    typeof html === "string" ? html.replace(/<[^>]*>/g, "").trim() : "";
+
+/** Prefer featured image URL safely */
+const getFeaturedUrl = (node) =>
+    node?.featuredImage?.node?.mediaItemUrl ||
+    node?.featuredImage?.node?.sourceUrl ||
+    null;
+
+/** Derive a presentable title from ACF override or core title */
+const getServiceTitle = (node) =>
+    node?.serviceFields?.title?.trim?.() || node?.title || "Untitled";
+
+/** Choose excerpt: ACF excerpt → ACF content → core content (stripped) */
+const getServiceExcerpt = (node) => {
+    const acfEx = node?.serviceFields?.excerpt;
+    if (acfEx) return acfEx;
+    const acfContent = node?.serviceFields?.content;
+    if (acfContent) return stripHtml(acfContent).slice(0, 220);
+    const coreContent = node?.content;
+    if (coreContent) return stripHtml(coreContent).slice(0, 220);
+    return "";
+};
 
 export default async function HomePage() {
-    // Use a stable DB ID for the front page (set it in .env.local)
     const homePageDbId = process.env.NEXT_PUBLIC_FRONT_PAGE_ID
         ? Number(process.env.NEXT_PUBLIC_FRONT_PAGE_ID)
         : null;
@@ -34,30 +56,92 @@ export default async function HomePage() {
         );
     }
 
-    // Fetch only the hero block for the home page
-    const data = await gqlRequest(HERO_QUERY, { id: homePageDbId });
-    const hp = data?.page?.homePageFields;
+    /* ---- HERO ---- */
+    const heroData = await gqlRequest(HERO_QUERY, { id: homePageDbId });
+    const hp = heroData?.page?.homePageFields;
     const hero = hp?.hero || {};
 
-    // Backgrounds / video
     const heroBgUrl = getAcfImageUrl(hero?.heroBgImage);
     const heroBgMobileUrl = getAcfImageUrl(hero?.heroBgImageMobile);
     const heroVideoUrl = hero?.heroVideoUrl || null;
     const heroVideoUrlMobile = hero?.heroVideoUrlMobile || null;
 
-    // Texts (fallbacks are temporary until CMS content is filled)
     const heroTitle = hero?.heroTitle || "Build the Future of Your Business";
     const heroSubtitle =
         hero?.heroSubtitle || "Headless web, AI systems, and automated marketing.";
     const kicker = hero?.kicker || "Default Kicker";
     const heroContent = hero?.heroContent || "";
 
-    // CTAs
-    const cta1Label = hero?.herocta1url.title || "Get Started";
+    const cta1Label = hero?.herocta1url?.title || "Get Started";
     const cta1Href = getAcfLinkUrl(hero?.herocta1url) || "/contact";
-    const cta2Label = hero?.herocta2url.title || "See Pricing";
+    const cta2Label = hero?.herocta2url?.title || "See Pricing";
     const cta2Href = getAcfLinkUrl(hero?.herocta2url) || "#pricing";
 
+    /* ---- SERVICES (Home section) ---- */
+    const firstDefault = 12;
+    const servicesRes = await gqlRequest(SERVICES_HOME_PAGE_QUERY, {
+        id: homePageDbId,
+        first: firstDefault,
+    });
+
+    const servicesSlice = servicesRes?.page?.homePageFields?.services || {};
+    const showServices = servicesSlice?.showServices ?? true;
+
+    const servicesBgUrl = getAcfImageUrl(servicesSlice?.servicesBgImage);
+    const servicesKicker = servicesSlice?.kicker || "Accelerate";
+    const servicesTitle = servicesSlice?.servicesTitle || "Our core services";
+    const servicesSubtitle =
+        servicesSlice?.servicesSubtitle ||
+        "Innovative solutions designed to drive your business forward with precision and intelligence.";
+    const servicesContentHtml = servicesSlice?.servicesContent || "";
+
+    const displayLimit = Math.max(
+        1,
+        Math.min(24, servicesSlice?.servicesDisplayLimit || firstDefault)
+    );
+
+    // Manual vs Auto source
+    let rawItems = [];
+    if (servicesSlice?.servicesSource === "manual") {
+        rawItems = servicesSlice?.servicesItems?.nodes || [];
+    } else {
+        // AUTO fallback list
+        rawItems = servicesRes?.services?.nodes || [];
+    }
+
+    // Trim to limit
+    rawItems = rawItems.slice(0, displayLimit);
+
+    // Map to UI-friendly shape (without changing your visual layout)
+    const serviceCards = rawItems.map((n, i) => {
+        const title = getServiceTitle(n);
+        const kicker = n?.serviceFields?.kicker || "Service";
+        const subtitle = n?.serviceFields?.subtitle || null;
+        const excerpt = n?.serviceFields?.excerpt || getServiceExcerpt(n);
+        const image = getFeaturedUrl(n);
+        const href =
+            n?.uri ||
+            (typeof window !== "undefined" ? window.location.origin : "") ||
+            "#";
+        const cta = n?.serviceFields?.ctaurl1 || null;
+
+        return {
+            id: n?.id || String(i),
+            title,
+            kicker,
+            subtitle,
+            excerpt,
+            image,
+            href,
+            cta, // { url, title, target } or null
+        };
+    });
+
+    const sectionCta = {
+        href: servicesSlice?.ctaurl?.url || "/services",
+        label: servicesSlice?.ctaurl?.title || "View all services",
+        target: servicesSlice?.ctaurl?.target || null,
+    };
 
     return (
         <main>
@@ -77,8 +161,19 @@ export default async function HomePage() {
                 secondaryLabel={cta2Label}
             />
 
-            {/* Static sections for now — will be wired to CMS next */}
-            <ServicesSection />
+            {/* SERVICES (carousel) */}
+            {showServices && (
+                <ServicesSection
+                    eyebrow={servicesKicker}
+                    title={servicesTitle}
+                    subtitle={servicesSubtitle}
+                    contentHtml={servicesContentHtml}
+                    bgUrl={servicesBgUrl}
+                    items={serviceCards}
+                    sectionCta={sectionCta}
+                />
+            )}
+
             <BundlesSection />
             <AboutSection />
             <ProjectsSection />

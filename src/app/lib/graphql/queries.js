@@ -1,8 +1,7 @@
-// lib/queries.js
+// lib/graphql/queries.js
 import { gql } from 'graphql-request'
 
 /* ---------- Hero (Home) ---------- */
-/* Fetch only the hero slice from the Home page (by database ID). */
 export const HERO_QUERY = gql`
   query HeroPage($id: ID!) {
     page(id: $id, idType: DATABASE_ID) {
@@ -25,6 +24,76 @@ export const HERO_QUERY = gql`
   }
 `
 
+/* ---------- Services (Home section) ---------- */
+/**
+ * Pulls the Services section slice from the Home page.
+ * Also fetches a fallback "services" list for AUTO mode.
+ *
+ * NOTE: Replace "serviceFields" below if your ACF group name differs.
+ */
+export const SERVICES_HOME_PAGE_QUERY = gql`
+  query ServicesHome($id: ID!, $first: Int = 12) {
+    page(id: $id, idType: DATABASE_ID) {
+      id
+      homePageFields {
+        services {
+          showServices
+          servicesBgImage { node { mediaItemUrl sourceUrl altText } }
+          kicker
+          servicesTitle
+          servicesSubtitle
+          servicesContent
+          servicesSource
+          servicesDisplayLimit
+          servicesOrderBy
+          servicesOrder
+          ctaurl { url title target }
+
+          servicesItems {
+            nodes {
+              ... on Service {
+                id
+                databaseId
+                uri
+                title
+                featuredImage { node { mediaItemUrl sourceUrl altText } }
+                serviceFields {
+                  kicker
+                  title
+                  subtitle
+                  excerpt
+                  content
+                  ctaurl1 { url title target }
+                  ctaurl2 { url title target }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    services(first: $first, where: { orderby: { field: DATE, order: DESC } }) {
+      nodes {
+        id
+        databaseId
+        uri
+        title
+        featuredImage { node { mediaItemUrl sourceUrl altText } }
+        serviceFields {
+          kicker
+          title
+          subtitle
+          excerpt
+          content
+          ctaurl1 { url title target }
+          ctaurl2 { url title target }
+        }
+      }
+    }
+  }
+`;
+
 
 /* ---------- Generic Pages ---------- */
 export const PAGE_BY_SLUG_QUERY = gql`
@@ -40,7 +109,7 @@ export const PAGE_BY_SLUG_QUERY = gql`
   }
 `
 
-/* ---------- Example Single (kept for future wiring) ---------- */
+/* ---------- Example Singles ---------- */
 export const SERVICE_QUERY = gql`
   query Service($slug: ID!) {
     service(id: $slug, idType: SLUG) {
@@ -65,9 +134,8 @@ export const PROJECT_QUERY = gql`
   }
 `
 
-
-/* ---------- Globals (brand + social + default assets) ---------- */
-/* NOTE: "linkdine" is kept as-is to match current ACF field key. */
+/* ---------- Globals ---------- */
+/* NOTE: keep field names as they are in your ACF */
 export const GLOBALS_QUERY = gql`
   query Globals {
     page(id: 39, idType: DATABASE_ID) {
@@ -97,8 +165,7 @@ export const GLOBALS_QUERY = gql`
   }
 `
 
-
-/* ---------- Menus by Location (no extra generalSettings here) ---------- */
+/* ---------- Menus by Location ---------- */
 export const MAIN_MENU_BY_LOCATION = gql`
   query MainMenuByLocation {
     menuItems(first: 100, where: { location: PRIMARY }) {
@@ -115,8 +182,7 @@ export const FOOTER_MENU_BY_LOCATION = gql`
   }
 `
 
-
-/* ---------- Front page discovery (optional helper) ---------- */
+/* ---------- Front page discovery (optional) ---------- */
 export const FRONT_PAGE_QUERY = gql`
   query GetFrontPage {
     pages(first: 50) {

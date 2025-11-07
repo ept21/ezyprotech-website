@@ -76,8 +76,14 @@ export default async function RootLayout({ children }) {
         <Footer
             links={footerLinks}
             siteTitle={siteTitle}
-            siteUrl={siteUrl}
-            faviconUrl={faviconUrl}
+            sitelogo={sitelogo}
+            socials={{
+                facebook: gs?.facebookAddress,   // {url,title,target} או ריק
+                instagram: gs?.instagramAddress,
+                tiktok: gs?.tiktokAddress,
+                linkedin: gs?.linkdine,
+                x: gs?.xAddress,
+            }}
         />
         <Analytics ga4Code={ga4Code} metaPixelId={metaPixelId} />
         </body>
