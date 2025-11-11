@@ -3,8 +3,10 @@
 
 export async function gqlRequest(query, variables = {}) {
     const ENDPOINT = process.env.NEXT_PUBLIC_CMS_URL;
-    const WP_APP_USER = process.env.WP_APP_USER || "";
-    const WP_APP_PASS_RAW = process.env.WP_APP_PASS || "";
+
+    // CRITICAL FIX: Use NEXT_PUBLIC_ prefix so variables are exposed during the Build stage
+    const WP_APP_USER = process.env.NEXT_PUBLIC_WP_APP_USER || "";
+    const WP_APP_PASS_RAW = process.env.NEXT_PUBLIC_WP_APP_PASS || "";
 
     if (!ENDPOINT) throw new Error("Missing NEXT_PUBLIC_CMS_URL");
 
@@ -13,7 +15,7 @@ export async function gqlRequest(query, variables = {}) {
 
     const headers = { "Content-Type": "application/json" };
 
-    // CRITICAL: Ensure we use the application password for authentication during build time
+    // Ensure we send Basic Auth only if credentials exist
     if (WP_APP_USER && WP_APP_PASS) {
         const basic = Buffer.from(`${WP_APP_USER}:${WP_APP_PASS}`).toString("base64");
         headers["Authorization"] = `Basic ${basic}`;
@@ -23,9 +25,9 @@ export async function gqlRequest(query, variables = {}) {
         method: "POST",
         headers,
         body: JSON.stringify({ query, variables }),
-        // CHANGE: Use Next.js cache control for SSG/ISR queries
+        // Use Next.js cache control for SSG/ISR queries
         next: {
-            revalidate: 60, // Example: Revalidate every 60 seconds
+            revalidate: 60,
         },
     });
 
