@@ -1,4 +1,4 @@
-// lib/graphql/client.js
+// src/app/lib/graphql/client.js
 // All comments in English only.
 
 export async function gqlRequest(query, variables = {}) {
@@ -12,6 +12,8 @@ export async function gqlRequest(query, variables = {}) {
     const WP_APP_PASS = WP_APP_PASS_RAW.replace(/\s+/g, "");
 
     const headers = { "Content-Type": "application/json" };
+
+    // CRITICAL: Ensure we use the application password for authentication during build time
     if (WP_APP_USER && WP_APP_PASS) {
         const basic = Buffer.from(`${WP_APP_USER}:${WP_APP_PASS}`).toString("base64");
         headers["Authorization"] = `Basic ${basic}`;
@@ -21,7 +23,10 @@ export async function gqlRequest(query, variables = {}) {
         method: "POST",
         headers,
         body: JSON.stringify({ query, variables }),
-        cache: "no-store",
+        // CHANGE: Use Next.js cache control for SSG/ISR queries
+        next: {
+            revalidate: 60, // Example: Revalidate every 60 seconds
+        },
     });
 
     // Try to parse JSON; if server returned HTML (login page etc) show a helpful error.
