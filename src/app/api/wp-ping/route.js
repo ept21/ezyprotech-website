@@ -1,5 +1,5 @@
 // All comments in English only.
-import { gqlRequest } from "@/lib/graphql/client";
+import { gqlRequest } from "@/app/lib/graphql/client";
 
 export async function GET() {
     try {

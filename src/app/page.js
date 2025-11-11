@@ -1,18 +1,18 @@
 // /src/app/page.js
 export const revalidate = 60;
 
-import HeroSection from "@/components/sections/home/HeroSection";
-import ServicesSection from "@/components/sections/home/ServicesSection";
-import BundlesSection from "@/components/sections/home/BundlesSection";
-import AboutSection from "@/components/sections/home/AboutSection";
-import ProjectsSection from "@/components/sections/home/ProjectsSection";
-import TestimonialsSection from "@/components/sections/home/TestimonialsSection";
-import CtaWideSection from "@/components/sections/home/CtaWideSection";
-import ContactSection from "@/components/sections/home/ContactSection";
+import HeroSection from "@/app/components/sections/home/HeroSection";
+import ServicesSection from "@/app/components/sections/home/ServicesSection";
+import BundlesSection from "@/app/components/sections/home/BundlesSection";
+import AboutSection from "@/app/components/sections/home/AboutSection";
+import ProjectsSection from "@/app/components/sections/home/ProjectsSection";
+import TestimonialsSection from "@/app/components/sections/home/TestimonialsSection";
+import CtaWideSection from "@/app/components/sections/home/CtaWideSection";
+import ContactSection from "@/app/components/sections/home/ContactSection";
 
-import { gqlRequest } from "@/lib/graphql/client";
-import { HERO_QUERY, SERVICES_HOME_PAGE_QUERY } from "@/lib/graphql/queries";
-import { getAcfImageUrl } from "@/lib/wp";
+import { gqlRequest } from "@/app/lib/graphql/client";
+import { HERO_QUERY, SERVICES_HOME_PAGE_QUERY } from "@/app/lib/graphql/queries";
+import { getAcfImageUrl } from "@/app/lib/wp";
 
 import "@/styles/electric-xtra.css";
 

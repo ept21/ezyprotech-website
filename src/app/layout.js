@@ -1,14 +1,14 @@
 // app/layout.js
-import { gqlRequest } from '@/lib/graphql/client'
-import { MAIN_MENU_BY_LOCATION, FOOTER_MENU_BY_LOCATION, GLOBALS_QUERY } from '@/lib/graphql/queries'
-import { buildMenuTree, getAcfImageUrl } from '@/lib/wp'
-import Header from '@/components/layout/Header'
-import Footer from '@/components/layout/Footer'
-import Analytics from '@/components/analytics/Analytics'
-import HeadMeta from '@/components/seo/HeadMeta'
+import { gqlRequest } from '@/app/lib/graphql/client'
+import { MAIN_MENU_BY_LOCATION, FOOTER_MENU_BY_LOCATION, GLOBALS_QUERY } from '@/app/lib/graphql/queries'
+import { buildMenuTree, getAcfImageUrl } from '@/app/lib/wp'
+import Header from '@/app/components/layout/Header'
+import Footer from '@/app/components/layout/Footer'
+import Analytics from '@/app/components/analytics/Analytics'
+import HeadMeta from '@/app/components/seo/HeadMeta'
 
-import '@/styles/electric-xtra.css'
-import '@/styles/globals.css'
+import '@/app/styles/electric-xtra.css'
+import '@/app/styles/globals.css'
 
 
 
