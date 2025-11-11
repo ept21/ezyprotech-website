@@ -10,6 +10,8 @@ import HeadMeta from '@/components/seo/HeadMeta'
 import '@/styles/electric-xtra.css'
 import '@/styles/globals.css'
 
+
+
 export default async function RootLayout({ children }) {
     let globalsRes = null, mainRes = null, footerRes = null;
 

@@ -16,6 +16,9 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+
+
+
 h1,h2,h3,h4 { letter-spacing: var(--track-h); font-family: var(--font-h); }
 h1 { letter-spacing: var(--track-h1); }
 small { letter-spacing: var(--track-sm); }
@@ -201,3 +204,12 @@ footer{
 .no-scrollbar::-webkit-scrollbar {
   display: none;             /* Chrome/Safari */
 }
+
+/* אל תחנוק שכבות של החיצים/תוכן */
+.v-sec.v-sec--carousel { overflow: visible; }
+.v-sec.v-sec--carousel .v-sec__container { overflow: visible; }
+.v-sec.v-sec--carousel .v-sec__body { overflow: visible; }
+
+/* גלילת טאץ' תקינה */
+.touch-pan-x { touch-action: pan-x; }
+

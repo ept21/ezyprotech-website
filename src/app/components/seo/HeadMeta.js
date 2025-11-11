@@ -1,5 +1,5 @@
 export default function HeadMeta({
-                                     siteTitle = 'EzyProTech',
+                                     siteTitle = 'Veltiqo',
                                      siteUrl = '',
                                      faviconUrl = '',
                                      defaultOgImage = '',
@@ -7,6 +7,8 @@ export default function HeadMeta({
                                  }) {
     // יצירת URL מלא לתמונת OG אם צריך
     const ogImage = defaultOgImage || ''
+
+
     return (
         <>
             {/* Favicon */}

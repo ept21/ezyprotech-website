@@ -1,0 +1,48 @@
+/* Global Swiper CSS (Next.js friendly) */
+@import 'swiper/css';
+@import 'swiper/css/navigation';
+@import 'swiper/css/pagination';
+
+/* Our carousel sizing */
+.services-swiper .swiper-slide {
+    width: 360px;             /* desktop base */
+}
+
+@media (max-width: 767px) {
+    .services-swiper .swiper-slide {
+        width: 88vw;           /* mobile = 1 card per view */
+    }
+}
+
+/* The “wide” slide = visible 3rd slot */
+@media (min-width: 768px) {
+    .services-swiper .swiper-slide.is-wide {
+        width: 624px;
+    }
+}
+
+/* Make sure arrows are visible above everything */
+.services-swiper .swiper-button-prev,
+.services-swiper .swiper-button-next {
+    z-index: 40;
+    width: 40px; height: 40px;
+    border-radius: 9999px;
+    background: rgba(255,255,255,0.10);
+    border: 1px solid rgba(255,255,255,0.20);
+    backdrop-filter: blur(6px);
+    color: #fff;
+}
+.services-swiper .swiper-button-prev:hover,
+.services-swiper .swiper-button-next:hover {
+    background: rgba(255,255,255,0.20);
+}
+
+/* Smaller bullets */
+.services-swiper .swiper-pagination-bullet {
+    background: rgba(255,255,255,0.4);
+    opacity: 1;
+}
+.services-swiper .swiper-pagination-bullet-active {
+    background: #fff;
+    transform: scale(1.4);
+}

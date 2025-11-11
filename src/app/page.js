@@ -119,10 +119,7 @@ export default async function HomePage() {
         const subtitle = n?.serviceFields?.subtitle || null;
         const excerpt = n?.serviceFields?.excerpt || getServiceExcerpt(n);
         const image = getFeaturedUrl(n);
-        const href =
-            n?.uri ||
-            (typeof window !== "undefined" ? window.location.origin : "") ||
-            "#";
+        const href = n?.uri || "#";
         const cta = n?.serviceFields?.ctaurl1 || null;
 
         return {

@@ -1,27 +1,13 @@
 // /src/app/components/sections/home/ServicesSection.js
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
-/**
- * English-only comments (as requested).
- * Fixes:
- * - Force horizontal overflow: cards are always flex-none widths.
- * - Mobile: one card per view (w-[88vw]).
- * - "Wide" = the currently visible 3rd slot (active + 2).
- * - Arrows visible/clickable (z-index + pointer-events).
- * - Debug logs to console for quick diagnosis.
- */
-
-function cx(...cls) {
-    return cls.filter(Boolean).join(" ");
-}
-function stripTags(html) {
-    if (!html) return "";
-    return String(html).replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-}
+const cx = (...cls) => cls.filter(Boolean).join(" ");
+const stripTags = (html) =>
+    !html ? "" : String(html).replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 
 export default function ServicesSection({
                                             eyebrow = "Accelerate",
@@ -33,120 +19,122 @@ export default function ServicesSection({
                                             sectionCta = { href: "/services", label: "View all services", target: null },
                                         }) {
     const hasItems = Array.isArray(items) && items.length > 0;
-
-    // Carousel state
     const trackRef = useRef(null);
-    const [active, setActive] = useState(0); // index of the first visible card
-    const [cards, setCards] = useState([]);  // card DOM nodes
+    const [active, setActive] = useState(0);
+    // Flag to control observer suppression during JS scrolling
+    const isScrollingByJSRef = useRef(false);
 
-    // Collect card nodes after mount or items change
-    useEffect(() => {
-        const el = trackRef.current;
-        if (!el) return;
-        const nodeList = el.querySelectorAll("[data-card]");
-        const arr = Array.from(nodeList);
-        setCards(arr);
+    const cardRefs = useRef([]);
+    const observerRef = useRef(null);
+    const timeoutRef = useRef(null);
 
-        // Debug: initial track sizing
-        const logInitial = () => {
-            const cw = el.clientWidth;
-            const sw = el.scrollWidth;
-            // eslint-disable-next-line no-console
-            console.log("[ServicesSection] mount: cards:", arr.length, "clientWidth:", cw, "scrollWidth:", sw);
-            if (sw <= cw) {
-                // eslint-disable-next-line no-console
-                console.warn("[ServicesSection] WARNING: No horizontal overflow (scrollWidth <= clientWidth). Carousel won't scroll.");
-                arr.forEach((n, i) => {
-                    // eslint-disable-next-line no-console
-                    console.log(`  card[${i}] offsetLeft=${n.offsetLeft} width=${n.offsetWidth} class="${n.className}"`);
-                });
+
+    // --- Core Observer Logic ---
+    const initializeObserver = useCallback(() => {
+        if (cardRefs.current.length === 0 || !trackRef.current) return;
+
+        // Disconnect old observer if exists
+        if (observerRef.current) {
+            observerRef.current.disconnect();
+        }
+
+        const observerCallback = (entries) => {
+            // CRITICAL CHECK: Use Ref to check the current state, avoiding dependency issues
+            if (isScrollingByJSRef.current) return;
+
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+
+            // Find the most visible card (>= 75% visible for center snap)
+            const mostVisible = entries.find(entry => entry.intersectionRatio >= 0.75);
+
+            if (mostVisible) {
+                const index = Number(mostVisible.target.dataset.index);
+
+                // Debounce setting state to wait for scroll to settle
+                timeoutRef.current = setTimeout(() => {
+                    setActive(index);
+                }, 50);
             }
         };
-        logInitial();
-    }, [items]);
 
-    // Update "active" on scroll by picking closest card to scrollLeft
+        const observer = new IntersectionObserver(
+            observerCallback,
+            {
+                root: trackRef.current,
+                rootMargin: "0px",
+                // Thresholds adapted for snap-center and smooth detection
+                threshold: [0.3, 0.5, 0.75],
+            }
+        );
+
+        observerRef.current = observer;
+
+        cardRefs.current.forEach((el) => {
+            if (el) observer.observe(el);
+        });
+
+        // We only depend on items.length
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [hasItems, items.length]);
+
+    // Effect to manage Observer lifecycle and connection status
     useEffect(() => {
-        const el = trackRef.current;
-        if (!el || cards.length === 0) return;
+        if (!hasItems) return;
 
-        let ticking = false;
-        const onScroll = () => {
-            if (ticking) return;
-            ticking = true;
-            requestAnimationFrame(() => {
-                ticking = false;
-                const { scrollLeft } = el;
-                let bestIdx = 0;
-                let bestDelta = Infinity;
-                cards.forEach((c, i) => {
-                    const delta = Math.abs(c.offsetLeft - scrollLeft);
-                    if (delta < bestDelta) {
-                        bestDelta = delta;
-                        bestIdx = i;
-                    }
-                });
-                setActive((prev) => (prev !== bestIdx ? bestIdx : prev));
-                // eslint-disable-next-line no-console
-                // console.log("[ServicesSection] scroll: scrollLeft", scrollLeft, "active", bestIdx);
-            });
-        };
+        initializeObserver();
 
-        const onResize = () => {
-            // Re-evaluate active after layout changes
-            // eslint-disable-next-line no-console
-            console.log("[ServicesSection] resize");
-            onScroll();
-            // Also re-log widths
-            // eslint-disable-next-line no-console
-            console.log(
-                "[ServicesSection] clientWidth/scrollWidth",
-                el.clientWidth,
-                el.scrollWidth
-            );
-        };
-
-        el.addEventListener("scroll", onScroll, { passive: true });
-        window.addEventListener("resize", onResize);
-
-        // initial
-        onScroll();
-
+        // Cleanup on unmount or re-initialization
         return () => {
-            el.removeEventListener("scroll", onScroll);
-            window.removeEventListener("resize", onResize);
+            if (observerRef.current) {
+                observerRef.current.disconnect();
+            }
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
         };
-    }, [cards]);
+        // Re-run when items change or observer initialization logic changes
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [hasItems, items.length, initializeObserver]);
 
-    // Snap helpers
+
+    // Navigation function (Used by buttons and dots)
     const scrollToIndex = (i) => {
         const el = trackRef.current;
-        if (!el || !cards[i]) return;
-        // eslint-disable-next-line no-console
-        console.log("[ServicesSection] scrollToIndex:", i);
-        el.scrollTo({ left: cards[i].offsetLeft, behavior: "smooth" });
-        setActive(i);
-    };
-    const scrollPrev = () => {
-        const i = Math.max(0, active - 1);
-        // eslint-disable-next-line no-console
-        console.log("[ServicesSection] prev ->", i);
-        scrollToIndex(i);
-    };
-    const scrollNext = () => {
-        const i = Math.min(items.length - 1, active + 1);
-        // eslint-disable-next-line no-console
-        console.log("[ServicesSection] next ->", i);
-        scrollToIndex(i);
+        const target = cardRefs.current[i];
+        if (!el || !target) return;
+
+        // 1. Set Ref flag to ignore observer events
+        isScrollingByJSRef.current = true;
+
+        // Calculate the scroll position needed to center the target element
+        const offset = target.offsetLeft - (el.clientWidth / 2) + (target.clientWidth / 2);
+
+        // 2. Perform the scroll
+        el.scrollTo({ left: offset, behavior: "smooth" });
+        setActive(i); // Update state for immediate button/dot feedback
+
+        // 3. Reset flag after scroll duration (re-enables the observer)
+        setTimeout(() => {
+            isScrollingByJSRef.current = false;
+        }, 400);
     };
 
-    // The currently visible 3rd slot
-    const wideIndex = Math.min(items.length - 1, active + 2);
+    const prev = () => scrollToIndex(Math.max(0, active - 1));
+    const next = () => scrollToIndex(Math.min(items.length - 1, active + 1));
+
+
+    // Wide index is now purely for visual effect (opacity/ring), not width calculation
+    const wideIndex = useMemo(() => {
+        return items?.length ? active : 0;
+    }, [active, items?.length]);
+
 
     return (
         <section
             id="services"
-            className={cx("v-sec", "v-sec--scheme-2", "relative")}
+            className={cx("v-sec", "v-sec--scheme-2", "v-sec--carousel", "relative")}
             style={
                 bgUrl
                     ? {
@@ -156,99 +144,115 @@ export default function ServicesSection({
                     }
                     : undefined
             }
+            role="region"
+            aria-label="Services carousel"
         >
-            {/* overlay 40% to match mock */}
             <div
                 aria-hidden
                 className="absolute inset-0 -z-10 pointer-events-none"
-                style={{
-                    background: "linear-gradient(0deg, rgba(0,0,0,0.40) 0%, rgba(0,0,0,0.40) 100%)",
-                }}
+                style={{ background: "linear-gradient(0deg, rgba(0,0,0,.40), rgba(0,0,0,.40))" }}
             />
 
-            <div className="v-sec__container relative">
+            <div className="v-sec__container relative overflow-visible">
                 {/* Head */}
                 <div className="v-sec__head text-center max-w-3xl mx-auto">
-                    {eyebrow ? <div className="v-eyebrow">{eyebrow}</div> : null}
-                    <h2 className="v-h2 mt-2">{title}</h2>
-                    {subtitle ? <p className="v-subtitle mt-3">{subtitle}</p> : null}
+                    {eyebrow ? <div className="v-eyebrow v-kicker--light">{eyebrow}</div> : null}
+                    <h2 className="v-h2 mt-2 text-white">{title}</h2>
+                    {subtitle ? <p className="v-subtitle mt-3 text-white/90">{subtitle}</p> : null}
                     {contentHtml ? (
-                        <div className="v-copy mt-6" dangerouslySetInnerHTML={{ __html: contentHtml }} />
+                        <div className="v-copy mt-6 text-white/90" dangerouslySetInnerHTML={{ __html: contentHtml }} />
                     ) : null}
                 </div>
 
                 {/* Carousel */}
-                <div className="v-sec__body mt-10">
-                    <div className="relative">
-                        {/* Track */}
+                <div className="v-sec__body mt-10 w-full">
+                    <div className="relative overflow-visible">
                         <div
                             ref={trackRef}
                             className={cx(
-                                "flex gap-8 overflow-x-auto pb-4 relative",
+                                "flex overflow-x-auto pb-4 relative",
+                                "gap-6 md:gap-8",
                                 "snap-x snap-mandatory",
-                                // hide scrollbar
-                                "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
-                                // mobile padding for breathing space
-                                "px-4 sm:px-6 md:px-0"
+                                // --- FIX 7: Padding for centering on mobile ---
+                                "scroll-pl-[5vw] pr-[5vw] md:scroll-pl-0 md:pr-0",
+                                "no-scrollbar cursor-grab active:cursor-grabbing",
+                                "px-0 md:px-0"
                             )}
+                            style={{
+                                scrollBehavior: "smooth",
+                                overscrollBehaviorX: "contain",
+                                WebkitOverflowScrolling: "touch",
+                            }}
                         >
                             {hasItems ? (
                                 items.map((card, idx) => {
-                                    const isWide = idx === wideIndex;
+                                    const isCurrentActive = idx === active;
 
-                                    // Always prevent shrinking: flex-none
-                                    // Mobile: single-card view via viewport width
-                                    // >= md: wide ~624px, others ~360px
+                                    // Width Classes (uniform width for stable snap)
                                     const widthClasses = cx(
                                         "flex-none",
-                                        "w-[88vw] sm:w-[82vw]",
-                                        isWide ? "md:w-[624px]" : "md:w-[360px]"
+                                        "w-[90vw]", // Mobile: Single card
+                                        "md:w-[calc(33.333%-16px)]", // Desktop: Three cards
+                                        "lg:w-[calc(33.333%-20px)]", // Desktop: Three cards (accounting for lg:gap-8)
+                                        "xl:w-[calc(33.333%-20px)]"
                                     );
 
                                     return (
                                         <article
                                             key={card?.id ?? idx}
-                                            data-card
-                                            data-card-index={idx}
+                                            data-index={idx}
+                                            ref={(el) => (cardRefs.current[idx] = el)}
                                             className={cx(
                                                 "v-card v-card--overlay",
-                                                "snap-start rounded-2xl overflow-hidden",
-                                                widthClasses
+                                                // --- FIX 7: snap-center for mobile centering ---
+                                                "snap-center rounded-2xl overflow-hidden",
+                                                widthClasses,
+                                                "transition-all duration-300 ease-out",
+                                                // Visual focus using ring/shadow (does not affect layout)
+                                                isCurrentActive ? "opacity-100 ring-2 ring-white/70 shadow-2xl" : "opacity-70 ring-1 ring-transparent"
                                             )}
                                         >
-                                            {/* Media with overlay */}
+                                            {/* media */}
                                             <div className="relative w-full pointer-events-none">
-                                                <div className={isWide ? "h-[335px]" : "h-[339px]"} />
+                                                <div className={isCurrentActive ? "h-[335px]" : "h-[339px]"} />
                                                 {card?.image ? (
                                                     <Image
                                                         src={card.image}
                                                         alt={card?.title || "Service image"}
                                                         fill
                                                         className="object-cover"
-                                                        sizes={isWide ? "(min-width: 768px) 624px, 88vw" : "(min-width: 768px) 360px, 88vw"}
+                                                        // Updated sizes to reflect the uniform width
+                                                        sizes={
+                                                            isCurrentActive
+                                                                ? "(min-width: 1024px) 33vw, 90vw"
+                                                                : "(min-width: 1024px) 33vw, 90vw"
+                                                        }
                                                         priority={idx < 3}
                                                     />
                                                 ) : null}
                                                 <div
                                                     className="absolute inset-0"
-                                                    style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.40) 0%, rgba(0,0,0,0.40) 100%)" }}
+                                                    style={{
+                                                        background:
+                                                            "linear-gradient(0deg, rgba(0,0,0,.40), rgba(0,0,0,.40))",
+                                                    }}
                                                 />
                                             </div>
 
-                                            {/* Content */}
-                                            <div className={cx("absolute inset-0", isWide ? "p-6 md:p-12" : "p-6")}>
+                                            {/* content */}
+                                            <div className={cx("absolute inset-0", isCurrentActive ? "p-6 md:p-12" : "p-6")}>
                                                 <div className="h-full flex flex-col justify-between pointer-events-auto">
                                                     <div className="flex flex-col gap-2">
-                                                        {card?.kicker ? <div className="v-kicker text-white">{card.kicker}</div> : null}
-
-                                                        <h3 className={cx(isWide ? "text-[48px] leading-[57.6px] font-bold" : "v-h4", "text-white")}>
+                                                        {card?.kicker ? (
+                                                            <div className="v-kicker text-white">{card.kicker}</div>
+                                                        ) : null}
+                                                        <h3 className={cx(isCurrentActive ? "text-4xl lg:text-[48px] leading-tight font-bold" : "v-h4", "text-white")}>
                                                             <Link href={card?.href || "#"} className="v-link-reset">
                                                                 {card?.title || "Untitled service"}
                                                             </Link>
                                                         </h3>
-
                                                         {card?.excerpt ? (
-                                                            <p className={cx(isWide ? "text-[18px] leading-[27px]" : "v-body", "text-white/90")}>
+                                                            <p className={cx(isCurrentActive ? "text-lg leading-[27px]" : "v-body", "text-white/90")}>
                                                                 {stripTags(card.excerpt)}
                                                             </p>
                                                         ) : null}
@@ -257,21 +261,20 @@ export default function ServicesSection({
                                                     <div className="flex items-center gap-6 mt-6">
                                                         <Link
                                                             href={card?.href || "#"}
-                                                            className="rounded-full px-3 py-1.5 border-2 border-white text-white text-[18px] leading-[27px] font-medium"
+                                                            className="rounded-full px-3 py-1.5 border-2 border-white text-white text-[18px] leading-[27px] font-medium hover:bg-white/10 transition"
                                                         >
                                                             Explore
                                                         </Link>
-
                                                         <Link
                                                             href={card?.cta?.url || card?.href || "#"}
                                                             target={card?.cta?.target || undefined}
-                                                            className="flex items-center gap-2 text-white text-[18px] leading-[27px] font-medium"
+                                                            className="flex items-center gap-2 text-white text-[18px] leading-[27px] font-medium hover:text-brand-accent transition"
                                                             aria-label={card?.cta?.title || "Learn"}
                                                         >
                                                             {card?.cta?.title || "Learn"}
                                                             <span aria-hidden className="inline-block translate-y-[1px]">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                  <path d="M9 6l6 6-6 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d="M9 6l6 6-6 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
                               </span>
                                                         </Link>
@@ -283,48 +286,53 @@ export default function ServicesSection({
                                 })
                             ) : (
                                 <div className="min-w-full text-center py-12 border border-dashed rounded-2xl opacity-70">
-                                    <p className="v-subline">No services available. Add services in WordPress.</p>
+                                    <p className="v-subline text-white">No services available. Add services in WordPress.</p>
                                 </div>
                             )}
                         </div>
 
-                        {/* Arrows */}
+                        {/* arrows (Buttons work due to fixed active state on click) */}
                         {hasItems && (
                             <>
                                 <button
                                     type="button"
-                                    onClick={scrollPrev}
+                                    onClick={prev}
+                                    disabled={active === 0}
                                     aria-label="Previous"
                                     className={cx(
-                                        "absolute left-2 md:left-0 top-1/2 -translate-y-1/2 z-20",
-                                        "rounded-full p-2 bg-white/10 hover:bg-white/20 border border-white/20",
-                                        "backdrop-blur-sm text-white pointer-events-auto"
+                                        "absolute left-2 md:left-[-16px] top-1/2 -translate-y-1/2 z-[999]",
+                                        "w-10 h-10 flex items-center justify-center",
+                                        "rounded-full bg-white/10 hover:bg-white/20 border border-white/20",
+                                        "backdrop-blur-sm text-white pointer-events-auto transition",
+                                        active === 0 && "opacity-40 cursor-not-allowed"
                                     )}
                                 >
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                        <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                        <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>
                                 </button>
-
                                 <button
                                     type="button"
-                                    onClick={scrollNext}
+                                    onClick={next}
+                                    disabled={active === items.length - 1}
                                     aria-label="Next"
                                     className={cx(
-                                        "absolute right-2 md:right-0 top-1/2 -translate-y-1/2 z-20",
-                                        "rounded-full p-2 bg-white/10 hover:bg-white/20 border border-white/20",
-                                        "backdrop-blur-sm text-white pointer-events-auto"
+                                        "absolute right-2 md:right-[-16px] top-1/2 -translate-y-1/2 z-[999]",
+                                        "w-10 h-10 flex items-center justify-center",
+                                        "rounded-full bg-white/10 hover:bg-white/20 border border-white/20",
+                                        "backdrop-blur-sm text-white pointer-events-auto transition",
+                                        active === items.length - 1 && "opacity-40 cursor-not-allowed"
                                     )}
                                 >
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                        <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                        <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>
                                 </button>
                             </>
                         )}
                     </div>
 
-                    {/* Dots */}
+                    {/* dots */}
                     {hasItems && (
                         <div className="mt-6 flex justify-center gap-2">
                             {items.map((_, i) => (
@@ -340,7 +348,7 @@ export default function ServicesSection({
                     )}
                 </div>
 
-                {/* Section CTA */}
+                {/* section CTA */}
                 <div className="v-actions mt-10 text-center">
                     <Link
                         href={sectionCta?.href || "/services"}
