@@ -2,80 +2,124 @@
 
 import Link from "next/link";
 
-export default function BundelsSection() {
+/** NOTE: All comments must remain in English only. */
+export default function BundlesSection({
+                                           eyebrow = "Scale",
+                                           title = "Pricing plans",
+                                           subtitle = "Flexible packages designed to match your business growth trajectory.",
+                                           contentHtml = "",
+                                           bgUrl = null,
+                                           items = [],
+                                           sectionCta = null
+                                       }) {
+    const HTML = ({ html }) => (
+        <div
+            className="prose prose-invert max-w-none"
+            dangerouslySetInnerHTML={{ __html: html || "" }}
+        />
+    );
+
+    const sectionBg = bgUrl
+        ? { backgroundImage: `url(${bgUrl})` }
+        : undefined;
+
     return (
-        <section id="pricing" className="v-sec v-sec--scheme-1" data-v="pricing">
-            <div className="v-sec__container">
+        <section
+            id="pricing"
+            data-v="pricing"
+            style={sectionBg}
+            className="v-sec v-sec--scheme-1 relative bg-center bg-cover bg-no-repeat"
+        >
+            {bgUrl && <div className="absolute inset-0 bg-black/35" aria-hidden="true" />}
+            <div className="v-sec__container relative z-10">
                 <header className="v-head v-head--center" data-v="pricing-head">
-                    <div className="v-kicker">Scale</div>
-                    <h2 className="v-title-xl">Pricing plans</h2>
-                    <p className="v-sub">Flexible packages designed to match your business growth trajectory.</p>
+                    {eyebrow && <div className="v-kicker">{eyebrow}</div>}
+                    <h2 className="v-title-xl">{title}</h2>
+                    {subtitle && <p className="v-sub">{subtitle}</p>}
+                    {contentHtml ? <HTML html={contentHtml} /> : null}
                 </header>
 
-                {/*<div className="v-switch" role="tablist" aria-label="Billing period">*/}
-                {/*    <button className="v-switch__btn v-switch__btn--active">Monthly</button>*/}
-                {/*    <button className="v-switch__btn">Yearly</button>*/}
-                {/*</div>*/}
+                <div
+                    className="v-pricing grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                    data-v="pricing-grid"
+                >
+                    {items.map((pkg, idx) => (
+                        <article
+                            key={pkg.id || idx}
+                            data-v={`price-${idx}`}
+                            className="v-price rounded-2xl border border-white/10 bg-black/30 backdrop-blur-sm p-5 grid grid-rows-[auto_1fr_auto] min-h-[400px]"
+                        >
+                            <header className="v-price__head flex items-baseline justify-between gap-4">
+                                <h3 className="v-price__title text-sm md:text-base font-semibold leading-tight">
+                                    {pkg.title}
+                                </h3>
 
-                <div className="v-pricing" data-v="pricing-grid">
-                    {/* Basic */}
-                    <article className="v-price" data-v="price-basic">
-                        <header className="v-price__head">
-                            <h3 className="v-price__title">Basic plan</h3>
-                            <div className="v-price__value">
-                                <span className="v-price__amount">$19</span>
-                                <span className="v-price__per">/mo</span>
-                            </div>
-                        </header>
-                        <div className="v-hr"/>
-                        <div className="v-price__list">
-                            <div className="v-li">Basic AI strategy consultation</div>
-                            <div className="v-li">Monthly performance report</div>
-                            <div className="v-li">Standard data analysis</div>
-                        </div>
-                        <a className="btn-brand w-full text-center">Start basic</a>
-                    </article>
+                                {(pkg.price || pkg.per) && (
+                                    <div className="v-price__value flex items-baseline gap-1">
+                                        {pkg.price ? (
+                                            <span className="v-price__amount text-xl md:text-2xl font-semibold tracking-tight leading-none">
+                        {pkg.price}
+                      </span>
+                                        ) : null}
+                                        {pkg.per ? (
+                                            <span className="v-price__per text-xs md:text-sm opacity-80 leading-none">
+                        {pkg.per}
+                      </span>
+                                        ) : null}
+                                    </div>
+                                )}
+                            </header>
 
-                    {/* Business */}
-                    <article className="v-price" data-v="price-business">
-                        <header className="v-price__head">
-                            <h3 className="v-price__title">Business plan</h3>
-                            <div className="v-price__value">
-                                <span className="v-price__amount">$29</span>
-                                <span className="v-price__per">/mo</span>
-                            </div>
-                        </header>
-                        <div className="v-hr"/>
-                        <div className="v-price__list">
-                            <div className="v-li">Advanced AI strategy</div>
-                            <div className="v-li">Weekly performance insights</div>
-                            <div className="v-li">Comprehensive data analysis</div>
-                            <div className="v-li">Custom dashboard integration</div>
-                        </div>
-                        <a className="btn-brand w-full text-center">Start business</a>
-                    </article>
+                            <div className="v-hr my-4 h-px bg-white/10" />
 
-                    {/* Enterprise */}
-                    <article className="v-price" data-v="price-enterprise">
-                        <header className="v-price__head">
-                            <h3 className="v-price__title">Enterprise plan</h3>
-                            <div className="v-price__value">
-                                <span className="v-price__amount">$49</span>
-                                <span className="v-price__per">/mo</span>
+                            <div className="v-price__list text-xs md:text-sm leading-relaxed">
+                                {pkg.featuresHtml ? (
+                                    <HTML html={pkg.featuresHtml} />
+                                ) : (
+                                    <div className="v-li">Details will be provided.</div>
+                                )}
                             </div>
-                        </header>
-                        <div className="v-hr"/>
-                        <div className="v-price__list">
-                            <div className="v-li">Full AI transformation</div>
-                            <div className="v-li">Daily performance tracking</div>
-                            <div className="v-li">Advanced predictive analytics</div>
-                            <div className="v-li">Dedicated AI consultant</div>
-                            <div className="v-li">Custom enterprise solutions</div>
-                        </div>
-                        <a className="btn-brand w-full text-center">Start enterprise</a>
-                    </article>
+
+                            <div className="mt-5 flex flex-wrap gap-3 justify-center">
+                                {pkg.ctas?.length ? (
+                                    pkg.ctas.map((c, i) =>
+                                        c?.url ? (
+                                            <Link
+                                                key={i}
+                                                href={c.url}
+                                                target={c.target ?? "_self"}
+                                                className="btn-brand px-3 py-2 text-xs md:text-sm"
+                                                aria-label={`${pkg.title} — ${c.title ?? "Select"}`}
+                                            >
+                                                {c.title ?? "Select"}
+                                            </Link>
+                                        ) : null
+                                    )
+                                ) : (
+                                    <span
+                                        className="btn-brand px-3 py-2 text-xs md:text-sm"
+                                        aria-disabled="true"
+                                    >
+                    Select plan
+                  </span>
+                                )}
+                            </div>
+                        </article>
+                    ))}
                 </div>
+
+                {sectionCta?.href ? (
+                    <div className="mt-10 text-center">
+                        <Link
+                            href={sectionCta.href}
+                            target={sectionCta.target ?? "_self"}
+                            className="btn-outline text-sm md:text-base px-4 py-2"
+                        >
+                            {sectionCta.label ?? "Compare packages"}
+                        </Link>
+                    </div>
+                ) : null}
             </div>
         </section>
-    )
+    );
 }

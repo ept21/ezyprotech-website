@@ -11,7 +11,7 @@ import CtaWideSection from "@/app/components/sections/home/CtaWideSection";
 import ContactSection from "@/app/components/sections/home/ContactSection";
 
 import { gqlRequest } from "@/app/lib/graphql/client";
-import { HERO_QUERY, SERVICES_HOME_PAGE_QUERY } from "@/app/lib/graphql/queries";
+import { HERO_QUERY, SERVICES_HOME_PAGE_QUERY, BUNDLES_HOME_PAGE_QUERY } from "@/app/lib/graphql/queries";
 import { getAcfImageUrl } from "@/app/lib/wp";
 
 import "@/styles/electric-xtra.css";
@@ -140,6 +140,73 @@ export default async function HomePage() {
         target: servicesSlice?.ctaurl?.target || null,
     };
 
+
+
+    /* ---- BUNDLES (Home section) ---- */
+    const bundlesFirstDefault = 12;
+    const bundlesRes = await gqlRequest(BUNDLES_HOME_PAGE_QUERY, {
+        id: homePageDbId,
+        first: bundlesFirstDefault,
+    });
+
+    const bundlesSlice = bundlesRes?.page?.homePageFields?.bundles || {};
+    const showBundles = bundlesSlice?.showBundles ?? true;
+
+    const bundlesBgUrl    = getAcfImageUrl(bundlesSlice?.bundlesBgImage);
+    const bundlesKicker   = bundlesSlice?.kicker || "Scale";
+    const bundlesTitle    = bundlesSlice?.bundlesTitle || "Pricing plans";
+    const bundlesSubtitle = bundlesSlice?.bundlesSubtitle || "Flexible packages designed to match your business growth trajectory.";
+    const bundlesContent  = bundlesSlice?.bundlesContent || "";
+
+    const bundlesDisplayLimit = Math.max(
+        1,
+        Math.min(24, bundlesSlice?.bundlesDisplayLimit || bundlesFirstDefault)
+    );
+
+// Manual vs Auto
+    let rawBundles = [];
+    if (bundlesSlice?.bundlesSource === "manual") {
+        rawBundles = bundlesSlice?.bundlesItems?.nodes || [];
+    } else {
+        rawBundles = bundlesRes?.bundles?.nodes || [];
+    }
+    rawBundles = rawBundles.slice(0, bundlesDisplayLimit);
+
+// Map WP → UI
+    const bundleCards = rawBundles.map((n, i) => {
+        const bf = n?.bundlesFields || {};
+        const title = bf?.title?.trim?.() || n?.title || "Untitled";
+        const price = bf?.price || null;
+        const per   = bf?.textNearPriceMonthlyYearlyOrOther || "";
+        const featuresHtml = bf?.productsIncludes || "";
+        const image = n?.featuredImage?.node?.mediaItemUrl || n?.featuredImage?.node?.sourceUrl || null;
+        const href  = n?.uri || "#";
+        const cta1  = bf?.ctaurl1 || null;
+        const cta2  = bf?.ctaurl2 || null;
+
+        return {
+            id: n?.id || String(i),
+            title,
+            price,
+            per,
+            featuresHtml,
+            image,
+            href,
+            ctas: [cta1, cta2].filter(Boolean),
+        };
+    });
+
+    const bundlesSectionCta = {
+        href: bundlesSlice?.ctaurl?.url || "#pricing",
+        label: bundlesSlice?.ctaurl?.title || "Compare packages",
+        target: bundlesSlice?.ctaurl?.target || null,
+    };
+
+
+
+
+
+
     return (
         <main>
             {/* HERO */}
@@ -171,7 +238,22 @@ export default async function HomePage() {
                 />
             )}
 
-            <BundlesSection />
+
+            {/* BUNDLES (pricing) */}
+            {showBundles && (
+                <BundlesSection
+                    eyebrow={bundlesKicker}
+                    title={bundlesTitle}
+                    subtitle={bundlesSubtitle}
+                    contentHtml={bundlesContent}
+                    bgUrl={bundlesBgUrl}
+                    items={bundleCards}
+                    sectionCta={bundlesSectionCta}
+                />
+            )}
+
+
+
             <AboutSection />
             <ProjectsSection />
             <TestimonialsSection />

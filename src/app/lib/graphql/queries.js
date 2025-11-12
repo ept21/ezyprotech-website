@@ -95,6 +95,81 @@ export const SERVICES_HOME_PAGE_QUERY = gql`
 `;
 
 
+/* ---------- Bundles (Home section) ---------- */
+export const BUNDLES_HOME_PAGE_QUERY = gql`
+  query BundlesHome($id: ID!, $first: Int = 12) {
+    page(id: $id, idType: DATABASE_ID) {
+      id
+      homePageFields {
+        bundles {
+          showBundles
+          bundlesBgImage { node { mediaItemUrl sourceUrl altText } }
+          kicker
+          bundlesTitle
+          bundlesSubtitle
+          bundlesContent
+          bundlesSource
+          bundlesDisplayLimit
+          bundlesOrderBy
+          bundlesOrder
+          ctaurl { url title target }
+
+          bundlesItems {
+            nodes {
+              ... on Bundle {
+                id
+                databaseId
+                uri
+                title
+                featuredImage { node { mediaItemUrl sourceUrl altText } }
+               
+                bundlesFields: bundlesfields {
+                  kicker
+                  title
+                  price
+                  textNearPriceMonthlyYearlyOrOther
+                  productsIncludes
+                  ctaurl1 { url title target }
+                  ctaurl2 { url title target }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    bundles(first: $first, where: { orderby: { field: DATE, order: DESC } }) {
+      nodes {
+        id
+        databaseId
+        uri
+        title
+        featuredImage { node { mediaItemUrl sourceUrl altText } }
+        
+        bundlesFields: bundlesfields {
+          kicker
+          title
+          price
+          textNearPriceMonthlyYearlyOrOther
+          productsIncludes
+          ctaurl1 { url title target }
+          ctaurl2 { url title target }
+        }
+      }
+    }
+  }
+`;
+
+
+
+
+
+
+
+
+
+
 /* ---------- Generic Pages ---------- */
 export const PAGE_BY_SLUG_QUERY = gql`
   query PageBySlug($slug: ID!) {
