@@ -188,6 +188,8 @@ export const ABOUT_HOME_PAGE_QUERY = gql`
 `;
 
 
+
+/* ---------- Projects (Home section) ---------- */
 export const PROJECTS_HOME_PAGE_QUERY = gql`
   query ProjectsHome($id: ID!, $first: Int = 8) {
     page(id: $id, idType: DATABASE_ID) {
@@ -204,8 +206,6 @@ export const PROJECTS_HOME_PAGE_QUERY = gql`
           projectsDisplayLimit
           projectsOrderBy
           projectsOrder
-
-       
 
           projectsItems {
             nodes {
@@ -226,7 +226,8 @@ export const PROJECTS_HOME_PAGE_QUERY = gql`
                   projectlink { url title target }
                   projectvideo
                   projectanalytics { node { mediaItemUrl sourceUrl altText } }
-
+                  ctaurl1 { url title target }
+                  ctaurl2 { url title target }
                 }
               }
             }
@@ -253,7 +254,8 @@ export const PROJECTS_HOME_PAGE_QUERY = gql`
           projectlink { url title target }
           projectvideo
           projectanalytics { node { mediaItemUrl sourceUrl altText } }
-
+          ctaurl1 { url title target }
+          ctaurl2 { url title target }
         }
       }
     }

@@ -11,7 +11,8 @@ import CtaWideSection from "@/app/components/sections/home/CtaWideSection";
 import ContactSection from "@/app/components/sections/home/ContactSection";
 
 import { gqlRequest } from "@/app/lib/graphql/client";
-import { HERO_QUERY,
+import {
+         HERO_QUERY,
          SERVICES_HOME_PAGE_QUERY,
          BUNDLES_HOME_PAGE_QUERY,
          ABOUT_HOME_PAGE_QUERY,
@@ -271,6 +272,9 @@ export default async function HomePage() {
         const image    = getAcfImageUrl(pf?.projectimage) || getFeaturedUrl(n);
         const href     = getAcfLinkUrl(pf?.projectlink) || n?.uri || "#";
 
+        const cta1 = pf?.ctaurl1 || null; // { url, title, target }
+        const cta2 = pf?.ctaurl2 || null;
+
         return {
             id: n?.id || String(i),
             title,
@@ -278,6 +282,7 @@ export default async function HomePage() {
             desc,
             image,
             href,
+            ctas: [cta1, cta2].filter(Boolean),
         };
     });
 
