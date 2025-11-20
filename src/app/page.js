@@ -16,7 +16,9 @@ import {
          SERVICES_HOME_PAGE_QUERY,
          BUNDLES_HOME_PAGE_QUERY,
          ABOUT_HOME_PAGE_QUERY,
-         PROJECTS_HOME_PAGE_QUERY
+         PROJECTS_HOME_PAGE_QUERY,
+         TESTIMONIALS_HOME_PAGE_QUERY,
+         CTA_HOME_PAGE_QUERY
             } from "@/app/lib/graphql/queries";
 import { getAcfImageUrl } from "@/app/lib/wp";
 
@@ -293,6 +295,119 @@ export default async function HomePage() {
 
 
 
+    /* ---- TESTIMONIALS (Home section) ---- */
+    const testimonialsFirstDefault = 12;
+    const testimonialsRes = await gqlRequest(TESTIMONIALS_HOME_PAGE_QUERY, {
+        id: homePageDbId,
+        first: testimonialsFirstDefault,
+    });
+
+    const testimonialsSlice =
+        testimonialsRes?.page?.homePageFields?.testimonials || {};
+    const showTestimonials =
+        testimonialsSlice?.showTestimonials ?? true;
+
+    const testimonialsBgUrl = getAcfImageUrl(
+        testimonialsSlice?.testimonialsBgImage
+    );
+    const testimonialsKicker =
+        testimonialsSlice?.kicker || "Trust";
+    const testimonialsTitle =
+        testimonialsSlice?.testimonialsTitle || "Client success stories";
+    const testimonialsSubtitle =
+        testimonialsSlice?.testimonialsSubtitle ||
+        "Real results from businesses that trusted Veltiqo.";
+    const testimonialsContent =
+        testimonialsSlice?.testimonialsContent || "";
+
+    const testimonialsDisplayLimit = Math.max(
+        1,
+        Math.min(
+            24,
+            testimonialsSlice?.testimonialsDisplayLimit ||
+            testimonialsFirstDefault
+        )
+    );
+
+    // Manual vs Auto source
+    let rawTestimonials = [];
+    if (testimonialsSlice?.testimonialsSource === "manual") {
+        rawTestimonials = testimonialsSlice?.testimonialsItems?.nodes || [];
+    } else {
+        rawTestimonials = testimonialsRes?.testimonials?.nodes || [];
+    }
+    rawTestimonials = rawTestimonials.slice(0, testimonialsDisplayLimit);
+
+    // Map WP → UI shape
+    const testimonialCards = rawTestimonials.map((n, i) => {
+        const tf = n?.testimonialsFields || {};
+
+        const stars = Number(tf?.starRanking) || 0;
+        const name =
+            tf?.fullname?.trim?.() ||
+            n?.title?.trim?.() ||
+            "Anonymous";
+        const company = tf?.companyname || "";
+        const businessType = tf?.typeofbusiness || "";
+        const kicker = tf?.kicker || null;
+
+        // Prefer excerpt; fallback to stripped content
+        const quote =
+            tf?.excerpt ||
+            stripHtml(tf?.content || n?.content || "").slice(0, 280);
+
+        const avatar = getFeaturedUrl(n);
+        const singleReview = tf?.singlereviewlink || null;
+        const googleReview = tf?.linktogooglereview || null;
+        const videoUrl = tf?.testimonialvideolink || null;
+
+        return {
+            id: n?.id || String(i),
+            stars,
+            kicker,
+            quote,
+            name,
+            company,
+            businessType,
+            avatar,
+            singleReview,
+            googleReview,
+            videoUrl,
+        };
+    });
+
+    const testimonialsCtas = [
+        testimonialsSlice?.ctaurl1 || null,
+        testimonialsSlice?.ctaurl2 || null,
+    ].filter(Boolean);
+
+
+    /* ---- CTA (Home section) ---- */
+    const ctaRes = await gqlRequest(CTA_HOME_PAGE_QUERY, {
+        id: homePageDbId,
+    });
+
+    const ctaSlice = ctaRes?.page?.homePageFields?.ctaSection || {};
+    const showCtaSection = ctaSlice?.showCtaSection ?? true;
+
+    const ctaBgUrl = getAcfImageUrl(ctaSlice?.backgroundImage);
+    const ctaImageUrl =
+        getAcfImageUrl(ctaSlice?.ctaImage) ||
+        (typeof ctaSlice?.ctaImage === "string" ? ctaSlice?.ctaImage : null);
+
+    const ctaKicker = ctaSlice?.kicker || "Accelerate";
+    const ctaTitle =
+        ctaSlice?.title || "Ready to accelerate your business?";
+    const ctaSubtitle =
+        ctaSlice?.subtitle ||
+        "Let's discuss how our AI-driven solutions can transform your business strategy and performance.";
+    const ctaContentHtml = ctaSlice?.content || "";
+
+    const ctaPrimary = ctaSlice?.ctaurl1 || null; // { url, title, target }
+    const ctaSecondary = ctaSlice?.ctaurl2 || null;
+
+
+
 
 
 
@@ -368,8 +483,36 @@ export default async function HomePage() {
                     ctas={projectsCtas}
                 />
             )}
-            <TestimonialsSection />
-            <CtaWideSection />
+
+            {/* TESTIMONIALS */}
+            {showTestimonials && (
+                <TestimonialsSection
+                    eyebrow={testimonialsKicker}
+                    title={testimonialsTitle}
+                    subtitle={testimonialsSubtitle}
+                    contentHtml={testimonialsContent}
+                    bgUrl={testimonialsBgUrl}
+                    items={testimonialCards}
+                    ctas={testimonialsCtas}
+                />
+            )}
+
+            {showCtaSection && (
+                <CtaWideSection
+                    eyebrow={ctaKicker}
+                    title={ctaTitle}
+                    subtitle={ctaSubtitle}
+                    contentHtml={ctaContentHtml}
+                    bgUrl={ctaBgUrl}
+                    imageUrl={ctaImageUrl}
+                    primaryCta={ctaPrimary}
+                    secondaryCta={ctaSecondary}
+                />
+            )}
+
+
+
+
             <ContactSection />
         </main>
     );

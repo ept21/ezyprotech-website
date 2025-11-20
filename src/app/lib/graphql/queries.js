@@ -263,6 +263,109 @@ export const PROJECTS_HOME_PAGE_QUERY = gql`
 `;
 
 
+/* ---------- Testimonials (Home section) ---------- */
+export const TESTIMONIALS_HOME_PAGE_QUERY = gql`
+  query TestimonialsHome($id: ID!, $first: Int = 12) {
+    page(id: $id, idType: DATABASE_ID) {
+      id
+      homePageFields {
+        testimonials {
+          showTestimonials
+          testimonialsBgImage { node { mediaItemUrl sourceUrl altText } }
+          kicker
+          testimonialsTitle
+          testimonialsSubtitle
+          testimonialsContent
+          testimonialsSource
+          testimonialsDisplayLimit
+          testimonialsOrderBy
+          testimonialsOrder
+          ctaurl1 { url title target }
+          ctaurl2 { url title target }
+
+          testimonialsItems {
+            nodes {
+              ... on Testimonial {
+                id
+                databaseId
+                uri
+                title
+                featuredImage { node { mediaItemUrl sourceUrl altText } }
+
+                testimonialsFields: testimonialsfields {
+                  starranking
+                  kicker
+                  title
+                  excerpt
+                  content
+                  fullname
+                  companyname
+                  typeofbusiness
+                  singlereviewlink { url title target }
+                  linktogooglereview { url title target }
+                  testimonialvideolink
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    testimonials(first: $first, where: { orderby: { field: DATE, order: DESC } }) {
+      nodes {
+        id
+        databaseId
+        uri
+        title
+        featuredImage { node { mediaItemUrl sourceUrl altText } }
+
+        testimonialsFields: testimonialsfields {
+          starranking
+          kicker
+          title
+          excerpt
+          content
+          fullname
+          companyname
+          typeofbusiness
+          singlereviewlink { url title target }
+          linktogooglereview { url title target }
+          testimonialvideolink
+        }
+      }
+    }
+  }
+`;
+
+
+
+/* ---------- CTA (Home section) ---------- */
+export const CTA_HOME_PAGE_QUERY = gql`
+  query CtaHome($id: ID!) {
+    page(id: $id, idType: DATABASE_ID) {
+      id
+      homePageFields {
+        ctaSection {
+          showCtaSection
+          backgroundImage { node { mediaItemUrl sourceUrl altText } }
+          kicker
+          title
+          subtitle
+          content
+          ctaImage { node { mediaItemUrl sourceUrl altText } }
+          ctaurl1 { url title target }
+          ctaurl2 { url title target }
+        }
+      }
+    }
+  }
+`;
+
+
+
+
+
 
 
 
