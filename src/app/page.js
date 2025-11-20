@@ -11,7 +11,12 @@ import CtaWideSection from "@/app/components/sections/home/CtaWideSection";
 import ContactSection from "@/app/components/sections/home/ContactSection";
 
 import { gqlRequest } from "@/app/lib/graphql/client";
-import { HERO_QUERY, SERVICES_HOME_PAGE_QUERY, BUNDLES_HOME_PAGE_QUERY } from "@/app/lib/graphql/queries";
+import { HERO_QUERY,
+         SERVICES_HOME_PAGE_QUERY,
+         BUNDLES_HOME_PAGE_QUERY,
+         ABOUT_HOME_PAGE_QUERY,
+         PROJECTS_HOME_PAGE_QUERY
+            } from "@/app/lib/graphql/queries";
 import { getAcfImageUrl } from "@/app/lib/wp";
 
 import "@/styles/electric-xtra.css";
@@ -203,6 +208,85 @@ export default async function HomePage() {
     };
 
 
+    /* ---- ABOUT (Home section) ---- */
+    const aboutRes = await gqlRequest(ABOUT_HOME_PAGE_QUERY, { id: homePageDbId });
+    const aboutSlice = aboutRes?.page?.homePageFields?.about || {};
+    const showAbout = aboutSlice?.showabout ?? true;
+
+    const aboutBgUrl   = getAcfImageUrl(aboutSlice?.aboutBgImage);
+    const aboutKicker  = aboutSlice?.kicker || "Transform";
+    const aboutTitle   = aboutSlice?.aboutTitle || "Intelligent technology meets strategic vision";
+    const aboutSubtitle= aboutSlice?.aboutSubtitle || "We bridge the gap between cutting-edge AI technologies and practical business solutions.";
+    const aboutContent = aboutSlice?.aboutContent || "";
+
+    // Resolve up to 4 images (null-safe)
+    const aboutImages = [
+        getAcfImageUrl(aboutSlice?.image1),
+        getAcfImageUrl(aboutSlice?.image2),
+        getAcfImageUrl(aboutSlice?.image3),
+        getAcfImageUrl(aboutSlice?.image4),
+    ].filter(Boolean);
+
+    console.log(aboutImages)
+
+    const aboutCta1 = aboutSlice?.ctaurl1 || null; // {url,title,target}
+    const aboutCta2 = aboutSlice?.ctaurl2 || null;
+
+    /* ---- PROJECTS (Home section) ---- */
+    const projectsFirstDefault = 8;
+    const projectsRes = await gqlRequest(PROJECTS_HOME_PAGE_QUERY, {
+        id: homePageDbId,
+        first: projectsFirstDefault,
+    });
+
+    const projectsSlice = projectsRes?.page?.homePageFields?.projects || {};
+    const showProjects = projectsSlice?.showProjects ?? true;
+
+    const projectsBgUrl   = getAcfImageUrl(projectsSlice?.projectsBgImage);
+    const projectsKicker  = projectsSlice?.kicker || "Deliver";
+    const projectsTitle   = projectsSlice?.projectsTitle || "Featured projects";
+    const projectsSubtitle= projectsSlice?.projectsSubtitle || "A snapshot of recent work — fast, scalable, and designed for growth.";
+    const projectsContent = projectsSlice?.projectsContent || "";
+
+    const projectsDisplayLimit = Math.max(
+        1,
+        Math.min(24, projectsSlice?.projectsDisplayLimit || projectsFirstDefault)
+    );
+
+    // Manual vs Auto
+    let rawProjects = [];
+    if (projectsSlice?.projectsSource === "manual") {
+        rawProjects = projectsSlice?.projectsItems?.nodes || [];
+    } else {
+        rawProjects = projectsRes?.projects?.nodes || [];
+    }
+    rawProjects = rawProjects.slice(0, projectsDisplayLimit);
+
+    // Map WP → UI shape that matches your current cards
+    const projectCards = rawProjects.map((n, i) => {
+        const pf = n?.projectsFields || {};
+        const title    = (pf?.title || n?.title || "Untitled").trim?.() || "Untitled";
+        const category = pf?.categorylabel || pf?.kicker || "Project";
+        const desc     = pf?.excerpt || "";
+        const image    = getAcfImageUrl(pf?.projectimage) || getFeaturedUrl(n);
+        const href     = getAcfLinkUrl(pf?.projectlink) || n?.uri || "#";
+
+        return {
+            id: n?.id || String(i),
+            title,
+            category,
+            desc,
+            image,
+            href,
+        };
+    });
+
+    const projectsCtas = [
+        projectsSlice?.ctaurl1 || null,
+        projectsSlice?.ctaurl2 || null,
+    ].filter(Boolean);
+
+
 
 
 
@@ -254,8 +338,31 @@ export default async function HomePage() {
 
 
 
-            <AboutSection />
-            <ProjectsSection />
+            {/* ABOUT */}
+            {showAbout && (
+                <AboutSection
+                    eyebrow={aboutKicker}
+                    title={aboutTitle}
+                    subtitle={aboutSubtitle}
+                    contentHtml={aboutContent}
+                    bgUrl={aboutBgUrl}
+                    images={aboutImages}
+                    ctas={[aboutCta1, aboutCta2].filter(Boolean)}
+                />
+            )}
+
+            {/* PROJECTS */}
+            {showProjects && (
+                <ProjectsSection
+                    eyebrow={projectsKicker}
+                    title={projectsTitle}
+                    subtitle={projectsSubtitle}
+                    contentHtml={projectsContent}
+                    bgUrl={projectsBgUrl}
+                    items={projectCards}
+                    ctas={projectsCtas}
+                />
+            )}
             <TestimonialsSection />
             <CtaWideSection />
             <ContactSection />

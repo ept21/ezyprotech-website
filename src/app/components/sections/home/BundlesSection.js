@@ -19,9 +19,7 @@ export default function BundlesSection({
         />
     );
 
-    const sectionBg = bgUrl
-        ? { backgroundImage: `url(${bgUrl})` }
-        : undefined;
+    const sectionBg = bgUrl ? { backgroundImage: `url(${bgUrl})` } : undefined;
 
     return (
         <section
@@ -30,7 +28,9 @@ export default function BundlesSection({
             style={sectionBg}
             className="v-sec v-sec--scheme-1 relative bg-center bg-cover bg-no-repeat"
         >
+            {/* overlay for readability */}
             {bgUrl && <div className="absolute inset-0 bg-black/35" aria-hidden="true" />}
+
             <div className="v-sec__container relative z-10">
                 <header className="v-head v-head--center" data-v="pricing-head">
                     {eyebrow && <div className="v-kicker">{eyebrow}</div>}
@@ -49,6 +49,7 @@ export default function BundlesSection({
                             data-v={`price-${idx}`}
                             className="v-price rounded-2xl border border-white/10 bg-black/30 backdrop-blur-sm p-5 grid grid-rows-[auto_1fr_auto] min-h-[400px]"
                         >
+                            {/* Title left, price right, aligned on baseline */}
                             <header className="v-price__head flex items-baseline justify-between gap-4">
                                 <h3 className="v-price__title text-sm md:text-base font-semibold leading-tight">
                                     {pkg.title}
@@ -57,12 +58,12 @@ export default function BundlesSection({
                                 {(pkg.price || pkg.per) && (
                                     <div className="v-price__value flex items-baseline gap-1">
                                         {pkg.price ? (
-                                            <span className="v-price__amount text-xl md:text-2xl font-semibold tracking-tight leading-none">
+                                            <span className="v-price__amount !text-lg md:!text-xl font-semibold tracking-tight leading-none">
                         {pkg.price}
                       </span>
                                         ) : null}
                                         {pkg.per ? (
-                                            <span className="v-price__per text-xs md:text-sm opacity-80 leading-none">
+                                            <span className="v-price__per !text-[10px] md:!text-xs opacity-80 leading-none">
                         {pkg.per}
                       </span>
                                         ) : null}
@@ -72,6 +73,7 @@ export default function BundlesSection({
 
                             <div className="v-hr my-4 h-px bg-white/10" />
 
+                            {/* Features fill the middle; keeps CTAs at bottom */}
                             <div className="v-price__list text-xs md:text-sm leading-relaxed">
                                 {pkg.featuresHtml ? (
                                     <HTML html={pkg.featuresHtml} />
@@ -80,6 +82,7 @@ export default function BundlesSection({
                                 )}
                             </div>
 
+                            {/* CTAs side-by-side (wrap on very small screens) */}
                             <div className="mt-5 flex flex-wrap gap-3 justify-center">
                                 {pkg.ctas?.length ? (
                                     pkg.ctas.map((c, i) =>
@@ -108,12 +111,13 @@ export default function BundlesSection({
                     ))}
                 </div>
 
+                {/* Section-level CTA (optional) */}
                 {sectionCta?.href ? (
                     <div className="mt-10 text-center">
                         <Link
                             href={sectionCta.href}
                             target={sectionCta.target ?? "_self"}
-                            className="btn-outline text-sm md:text-base px-4 py-2"
+                            className="btn-outline bg-white rounded-3xl text-sm md:text-base px-4 py-2"
                         >
                             {sectionCta.label ?? "Compare packages"}
                         </Link>

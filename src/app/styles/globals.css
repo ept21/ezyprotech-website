@@ -213,3 +213,10 @@ footer{
 /* גלילת טאץ' תקינה */
 .touch-pan-x { touch-action: pan-x; }
 
+@layer components {
+  .v-price__amount,
+  .v-price__per {
+    font-size: inherit;
+    line-height: inherit;
+  }
+}

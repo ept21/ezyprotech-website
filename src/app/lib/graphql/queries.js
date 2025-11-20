@@ -162,6 +162,108 @@ export const BUNDLES_HOME_PAGE_QUERY = gql`
 `;
 
 
+/* ---------- About (Home section) ---------- */
+export const ABOUT_HOME_PAGE_QUERY = gql`
+  query AboutHome($id: ID!) {
+    page(id: $id, idType: DATABASE_ID) {
+      id
+      homePageFields {
+        about {
+          showabout
+          aboutBgImage { node { mediaItemUrl sourceUrl altText } }
+          kicker
+          aboutTitle
+          aboutSubtitle
+          aboutContent
+          image1 { node { mediaItemUrl sourceUrl altText } }
+          image2 { node { mediaItemUrl sourceUrl altText } }
+          image3 { node { mediaItemUrl sourceUrl altText } }
+          image4 { node { mediaItemUrl sourceUrl altText } }
+          ctaurl1 { url title target }
+          ctaurl2 { url title target }
+        }
+      }
+    }
+  }
+`;
+
+
+export const PROJECTS_HOME_PAGE_QUERY = gql`
+  query ProjectsHome($id: ID!, $first: Int = 8) {
+    page(id: $id, idType: DATABASE_ID) {
+      id
+      homePageFields {
+        projects {
+          showProjects
+          projectsBgImage { node { mediaItemUrl sourceUrl altText } }
+          kicker
+          projectsTitle
+          projectsSubtitle
+          projectsContent
+          projectsSource
+          projectsDisplayLimit
+          projectsOrderBy
+          projectsOrder
+
+       
+
+          projectsItems {
+            nodes {
+              ... on Project {
+                id
+                databaseId
+                uri
+                title
+                featuredImage { node { mediaItemUrl sourceUrl altText } }
+                projectsFields: projectsfields {
+                  kicker
+                  title
+                  subtitle
+                  excerpt
+                  categorylabel
+                  projectimage { node { mediaItemUrl sourceUrl altText } }
+                  projectbgimage { node { mediaItemUrl sourceUrl altText } }
+                  projectlink { url title target }
+                  projectvideo
+                  projectanalytics { node { mediaItemUrl sourceUrl altText } }
+
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    projects(first: $first, where: { orderby: { field: DATE, order: DESC } }) {
+      nodes {
+        id
+        databaseId
+        uri
+        title
+        featuredImage { node { mediaItemUrl sourceUrl altText } }
+        projectsFields: projectsfields {
+          kicker
+          title
+          subtitle
+          excerpt
+          categorylabel
+          projectimage { node { mediaItemUrl sourceUrl altText } }
+          projectbgimage { node { mediaItemUrl sourceUrl altText } }
+          projectlink { url title target }
+          projectvideo
+          projectanalytics { node { mediaItemUrl sourceUrl altText } }
+
+        }
+      }
+    }
+  }
+`;
+
+
+
+
+
 
 
 
