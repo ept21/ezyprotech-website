@@ -18,7 +18,9 @@ import {
          ABOUT_HOME_PAGE_QUERY,
          PROJECTS_HOME_PAGE_QUERY,
          TESTIMONIALS_HOME_PAGE_QUERY,
-         CTA_HOME_PAGE_QUERY
+         CTA_HOME_PAGE_QUERY,
+         CONTACT_HOME_PAGE_QUERY,
+         GLOBALS_QUERY,
             } from "@/app/lib/graphql/queries";
 import { getAcfImageUrl } from "@/app/lib/wp";
 
@@ -63,6 +65,20 @@ export default async function HomePage() {
             </main>
         );
     }
+
+
+    // Globals for contact details
+    const globalsRes = await gqlRequest(GLOBALS_QUERY);
+    const gs = globalsRes?.page?.globalSettings;
+
+    const contactGlobals = {
+        email: gs?.email || null,
+        phone: gs?.phoneNumber || null,
+        whatsapp: gs?.whatsapp || null,
+        address: gs?.address || null,
+    };
+
+
 
     /* ---- HERO ---- */
     const heroData = await gqlRequest(HERO_QUERY, { id: homePageDbId });
@@ -342,7 +358,7 @@ export default async function HomePage() {
     const testimonialCards = rawTestimonials.map((n, i) => {
         const tf = n?.testimonialsFields || {};
 
-        const stars = Number(tf?.starRanking) || 0;
+        const stars = Number(tf?.starranking) || 0; // <-- שם השדה לפי ה־GQL
         const name =
             tf?.fullname?.trim?.() ||
             n?.title?.trim?.() ||
@@ -351,7 +367,6 @@ export default async function HomePage() {
         const businessType = tf?.typeofbusiness || "";
         const kicker = tf?.kicker || null;
 
-        // Prefer excerpt; fallback to stripped content
         const quote =
             tf?.excerpt ||
             stripHtml(tf?.content || n?.content || "").slice(0, 280);
@@ -375,6 +390,7 @@ export default async function HomePage() {
             videoUrl,
         };
     });
+
 
     const testimonialsCtas = [
         testimonialsSlice?.ctaurl1 || null,
@@ -405,6 +421,27 @@ export default async function HomePage() {
 
     const ctaPrimary = ctaSlice?.ctaurl1 || null; // { url, title, target }
     const ctaSecondary = ctaSlice?.ctaurl2 || null;
+
+
+
+    /* ---- CONTACT (Home section) ---- */
+    const contactRes = await gqlRequest(CONTACT_HOME_PAGE_QUERY, {
+        id: homePageDbId,
+    });
+
+    const contactSlice = contactRes?.page?.homePageFields?.contact || {};
+    const showContact = contactSlice?.showContact ?? true;
+
+    const contactBgUrl = getAcfImageUrl(contactSlice?.contactBgImage);
+    const contactKicker = contactSlice?.kicker || "Connect";
+    const contactTitle = contactSlice?.contactTitle || "Contact Veltiqo";
+    const contactSubtitle =
+        contactSlice?.contactSubtitle ||
+        "We're ready to help you navigate the future of intelligent business solutions.";
+    const contactContentHtml = contactSlice?.contactContent || "";
+
+    const useGlobalContact = contactSlice?.useGlobalContact ?? true;
+    const contactImageUrl = getAcfImageUrl(contactSlice?.contactimage);
 
 
 
@@ -511,9 +548,22 @@ export default async function HomePage() {
             )}
 
 
+            {showContact && (
+                <ContactSection
+                    bgUrl={contactBgUrl}
+                    eyebrow={contactKicker}
+                    title={contactTitle}
+                    subtitle={contactSubtitle}
+                    contentHtml={contactContentHtml}
+                    useGlobalContact={useGlobalContact}
+                    imageUrl={contactImageUrl}
+                    contactInfo={contactGlobals}
+                />
+            )}
 
 
-            <ContactSection />
+
+
         </main>
     );
 }

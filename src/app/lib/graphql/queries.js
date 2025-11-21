@@ -363,6 +363,26 @@ export const CTA_HOME_PAGE_QUERY = gql`
 `;
 
 
+/* ---------- Contact (Home section) ---------- */
+export const CONTACT_HOME_PAGE_QUERY = gql`
+  query ContactHome($id: ID!) {
+    page(id: $id, idType: DATABASE_ID) {
+      id
+      homePageFields {
+        contact {
+          showContact
+          contactBgImage { node { mediaItemUrl sourceUrl altText } }
+          kicker
+          contactTitle
+          contactSubtitle
+          contactContent
+          useGlobalContact
+          contactimage { node { mediaItemUrl sourceUrl altText } }
+        }
+      }
+    }
+  }
+`;
 
 
 
@@ -433,6 +453,7 @@ export const GLOBALS_QUERY = gql`
         headhtml
         ga4code
         metapixelid
+        address
         phoneNumber
         whatsapp
         email

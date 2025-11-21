@@ -45,6 +45,8 @@ export default async function RootLayout({ children }) {
     const defaultOg  = getAcfImageUrl(gs?.defaultogimage);
     const ga4Code    = gs?.ga4code || '';
     const metaPixelId= gs?.metapixelid || '';
+    const address = gs?.address || '';
+
 
     const mainItems   = mainRes?.menuItems?.nodes   ?? [];
     const footerItems = footerRes?.menuItems?.nodes ?? [];
@@ -54,6 +56,7 @@ export default async function RootLayout({ children }) {
         .filter(n => !n.parentId)
         .sort((a,b) => (a.order ?? 0) - (b.order ?? 0))
         .map(n => ({ id: n.id, label: n.label, url: n.url }));
+
 
     return (
         <html lang="en">
@@ -86,6 +89,7 @@ export default async function RootLayout({ children }) {
                 linkedin: gs?.linkdine,
                 x: gs?.xAddress,
             }}
+            address={address}
         />
         <Analytics ga4Code={ga4Code} metaPixelId={metaPixelId} />
         </body>

@@ -73,7 +73,7 @@ export default function Footer({
             className="
         mt-20 border-t border-[var(--border-subtle)]
         bg-[color-mix(in_oklab,var(--bg-elevated)_85%,transparent)]
-        backdrop-blur-md
+        backdrop-blur-md mt-[-4px]
       "
             aria-labelledby="footer-heading"
         >
