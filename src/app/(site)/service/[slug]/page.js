@@ -5,7 +5,7 @@ import { SERVICE_QUERY } from '@/app/lib/graphql/queries'
 
 export default async function Page({ params }) {
     const data = await getClient().request(SERVICE_QUERY, { slug: params.slug })
-    console.log(data)
+
     const p = data?.service
     if (!p) return null
     return (

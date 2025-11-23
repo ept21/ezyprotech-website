@@ -246,7 +246,6 @@ export default async function HomePage() {
         getAcfImageUrl(aboutSlice?.image4),
     ].filter(Boolean);
 
-    console.log(aboutImages)
 
     const aboutCta1 = aboutSlice?.ctaurl1 || null; // {url,title,target}
     const aboutCta2 = aboutSlice?.ctaurl2 || null;

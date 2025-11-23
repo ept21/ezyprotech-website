@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 
 /** NOTE: All comments must remain in English only. */
 export default function ContactSection({
@@ -13,6 +13,20 @@ export default function ContactSection({
                                            imageUrl = null,
                                            contactInfo = {},
                                        }) {
+    const [formData, setFormData] = useState({
+        fullName: "",
+        email: "",
+        phone: "",
+        businessName: "",
+        message: "",
+    });
+
+    const [status, setStatus] = useState({
+        loading: false,
+        success: false,
+        error: "",
+    });
+
     const HTML = ({ html }) => (
         <div
             className="prose prose-invert max-w-2xl mx-auto mt-4"
@@ -29,8 +43,48 @@ export default function ContactSection({
         : undefined;
 
     const { email, phone, whatsapp, address } = contactInfo || {};
-
     const hasContactDetails = Boolean(email || phone || whatsapp || address);
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setStatus({ loading: true, success: false, error: "" });
+
+        try {
+            const res = await fetch("/api/contact", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData),
+            });
+
+            const data = await res.json().catch(() => null);
+
+            if (!res.ok || !data?.ok) {
+                throw new Error(data?.error || "Failed to send message");
+            }
+
+            setStatus({ loading: false, success: true, error: "" });
+
+            setFormData({
+                fullName: "",
+                email: "",
+                phone: "",
+                businessName: "",
+                message: "",
+            });
+        } catch (err) {
+            console.error(err);
+            setStatus({
+                loading: false,
+                success: false,
+                error: err.message || "Something went wrong",
+            });
+        }
+    };
 
     return (
         <section
@@ -99,16 +153,17 @@ export default function ContactSection({
                     </div>
                 )}
 
-                {/* Static form – visual only for now */}
+                {/* Real form – posts to /api/contact → CF7 → Flamingo */}
                 <div className="mt-10 max-w-3xl mx-auto text-left">
                     <form
                         className="v-form v-form--contact glass-card"
-                        onSubmit={(e) => e.preventDefault()}
+                        onSubmit={handleSubmit}
                     >
                         <div className="grid gap-4 md:grid-cols-2">
                             <div className="form-group">
                                 <label htmlFor="fullName">
-                                    Full Name<span className="text-red-400">*</span>
+                                    Full Name
+                                    <span className="text-red-400">*</span>
                                 </label>
                                 <input
                                     id="fullName"
@@ -116,12 +171,15 @@ export default function ContactSection({
                                     type="text"
                                     required
                                     placeholder="John Doe"
+                                    value={formData.fullName}
+                                    onChange={handleChange}
                                 />
                             </div>
 
                             <div className="form-group">
                                 <label htmlFor="email">
-                                    Email<span className="text-red-400">*</span>
+                                    Email
+                                    <span className="text-red-400">*</span>
                                 </label>
                                 <input
                                     id="email"
@@ -129,12 +187,15 @@ export default function ContactSection({
                                     type="email"
                                     required
                                     placeholder="you@example.com"
+                                    value={formData.email}
+                                    onChange={handleChange}
                                 />
                             </div>
 
                             <div className="form-group">
                                 <label htmlFor="phone">
-                                    Phone<span className="text-red-400">*</span>
+                                    Phone
+                                    <span className="text-red-400">*</span>
                                 </label>
                                 <input
                                     id="phone"
@@ -142,37 +203,51 @@ export default function ContactSection({
                                     type="tel"
                                     required
                                     placeholder="+1 555 123 4567"
+                                    value={formData.phone}
+                                    onChange={handleChange}
                                 />
                             </div>
 
                             <div className="form-group">
                                 <label htmlFor="businessName">
-                                    Business Name <span className="text-xs text-gray-400">(optional)</span>
+                                    Business Name{" "}
+                                    <span className="text-xs text-gray-400">
+                                        (optional)
+                                    </span>
                                 </label>
                                 <input
                                     id="businessName"
                                     name="businessName"
                                     type="text"
                                     placeholder="Your company"
+                                    value={formData.businessName}
+                                    onChange={handleChange}
                                 />
                             </div>
                         </div>
 
                         <div className="form-group mt-4">
                             <label htmlFor="message">
-                                Tell us a bit about your project or what you&apos;re looking for
+                                Tell us a bit about your project or what you&apos;re
+                                looking for
                             </label>
                             <textarea
                                 id="message"
                                 name="message"
                                 rows={5}
                                 placeholder="For example: we want to rebuild our website with headless WordPress and automate lead routing…"
+                                value={formData.message}
+                                onChange={handleChange}
                             />
                         </div>
 
                         <div className="mt-6 flex flex-wrap items-center gap-4">
-                            <button type="submit" className="btn-brand">
-                                Send message
+                            <button
+                                type="submit"
+                                className="btn-brand"
+                                disabled={status.loading}
+                            >
+                                {status.loading ? "Sending..." : "Send message"}
                             </button>
                             {email && (
                                 <p className="text-sm text-white/70">
@@ -187,6 +262,17 @@ export default function ContactSection({
                                 </p>
                             )}
                         </div>
+
+                        {status.error && (
+                            <p className="mt-3 text-sm text-red-400">
+                                {status.error}
+                            </p>
+                        )}
+                        {status.success && (
+                            <p className="mt-3 text-sm text-emerald-400">
+                                Thanks, your message has been sent.
+                            </p>
+                        )}
                     </form>
                 </div>
 
