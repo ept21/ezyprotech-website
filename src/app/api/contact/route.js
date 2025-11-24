@@ -31,7 +31,10 @@ export async function POST(req) {
         formData.append("_wpcf7_container_post", "0");              // no specific page
         formData.append("_wpcf7_locale", "en_US");                  // adjust if needed
 
-        // ---- Your actual form fields (names must match CF7 exactly) ----
+
+        formData.append("your-subject", "HomePage Contact Lead");
+        formData.append("formName", "Veltiqo HomePage Contact Form");
+
         formData.append("fullName", fullName || "");
         formData.append("email", email || "");
         formData.append("phone", phone || "");
