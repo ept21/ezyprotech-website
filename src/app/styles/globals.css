@@ -436,3 +436,15 @@ footer{
   font-family: var(--font-h);
 }
 
+/* העברת הקאפצה לצד שמאל */
+.grecaptcha-badge {
+  width: 70px !important;
+  overflow: hidden !important;
+  transition: all 0.3s ease !important;
+  left: 0 !important;
+  right: auto !important;
+}
+
+.grecaptcha-badge:hover {
+  width: 256px !important;
+}
