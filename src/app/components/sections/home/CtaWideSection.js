@@ -40,6 +40,7 @@ export default function CtaWideSection({
 
     return (
         <section
+            id="ctasection"
             className="v-sec v-sec--scheme-1 relative bg-center bg-cover bg-no-repeat"
             data-v="cta"
             style={sectionBgStyle}

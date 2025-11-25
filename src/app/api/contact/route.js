@@ -25,21 +25,26 @@ export async function POST(req) {
 
         const formData = new FormData();
 
-        // ---- CF7 internal meta fields (this is what the browser normally sends) ----
-        formData.append("_wpcf7", String(formId));                  // numeric form ID
-        formData.append("_wpcf7_unit_tag", `wpcf7-f${formId}-o1`);  // must match pattern
-        formData.append("_wpcf7_container_post", "0");              // no specific page
-        formData.append("_wpcf7_locale", "en_US");                  // adjust if needed
+        // CF7 meta
+        formData.append("_wpcf7", String(formId));
+        formData.append("_wpcf7_unit_tag", `wpcf7-f${formId}-o1`);
+        formData.append("_wpcf7_container_post", "0");
+        formData.append("_wpcf7_locale", "en_US");
 
-
+        // fields for subject + form name
         formData.append("your-subject", "HomePage Contact Lead");
         formData.append("formName", "Veltiqo HomePage Contact Form");
 
+        // main fields (exact names as in CF7 form)
         formData.append("fullName", fullName || "");
         formData.append("email", email || "");
         formData.append("phone", phone || "");
         formData.append("businessName", businessName || "");
         formData.append("message", message || "");
+
+        // aliases for Flamingo "From:"
+        formData.append("your-name", fullName || "");
+        formData.append("your-email", email || "");
 
         const wpRes = await fetch(
             `${wpUrl}/wp-json/contact-form-7/v1/contact-forms/${formId}/feedback`,
@@ -47,7 +52,6 @@ export async function POST(req) {
                 method: "POST",
                 headers: {
                     Accept: "application/json",
-                    // Do NOT set Content-Type – let fetch + FormData handle it
                 },
                 body: formData,
             }
