@@ -71,14 +71,16 @@ export async function POST(req) {
         const formData = new FormData();
 
         // CF7 meta fields
+
         formData.append("_wpcf7", String(formId));
         formData.append("_wpcf7_unit_tag", `wpcf7-f${formId}-o1`);
         formData.append("_wpcf7_container_post", "0");
         formData.append("_wpcf7_locale", "en_US");
 
-        // Custom fields and labels
+
         formData.append("your-subject", "HomePage Contact Lead");
         formData.append("formName", "Veltiqo HomePage Contact Form");
+
 
         formData.append("fullName", fullName || "");
         formData.append("email", email || "");
@@ -86,6 +88,9 @@ export async function POST(req) {
         formData.append("businessName", businessName || "");
         formData.append("message", message || "");
 
+
+        formData.append("your-name", fullName || "");
+        formData.append("your-email", email || "");
         const wpRes = await fetch(
             `${wpUrl}/wp-json/contact-form-7/v1/contact-forms/${formId}/feedback`,
             {
