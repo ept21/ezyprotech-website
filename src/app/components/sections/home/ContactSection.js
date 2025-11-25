@@ -30,6 +30,9 @@ export default function ContactSection({
         error: "",
     });
 
+    // State to handle lazy loading of reCAPTCHA
+    const [loadRecaptcha, setLoadRecaptcha] = useState(false);
+
     const HTML = ({ html }) => (
         <div
             className="prose prose-invert max-w-2xl mx-auto mt-4"
@@ -53,14 +56,22 @@ export default function ContactSection({
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
+    // Trigger reCAPTCHA script loading on user interaction
+    const handleInteraction = () => {
+        if (!loadRecaptcha) {
+            setLoadRecaptcha(true);
+        }
+    };
+
     // Helper to get a reCAPTCHA v3 token from Google
     const getRecaptchaToken = () => {
         return new Promise((resolve, reject) => {
             if (typeof window === "undefined") {
                 return reject(new Error("reCAPTCHA is not available on server side."));
             }
+            // If script hasn't loaded yet, we can't execute
             if (!window.grecaptcha || !siteKey) {
-                return reject(new Error("reCAPTCHA is not ready yet."));
+                return reject(new Error("reCAPTCHA is not ready yet. Please try again in a moment."));
             }
 
             window.grecaptcha.ready(() => {
@@ -74,6 +85,14 @@ export default function ContactSection({
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Ensure recaptcha is requested if user clicked submit directly without prior focus
+        if (!loadRecaptcha) {
+            setLoadRecaptcha(true);
+            // Give it a small delay to start loading if it wasn't already
+            await new Promise(r => setTimeout(r, 500));
+        }
+
         setStatus({ loading: true, success: false, error: "" });
 
         try {
@@ -120,7 +139,15 @@ export default function ContactSection({
 
     return (
         <>
-            {siteKey && (
+            {/* Hiding the badge globally via CSS */}
+            <style jsx global>{`
+                .grecaptcha-badge {
+                    visibility: hidden;
+                }
+            `}</style>
+
+            {/* Load script only when user interacts */}
+            {siteKey && loadRecaptcha && (
                 <Script
                     src={`https://www.google.com/recaptcha/api.js?render=${siteKey}`}
                     strategy="afterInteractive"
@@ -198,6 +225,8 @@ export default function ContactSection({
                         <form
                             className="v-form v-form--contact glass-card"
                             onSubmit={handleSubmit}
+                            onFocus={handleInteraction}
+                            onClick={handleInteraction}
                         >
                             <div className="grid gap-4 md:grid-cols-2">
                                 <div className="form-group">
@@ -303,6 +332,13 @@ export default function ContactSection({
                                         .
                                     </p>
                                 )}
+                            </div>
+
+                            {/* Required Legal Text for hidden badge */}
+                            <div className="mt-4 text-xs text-gray-400/80">
+                                This site is protected by reCAPTCHA and the Google{' '}
+                                <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="underline hover:text-white">Privacy Policy</a> and{' '}
+                                <a href="https://policies.google.com/terms" target="_blank" rel="noreferrer" className="underline hover:text-white">Terms of Service</a> apply.
                             </div>
 
                             {status.error && (
