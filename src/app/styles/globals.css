@@ -182,7 +182,7 @@ a { text-underline-offset: 2px; }
 
 /* Footer */
 footer{
-  background: color-mix(in oklab, #000 85%, transparent);
+  background:#0C0C0D;
   border-top:1px solid var(--border-subtle); padding:40px 20px; text-align:center
 }
 .footer-links{ display:flex; justify-content:center; gap:24px; margin-bottom:16px }

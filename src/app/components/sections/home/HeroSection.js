@@ -56,16 +56,6 @@ export default function HeroSection({
                 <div className="v-hero__radial" />
             </div>
 
-            {/* Electric FX layer (unchanged) */}
-            <div className="fx-electric pointer-events-none absolute inset-0 -z-10">
-                <div className="grid-bg fx-layer" />
-                <div className="shapes-container fx-layer">
-                    <div className="shape shape-circle" />
-                    <div className="shape shape-triangle" />
-                    <div className="shape shape-square" />
-                </div>
-                <div className="scanlines fx-layer" />
-            </div>
 
             {/* Content */}
             <div className="v-hero__content">

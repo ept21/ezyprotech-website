@@ -1,4 +1,4 @@
-// /src/app/page.js
+
 export const revalidate = 60;
 
 import HeroSection from "@/app/components/sections/home/HeroSection";

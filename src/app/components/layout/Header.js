@@ -80,7 +80,7 @@ export default function Header({
     }, [menu]);
 
     const navBg = scrolled
-        ? "backdrop-blur-md bg-[color-mix(in_oklab,var(--bg-default)_70%,transparent)] border-b border-[var(--border-subtle)] py-2"
+        ? "backdrop-blur-md bg-[#0C0C0D] py-2"
         : "bg-transparent py-3";
 
     const isActive = (href) => {
