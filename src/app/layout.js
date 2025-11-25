@@ -6,57 +6,62 @@ import Header from '@/app/components/layout/Header'
 import Footer from '@/app/components/layout/Footer'
 import Analytics from '@/app/components/analytics/Analytics'
 import HeadMeta from '@/app/components/seo/HeadMeta'
+import FloatingContactFab from '@/app/components/layout/FloatingContactFab'
 
 import '@/app/styles/electric-xtra.css'
 import '@/app/styles/globals.css'
 
-
-
 export default async function RootLayout({ children }) {
-    let globalsRes = null, mainRes = null, footerRes = null;
+    let globalsRes = null, mainRes = null, footerRes = null
 
     // Fetch globals
     try {
-        globalsRes = await gqlRequest(GLOBALS_QUERY);
+        globalsRes = await gqlRequest(GLOBALS_QUERY)
     } catch (err) {
-        console.warn("[WP] Globals fetch failed:", err.message, err.graphQLErrors ? JSON.stringify(err.graphQLErrors, null, 2) : "");
+        console.warn(
+            '[WP] Globals fetch failed:',
+            err.message,
+            err.graphQLErrors ? JSON.stringify(err.graphQLErrors, null, 2) : ''
+        )
     }
 
     // Fetch main menu
     try {
-        mainRes = await gqlRequest(MAIN_MENU_BY_LOCATION);
+        mainRes = await gqlRequest(MAIN_MENU_BY_LOCATION)
     } catch (err) {
-        console.warn("[WP] Main menu fetch failed:", err.message);
+        console.warn('[WP] Main menu fetch failed:', err.message)
     }
 
     // Fetch footer menu
     try {
-        footerRes = await gqlRequest(FOOTER_MENU_BY_LOCATION);
+        footerRes = await gqlRequest(FOOTER_MENU_BY_LOCATION)
     } catch (err) {
-        console.warn("[WP] Footer menu fetch failed:", err.message);
+        console.warn('[WP] Footer menu fetch failed:', err.message)
     }
 
-    const siteTitle = globalsRes?.generalSettings?.title ?? 'Veitiqo';
-    const siteUrl   = globalsRes?.generalSettings?.url   ?? '';
-    const gs        = globalsRes?.page?.globalSettings;
+    const siteTitle = globalsRes?.generalSettings?.title ?? 'Veitiqo'
+    const siteUrl = globalsRes?.generalSettings?.url ?? ''
+    const gs = globalsRes?.page?.globalSettings
 
-    const faviconUrl = getAcfImageUrl(gs?.favicon);
-    const sitelogo   = getAcfImageUrl(gs?.sitelogo);
-    const defaultOg  = getAcfImageUrl(gs?.defaultogimage);
-    const ga4Code    = gs?.ga4code || '';
-    const metaPixelId= gs?.metapixelid || '';
-    const address = gs?.address || '';
+    const faviconUrl = getAcfImageUrl(gs?.favicon)
+    const sitelogo = getAcfImageUrl(gs?.sitelogo)
+    const defaultOg = getAcfImageUrl(gs?.defaultogimage)
+    const ga4Code = gs?.ga4code || ''
+    const metaPixelId = gs?.metapixelid || ''
+    const address = gs?.address || ''
 
+    // Global contact info (field names can be adjusted to your ACF keys)
+    const phone = gs?.phone || gs?.phoneNumber || ''
+    const whatsapp = gs?.whatsapp || gs?.whatsappNumber || ''
 
-    const mainItems   = mainRes?.menuItems?.nodes   ?? [];
-    const footerItems = footerRes?.menuItems?.nodes ?? [];
+    const mainItems = mainRes?.menuItems?.nodes ?? []
+    const footerItems = footerRes?.menuItems?.nodes ?? []
 
-    const mainMenuTree = buildMenuTree(mainItems);
+    const mainMenuTree = buildMenuTree(mainItems)
     const footerLinks = footerItems
-        .filter(n => !n.parentId)
-        .sort((a,b) => (a.order ?? 0) - (b.order ?? 0))
-        .map(n => ({ id: n.id, label: n.label, url: n.url }));
-
+        .filter((n) => !n.parentId)
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+        .map((n) => ({ id: n.id, label: n.label, url: n.url }))
 
     return (
         <html lang="en">
@@ -77,13 +82,15 @@ export default async function RootLayout({ children }) {
             siteUrl={siteUrl}
             sitelogo={sitelogo}
         />
+
         {children}
+
         <Footer
             links={footerLinks}
             siteTitle={siteTitle}
             sitelogo={sitelogo}
             socials={{
-                facebook: gs?.facebookAddress,   // {url,title,target} או ריק
+                facebook: gs?.facebookAddress,
                 instagram: gs?.instagramAddress,
                 tiktok: gs?.tiktokAddress,
                 linkedin: gs?.linkdine,
@@ -91,8 +98,16 @@ export default async function RootLayout({ children }) {
             }}
             address={address}
         />
+
+        {/* Global floating contact FAB using global settings */}
+        <FloatingContactFab
+            phone={phone}
+            whatsapp={whatsapp}
+            showOnMobile={true}
+        />
+
         <Analytics ga4Code={ga4Code} metaPixelId={metaPixelId} />
         </body>
         </html>
-    );
+    )
 }
