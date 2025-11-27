@@ -59,16 +59,16 @@ export default function HeroSection({
 
             {/* Content */}
             <div className="v-hero__content">
-                {kicker ? <p className="text-sm text-white">{kicker}</p> : null}
+                {kicker ? <p className="text-sm text-white font-bold">{kicker}</p> : null}
                 <h1 className="text-white mt-2 text-4xl md:text-5xl font-extrabold tracking-[-0.02em]">
                     {title}
                 </h1>
-                {subtitle ? <p className="mt-4 text-lg text-white">{subtitle}</p> : null}
+                {subtitle ? <h2 className="mt-4 text-lg text-white font-bold">{subtitle}</h2> : null}
 
                 {/* Optional WYSIWYG content */}
                 {contentHtml ? (
                     <div
-                        className="mt-4 text-white/90 max-w-3xl mx-auto prose prose-invert prose-p:my-2"
+                        className="cus-content mt-4 text-white/90 max-w-3xl mx-auto prose prose-invert prose-p:my-2"
                         dangerouslySetInnerHTML={{ __html: contentHtml }}
                     />
                 ) : null}
@@ -78,7 +78,7 @@ export default function HeroSection({
                         <a href={primaryHref} className="btn-brand">{primaryLabel}</a>
                     ) : null}
                     {secondaryHref && secondaryLabel ? (
-                        <a href={secondaryHref} className="btn-brand-outline text-white">{secondaryLabel}</a>
+                        <a href={secondaryHref} className="hiro-btn-brand-outline text-white">{secondaryLabel}</a>
                     ) : null}
                 </div>
             </div>

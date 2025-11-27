@@ -80,7 +80,7 @@ export default function Header({
     }, [menu]);
 
     const navBg = scrolled
-        ? "backdrop-blur-md bg-[color-mix(in_oklab,var(--bg-default)_70%,transparent)] border-b border-[var(--border-subtle)] py-2"
+        ? "backdrop-blur-md bg-[color-mix(in_oklab,var(--text-primary)_70%,transparent)] py-2"
         : "bg-transparent py-3";
 
     const isActive = (href) => {
@@ -134,10 +134,10 @@ export default function Header({
                             <Link
                                 href={item.url}
                                 aria-label={item.label}
-                                className={`px-3 py-2 rounded-lg text-sm font-medium transition
+                                className={`menu-link px-3 py-2 rounded-lg text-sm font-medium transition
                   ${isActive(item.url)
-                                    ? "text-[var(--brand-primary)]"
-                                    : "text-[var(--text-secondary)] hover:text-[var(--foreground)]"}
+                                    ? "text-[#ffffff]"
+                                    : "text-[var(--text-secondary)] hover:text-[#017373]"}
                   focus:outline-none focus-visible:ring ring-[var(--brand-primary)]`}
                             >
                                 {item.label}
@@ -156,7 +156,7 @@ export default function Header({
                 {/* Mobile toggle */}
                 <button
                     type="button"
-                    className="text-[#0A84FF] md:hidden inline-flex items-center justify-center rounded-lg p-2 focus:outline-none focus-visible:ring ring-[var(--brand-primary)]"
+                    className="text-[#2ebdd4] md:hidden inline-flex items-center justify-center rounded-lg p-2 focus:outline-none focus-visible:ring ring-[var(--brand-primary)]"
                     aria-controls="mobile-menu"
                     aria-expanded={open}
                     aria-label={open ? "Close menu" : "Open menu"}
@@ -179,7 +179,7 @@ export default function Header({
                             <li key={item.id}>
                                 <Link
                                     href={item.url}
-                                    className={`block w-full px-4 py-3 rounded-xl text-base transition
+                                    className={`font-bold block w-full px-4 py-3 rounded-xl text-base transition
                     ${isActive(item.url)
                                         ? "text-[var(--brand-primary)] bg-[color-mix(in_oklab,var(--brand-primary)_8%,transparent)]"
                                         : "text-[var(--foreground)] hover:bg-[rgba(255,255,255,.04)]"}

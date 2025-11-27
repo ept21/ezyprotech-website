@@ -1,6 +1,6 @@
 :root {
     /* Veitiqo – Light (Electric Vector) */
-    --brand-primary: #0A84FF;
+    --brand-primary: #3f9191;
     --brand-accent:  #00C2FF;
     --text-primary:  #0B1220;
     --text-secondary:#5E6975;
@@ -76,7 +76,7 @@ img { display: block; max-width: 100%; height: auto; }
 /* ===== Design tokens (optional but nice) ===== */
 :root{
     /* Light “Electric Vector” (from your brand memory) */
-    --brand-primary: #0A84FF;
+    --brand-primary: #3f9191;
     --brand-accent:  #00C2FF;
     --text-primary:  #0B1220;
     --text-secondary:#5E6975;

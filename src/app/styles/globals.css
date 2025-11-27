@@ -4,18 +4,38 @@
 /* ==== Brand tokens ==== */
 @import "./brand.css";
 
-/* ==== Base Resets (עדין, שלא יתנגש ב-TW) ==== */
+/* ==== Base Resets ==== */
 * { box-sizing: border-box; }
-html, body { height: 100%; }
-html { scroll-behavior: smooth; }
+
+html {
+  height: 100%;
+  /* זה מבטל את הגלילה מעבר לגבולות (הקפיץ) */
+  overscroll-behavior-y: none;
+  /* מוודא שהרקע "מתחת" לאתר הוא גם בצבע הכהה */
+  background-color: var(--bg-default);
+  scroll-behavior: smooth;
+}
+
 body {
+  /* מינימום גובה מסך מלא */
+  min-height: 100vh;
+  /* הופך את הגוף לקונטיינר גמיש כדי שהפוטר יישאר למטה */
+  display: flex;
+  flex-direction: column;
+
   background: var(--bg-default);
   color: var(--text-primary);
   font-family: var(--font-b);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  /* מבטל margin כדי למנוע פסים לבנים */
+  margin: 0;
 }
 
+/* הפוטר ידחף למטה, והתוכן (main) יתפוס את השאר */
+main {
+  flex-grow: 1;
+}
 
 
 
@@ -447,4 +467,21 @@ footer{
 
 .grecaptcha-badge:hover {
   width: 256px !important;
+}
+
+
+
+.hiro-btn-brand-outline {
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px; padding: .65rem 1rem; font-weight: 600;
+  border: 1px solid color-mix(in oklab, #0bbbef 70%, white);
+  color: #fff;
+  background: rgba(255,255,255,.04);
+  transition: background .2s ease, color .2s ease, border-color .2s ease, transform .2s ease;
+}
+.hiro-btn-brand-outline:hover{
+  background: rgba(10,132,255,.08);
+  color: #fff;
+  border-color: var(--brand-primary);
+  transform: translateY(-2px);
 }

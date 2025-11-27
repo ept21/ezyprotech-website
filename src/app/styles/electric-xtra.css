@@ -92,7 +92,7 @@
     gap: 80px;
     align-items: center;
 }
-.v-sec--dark { background: #0b0f14; } /* עומק כהה יותר */
+.v-sec--dark { background: #0b0f14; }
 .v-sec--scheme-1 { background: var(--bg-default, #0D1117); }
 .v-sec--scheme-2 {
     background: var(--bg-elevated, #161B22);
@@ -464,10 +464,34 @@
 
 
 
+.menu-link:hover {
+    color: #2ebdd4;
+}
+
+
+
+
+
+
+
 /* Mobile Query */
 
 @media (max-width:768px){
    .v-sec {
        padding: 50px 30px;
    }
+
+
+
+    .v-hero__content {
+        padding-inline: 0.75rem;
+    }
+
+    .cus-content {
+        font-size: 14px;
+    }
 }
+
+
+
+
