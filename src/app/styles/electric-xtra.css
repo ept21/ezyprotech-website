@@ -481,7 +481,9 @@
        padding: 50px 30px;
    }
 
-
+    v-hero {
+        min-height: 100vh!important;
+    }
 
     .v-hero__content {
         padding-inline: 0.75rem;
