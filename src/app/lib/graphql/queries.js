@@ -39,6 +39,7 @@ export const SERVICES_HOME_PAGE_QUERY = gql`
         services {
           showServices
           servicesBgImage { node { mediaItemUrl sourceUrl altText } }
+          mobileBackgroundImage { node { mediaItemUrl sourceUrl altText } }
           kicker
           servicesTitle
           servicesSubtitle

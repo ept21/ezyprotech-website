@@ -1,4 +1,3 @@
-
 export const revalidate = 60;
 
 import HeroSection from "@/app/components/sections/home/HeroSection";
@@ -12,16 +11,16 @@ import ContactSection from "@/app/components/sections/home/ContactSection";
 
 import { gqlRequest } from "@/app/lib/graphql/client";
 import {
-         HERO_QUERY,
-         SERVICES_HOME_PAGE_QUERY,
-         BUNDLES_HOME_PAGE_QUERY,
-         ABOUT_HOME_PAGE_QUERY,
-         PROJECTS_HOME_PAGE_QUERY,
-         TESTIMONIALS_HOME_PAGE_QUERY,
-         CTA_HOME_PAGE_QUERY,
-         CONTACT_HOME_PAGE_QUERY,
-         GLOBALS_QUERY,
-            } from "@/app/lib/graphql/queries";
+    HERO_QUERY,
+    SERVICES_HOME_PAGE_QUERY,
+    BUNDLES_HOME_PAGE_QUERY,
+    ABOUT_HOME_PAGE_QUERY,
+    PROJECTS_HOME_PAGE_QUERY,
+    TESTIMONIALS_HOME_PAGE_QUERY,
+    CTA_HOME_PAGE_QUERY,
+    CONTACT_HOME_PAGE_QUERY,
+    GLOBALS_QUERY,
+} from "@/app/lib/graphql/queries";
 import { getAcfImageUrl } from "@/app/lib/wp";
 
 import "@/styles/electric-xtra.css";
@@ -66,7 +65,6 @@ export default async function HomePage() {
         );
     }
 
-
     // Globals for contact details
     const globalsRes = await gqlRequest(GLOBALS_QUERY);
     const gs = globalsRes?.page?.globalSettings;
@@ -77,8 +75,6 @@ export default async function HomePage() {
         whatsapp: gs?.whatsapp || null,
         address: gs?.address || null,
     };
-
-
 
     /* ---- HERO ---- */
     const heroData = await gqlRequest(HERO_QUERY, { id: homePageDbId });
@@ -112,6 +108,9 @@ export default async function HomePage() {
     const showServices = servicesSlice?.showServices ?? true;
 
     const servicesBgUrl = getAcfImageUrl(servicesSlice?.servicesBgImage);
+    const servicesBgMobileUrl = getAcfImageUrl(
+        servicesSlice?.mobileBackgroundImage
+    );
     const servicesKicker = servicesSlice?.kicker || "Accelerate";
     const servicesTitle = servicesSlice?.servicesTitle || "Our core services";
     const servicesSubtitle =
@@ -164,8 +163,6 @@ export default async function HomePage() {
         target: servicesSlice?.ctaurl?.target || null,
     };
 
-
-
     /* ---- BUNDLES (Home section) ---- */
     const bundlesFirstDefault = 12;
     const bundlesRes = await gqlRequest(BUNDLES_HOME_PAGE_QUERY, {
@@ -176,18 +173,20 @@ export default async function HomePage() {
     const bundlesSlice = bundlesRes?.page?.homePageFields?.bundles || {};
     const showBundles = bundlesSlice?.showBundles ?? true;
 
-    const bundlesBgUrl    = getAcfImageUrl(bundlesSlice?.bundlesBgImage);
-    const bundlesKicker   = bundlesSlice?.kicker || "Scale";
-    const bundlesTitle    = bundlesSlice?.bundlesTitle || "Pricing plans";
-    const bundlesSubtitle = bundlesSlice?.bundlesSubtitle || "Flexible packages designed to match your business growth trajectory.";
-    const bundlesContent  = bundlesSlice?.bundlesContent || "";
+    const bundlesBgUrl = getAcfImageUrl(bundlesSlice?.bundlesBgImage);
+    const bundlesKicker = bundlesSlice?.kicker || "Scale";
+    const bundlesTitle = bundlesSlice?.bundlesTitle || "Pricing plans";
+    const bundlesSubtitle =
+        bundlesSlice?.bundlesSubtitle ||
+        "Flexible packages designed to match your business growth trajectory.";
+    const bundlesContent = bundlesSlice?.bundlesContent || "";
 
     const bundlesDisplayLimit = Math.max(
         1,
         Math.min(24, bundlesSlice?.bundlesDisplayLimit || bundlesFirstDefault)
     );
 
-// Manual vs Auto
+    // Manual vs Auto
     let rawBundles = [];
     if (bundlesSlice?.bundlesSource === "manual") {
         rawBundles = bundlesSlice?.bundlesItems?.nodes || [];
@@ -196,17 +195,20 @@ export default async function HomePage() {
     }
     rawBundles = rawBundles.slice(0, bundlesDisplayLimit);
 
-// Map WP → UI
+    // Map WP → UI
     const bundleCards = rawBundles.map((n, i) => {
         const bf = n?.bundlesFields || {};
         const title = bf?.title?.trim?.() || n?.title || "Untitled";
         const price = bf?.price || null;
-        const per   = bf?.textNearPriceMonthlyYearlyOrOther || "";
+        const per = bf?.textNearPriceMonthlyYearlyOrOther || "";
         const featuresHtml = bf?.productsIncludes || "";
-        const image = n?.featuredImage?.node?.mediaItemUrl || n?.featuredImage?.node?.sourceUrl || null;
-        const href  = n?.uri || "#";
-        const cta1  = bf?.ctaurl1 || null;
-        const cta2  = bf?.ctaurl2 || null;
+        const image =
+            n?.featuredImage?.node?.mediaItemUrl ||
+            n?.featuredImage?.node?.sourceUrl ||
+            null;
+        const href = n?.uri || "#";
+        const cta1 = bf?.ctaurl1 || null;
+        const cta2 = bf?.ctaurl2 || null;
 
         return {
             id: n?.id || String(i),
@@ -226,16 +228,19 @@ export default async function HomePage() {
         target: bundlesSlice?.ctaurl?.target || null,
     };
 
-
     /* ---- ABOUT (Home section) ---- */
     const aboutRes = await gqlRequest(ABOUT_HOME_PAGE_QUERY, { id: homePageDbId });
     const aboutSlice = aboutRes?.page?.homePageFields?.about || {};
     const showAbout = aboutSlice?.showabout ?? true;
 
-    const aboutBgUrl   = getAcfImageUrl(aboutSlice?.aboutBgImage);
-    const aboutKicker  = aboutSlice?.kicker || "Transform";
-    const aboutTitle   = aboutSlice?.aboutTitle || "Intelligent technology meets strategic vision";
-    const aboutSubtitle= aboutSlice?.aboutSubtitle || "We bridge the gap between cutting-edge AI technologies and practical business solutions.";
+    const aboutBgUrl = getAcfImageUrl(aboutSlice?.aboutBgImage);
+    const aboutKicker = aboutSlice?.kicker || "Transform";
+    const aboutTitle =
+        aboutSlice?.aboutTitle ||
+        "Intelligent technology meets strategic vision";
+    const aboutSubtitle =
+        aboutSlice?.aboutSubtitle ||
+        "We bridge the gap between cutting-edge AI technologies and practical business solutions.";
     const aboutContent = aboutSlice?.aboutContent || "";
 
     // Resolve up to 4 images (null-safe)
@@ -245,7 +250,6 @@ export default async function HomePage() {
         getAcfImageUrl(aboutSlice?.image3),
         getAcfImageUrl(aboutSlice?.image4),
     ].filter(Boolean);
-
 
     const aboutCta1 = aboutSlice?.ctaurl1 || null; // {url,title,target}
     const aboutCta2 = aboutSlice?.ctaurl2 || null;
@@ -260,10 +264,13 @@ export default async function HomePage() {
     const projectsSlice = projectsRes?.page?.homePageFields?.projects || {};
     const showProjects = projectsSlice?.showProjects ?? true;
 
-    const projectsBgUrl   = getAcfImageUrl(projectsSlice?.projectsBgImage);
-    const projectsKicker  = projectsSlice?.kicker || "Deliver";
-    const projectsTitle   = projectsSlice?.projectsTitle || "Featured projects";
-    const projectsSubtitle= projectsSlice?.projectsSubtitle || "A snapshot of recent work — fast, scalable, and designed for growth.";
+    const projectsBgUrl = getAcfImageUrl(projectsSlice?.projectsBgImage);
+    const projectsKicker = projectsSlice?.kicker || "Deliver";
+    const projectsTitle =
+        projectsSlice?.projectsTitle || "Featured projects";
+    const projectsSubtitle =
+        projectsSlice?.projectsSubtitle ||
+        "A snapshot of recent work — fast, scalable, and designed for growth.";
     const projectsContent = projectsSlice?.projectsContent || "";
 
     const projectsDisplayLimit = Math.max(
@@ -283,11 +290,13 @@ export default async function HomePage() {
     // Map WP → UI shape that matches your current cards
     const projectCards = rawProjects.map((n, i) => {
         const pf = n?.projectsFields || {};
-        const title    = (pf?.title || n?.title || "Untitled").trim?.() || "Untitled";
+        const title =
+            (pf?.title || n?.title || "Untitled").trim?.() || "Untitled";
         const category = pf?.categorylabel || pf?.kicker || "Project";
-        const desc     = pf?.excerpt || "";
-        const image    = getAcfImageUrl(pf?.projectimage) || getFeaturedUrl(n);
-        const href     = getAcfLinkUrl(pf?.projectlink) || n?.uri || "#";
+        const desc = pf?.excerpt || "";
+        const image =
+            getAcfImageUrl(pf?.projectimage) || getFeaturedUrl(n);
+        const href = getAcfLinkUrl(pf?.projectlink) || n?.uri || "#";
 
         const cta1 = pf?.ctaurl1 || null; // { url, title, target }
         const cta2 = pf?.ctaurl2 || null;
@@ -308,8 +317,6 @@ export default async function HomePage() {
         projectsSlice?.ctaurl2 || null,
     ].filter(Boolean);
 
-
-
     /* ---- TESTIMONIALS (Home section) ---- */
     const testimonialsFirstDefault = 12;
     const testimonialsRes = await gqlRequest(TESTIMONIALS_HOME_PAGE_QUERY, {
@@ -328,7 +335,8 @@ export default async function HomePage() {
     const testimonialsKicker =
         testimonialsSlice?.kicker || "Trust";
     const testimonialsTitle =
-        testimonialsSlice?.testimonialsTitle || "Client success stories";
+        testimonialsSlice?.testimonialsTitle ||
+        "Client success stories";
     const testimonialsSubtitle =
         testimonialsSlice?.testimonialsSubtitle ||
         "Real results from businesses that trusted Veltiqo.";
@@ -351,13 +359,16 @@ export default async function HomePage() {
     } else {
         rawTestimonials = testimonialsRes?.testimonials?.nodes || [];
     }
-    rawTestimonials = rawTestimonials.slice(0, testimonialsDisplayLimit);
+    rawTestimonials = rawTestimonials.slice(
+        0,
+        testimonialsDisplayLimit
+    );
 
     // Map WP → UI shape
     const testimonialCards = rawTestimonials.map((n, i) => {
         const tf = n?.testimonialsFields || {};
 
-        const stars = Number(tf?.starranking) || 0; // <-- שם השדה לפי ה־GQL
+        const stars = Number(tf?.starranking) || 0;
         const name =
             tf?.fullname?.trim?.() ||
             n?.title?.trim?.() ||
@@ -390,12 +401,10 @@ export default async function HomePage() {
         };
     });
 
-
     const testimonialsCtas = [
         testimonialsSlice?.ctaurl1 || null,
         testimonialsSlice?.ctaurl2 || null,
     ].filter(Boolean);
-
 
     /* ---- CTA (Home section) ---- */
     const ctaRes = await gqlRequest(CTA_HOME_PAGE_QUERY, {
@@ -408,7 +417,9 @@ export default async function HomePage() {
     const ctaBgUrl = getAcfImageUrl(ctaSlice?.backgroundImage);
     const ctaImageUrl =
         getAcfImageUrl(ctaSlice?.ctaImage) ||
-        (typeof ctaSlice?.ctaImage === "string" ? ctaSlice?.ctaImage : null);
+        (typeof ctaSlice?.ctaImage === "string"
+            ? ctaSlice?.ctaImage
+            : null);
 
     const ctaKicker = ctaSlice?.kicker || "Accelerate";
     const ctaTitle =
@@ -421,8 +432,6 @@ export default async function HomePage() {
     const ctaPrimary = ctaSlice?.ctaurl1 || null; // { url, title, target }
     const ctaSecondary = ctaSlice?.ctaurl2 || null;
 
-
-
     /* ---- CONTACT (Home section) ---- */
     const contactRes = await gqlRequest(CONTACT_HOME_PAGE_QUERY, {
         id: homePageDbId,
@@ -433,7 +442,8 @@ export default async function HomePage() {
 
     const contactBgUrl = getAcfImageUrl(contactSlice?.contactBgImage);
     const contactKicker = contactSlice?.kicker || "Connect";
-    const contactTitle = contactSlice?.contactTitle || "Contact Veltiqo";
+    const contactTitle =
+        contactSlice?.contactTitle || "Contact Veltiqo";
     const contactSubtitle =
         contactSlice?.contactSubtitle ||
         "We're ready to help you navigate the future of intelligent business solutions.";
@@ -441,11 +451,6 @@ export default async function HomePage() {
 
     const useGlobalContact = contactSlice?.useGlobalContact ?? true;
     const contactImageUrl = getAcfImageUrl(contactSlice?.contactimage);
-
-
-
-
-
 
     return (
         <main>
@@ -473,11 +478,11 @@ export default async function HomePage() {
                     subtitle={servicesSubtitle}
                     contentHtml={servicesContentHtml}
                     bgUrl={servicesBgUrl}
+                    bgMobileUrl={servicesBgMobileUrl}
                     items={serviceCards}
                     sectionCta={sectionCta}
                 />
             )}
-
 
             {/* BUNDLES (pricing) */}
             {showBundles && (
@@ -491,8 +496,6 @@ export default async function HomePage() {
                     sectionCta={bundlesSectionCta}
                 />
             )}
-
-
 
             {/* ABOUT */}
             {showAbout && (
@@ -546,7 +549,6 @@ export default async function HomePage() {
                 />
             )}
 
-
             {showContact && (
                 <ContactSection
                     bgUrl={contactBgUrl}
@@ -559,10 +561,6 @@ export default async function HomePage() {
                     contactInfo={contactGlobals}
                 />
             )}
-
-
-
-
         </main>
     );
 }
