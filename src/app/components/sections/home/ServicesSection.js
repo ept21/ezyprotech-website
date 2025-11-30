@@ -119,15 +119,15 @@ export default function ServicesSection({
             aria-label="Services carousel"
         >
             {/* Dark overlay for readability (sits above CSS background, below content) */}
-            {hasBackground && (
-                <div
-                    aria-hidden
-                    className="absolute inset-0 -z-10 pointer-events-none"
-                    style={{
-                        background: "linear-gradient(0deg, rgba(0,0,0,.40), rgba(0,0,0,.40))",
-                    }}
-                />
-            )}
+            {/*{hasBackground && (*/}
+            {/*    <div*/}
+            {/*        aria-hidden*/}
+            {/*        className="absolute inset-0 -z-10 pointer-events-none"*/}
+            {/*        style={{*/}
+            {/*            background: "linear-gradient(0deg, rgba(0,0,0,.40), rgba(0,0,0,.40))",*/}
+            {/*        }}*/}
+            {/*    />*/}
+            {/*)}*/}
 
             <div className="v-sec__container relative">
                 {/* Head */}
