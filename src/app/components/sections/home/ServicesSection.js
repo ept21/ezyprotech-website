@@ -1,7 +1,7 @@
 // /src/app/components/sections/home/ServicesSection.js
 "use client";
 
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -23,41 +23,41 @@ export default function ServicesSection({
     const hasItems = Array.isArray(items) && items.length > 0;
     const trackRef = useRef(null);
     const [active, setActive] = useState(0);
-    // Flag to control observer suppression during JS scrolling
     const isScrollingByJSRef = useRef(false);
 
     const cardRefs = useRef([]);
     const observerRef = useRef(null);
     const timeoutRef = useRef(null);
 
-    // Resolve mobile background URL from either prop name
     const resolvedMobileBgUrl = bgMobileUrl || mobileBackgroundImage || null;
     const hasBackground = !!(bgUrl || resolvedMobileBgUrl);
+
+    // Expose background URLs as CSS variables for the section
+    const sectionStyle = hasBackground
+        ? {
+            "--v-sec-bg-image": bgUrl ? `url('${bgUrl}')` : undefined,
+            "--v-sec-bg-image-mobile": resolvedMobileBgUrl
+                ? `url('${resolvedMobileBgUrl}')`
+                : undefined,
+        }
+        : undefined;
 
     // --- Core Observer Logic ---
     const initializeObserver = useCallback(() => {
         if (cardRefs.current.length === 0 || !trackRef.current) return;
 
-        // Disconnect old observer if exists
         if (observerRef.current) {
             observerRef.current.disconnect();
         }
 
         const observerCallback = (entries) => {
-            // Use ref flag to ignore events triggered by programmatic scrolling
             if (isScrollingByJSRef.current) return;
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-            }
-
-            // Find the most visible card (>= 75% visible for center snap)
             const mostVisible = entries.find((entry) => entry.intersectionRatio >= 0.75);
 
             if (mostVisible) {
                 const index = Number(mostVisible.target.dataset.index);
-
-                // Debounce setting state to wait for scroll to settle
                 timeoutRef.current = setTimeout(() => {
                     setActive(index);
                 }, 50);
@@ -75,42 +75,27 @@ export default function ServicesSection({
         cardRefs.current.forEach((el) => {
             if (el) observer.observe(el);
         });
-        // We only depend on items length; other deps are handled via refs
     }, [hasItems, items.length]);
 
-    // Effect to manage observer lifecycle and connection status
     useEffect(() => {
         if (!hasItems) return;
-
         initializeObserver();
-
-        // Cleanup on unmount or re-initialization
         return () => {
-            if (observerRef.current) {
-                observerRef.current.disconnect();
-            }
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-            }
+            if (observerRef.current) observerRef.current.disconnect();
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
         };
     }, [hasItems, items.length, initializeObserver]);
 
-    // Navigation function (used by buttons and dots)
     const scrollToIndex = (i) => {
         const el = trackRef.current;
         const target = cardRefs.current[i];
         if (!el || !target) return;
 
-        // Set ref flag to ignore observer events
         isScrollingByJSRef.current = true;
-
-        // Calculate the scroll position needed to center the target element
         const offset = target.offsetLeft - el.clientWidth / 2 + target.clientWidth / 2;
-
         el.scrollTo({ left: offset, behavior: "smooth" });
         setActive(i);
 
-        // Reset flag after scroll duration (re-enables the observer)
         setTimeout(() => {
             isScrollingByJSRef.current = false;
         }, 400);
@@ -119,48 +104,32 @@ export default function ServicesSection({
     const prev = () => scrollToIndex(Math.max(0, active - 1));
     const next = () => scrollToIndex(Math.min(items.length - 1, active + 1));
 
-    // Wide index is now purely for visual effect (opacity/ring), not width calculation
-    const wideIndex = useMemo(() => {
-        return items?.length ? active : 0;
-    }, [active, items?.length]);
-
     return (
         <section
             id="services"
-            className={cx("v-sec", "v-sec--scheme-2", "v-sec--carousel", "relative")}
+            className={cx(
+                "v-sec",
+                "v-sec--scheme-2",
+                "v-sec--carousel",
+                "relative",
+                "overflow-hidden"
+            )}
+            style={sectionStyle}
             role="region"
             aria-label="Services carousel"
         >
-            {/* Responsive background image, similar to HeroSection */}
+            {/* Dark overlay for readability (sits above CSS background, below content) */}
             {hasBackground && (
                 <div
                     aria-hidden
-                    className="absolute inset-0 -z-20 pointer-events-none"
-                >
-                    <picture>
-                        {resolvedMobileBgUrl && (
-                            <source
-                                media="(max-width: 640px)"
-                                srcSet={resolvedMobileBgUrl}
-                            />
-                        )}
-                        <img
-                            src={bgUrl || resolvedMobileBgUrl}
-                            alt=""
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                        />
-                    </picture>
-                </div>
+                    className="absolute inset-0 -z-10 pointer-events-none"
+                    style={{
+                        background: "linear-gradient(0deg, rgba(0,0,0,.40), rgba(0,0,0,.40))",
+                    }}
+                />
             )}
 
-            {/* Dark overlay gradient */}
-            <div
-                aria-hidden
-                className="absolute inset-0 -z-10 pointer-events-none"
-            />
-
-            <div className="v-sec__container relative overflow-visible">
+            <div className="v-sec__container relative">
                 {/* Head */}
                 <div className="v-sec__head text-center max-w-3xl mx-auto">
                     {eyebrow ? <div className="v-eyebrow v-kicker--light">{eyebrow}</div> : null}
@@ -182,12 +151,13 @@ export default function ServicesSection({
                         <div
                             ref={trackRef}
                             className={cx(
-                                "flex overflow-x-auto pb-4 relative",
+                                "flex overflow-x-auto relative",
+                                "py-8",
                                 "gap-6 md:gap-8",
                                 "snap-x snap-mandatory",
                                 "scroll-pl-[5vw] pr-[5vw] md:scroll-pl-0 md:pr-0",
                                 "no-scrollbar cursor-grab active:cursor-grabbing",
-                                "px-0 md:px-0"
+                                "px-4 md:px-0"
                             )}
                             style={{
                                 scrollBehavior: "smooth",
@@ -201,7 +171,7 @@ export default function ServicesSection({
 
                                     const widthClasses = cx(
                                         "flex-none",
-                                        "w-[90vw]", // Mobile: single card
+                                        "w-[90vw]",
                                         "md:w-[calc(33.333%-16px)]",
                                         "lg:w-[calc(33.333%-20px)]",
                                         "xl:w-[calc(33.333%-20px)]"
@@ -222,13 +192,9 @@ export default function ServicesSection({
                                                     : "opacity-70 ring-1 ring-transparent"
                                             )}
                                         >
-                                            {/* media */}
+                                            {/* Media */}
                                             <div className="relative w-full pointer-events-none">
-                                                <div
-                                                    className={
-                                                        isCurrentActive ? "h-[335px]" : "h-[339px]"
-                                                    }
-                                                />
+                                                <div className={isCurrentActive ? "h-[335px]" : "h-[339px]"} />
                                                 {card?.image ? (
                                                     <Image
                                                         src={card.image}
@@ -248,7 +214,7 @@ export default function ServicesSection({
                                                 />
                                             </div>
 
-                                            {/* content */}
+                                            {/* Content */}
                                             <div
                                                 className={cx(
                                                     "absolute inset-0",
@@ -258,9 +224,7 @@ export default function ServicesSection({
                                                 <div className="h-full flex flex-col justify-between pointer-events-auto">
                                                     <div className="flex flex-col gap-2">
                                                         {card?.kicker ? (
-                                                            <div className="v-kicker text-white">
-                                                                {card.kicker}
-                                                            </div>
+                                                            <div className="v-kicker text-white">{card.kicker}</div>
                                                         ) : null}
                                                         <h3
                                                             className={cx(
@@ -309,21 +273,21 @@ export default function ServicesSection({
                                                                 aria-hidden
                                                                 className="inline-block translate-y-[1px]"
                                                             >
-                                                                <svg
-                                                                    width="24"
-                                                                    height="24"
-                                                                    viewBox="0 0 24 24"
-                                                                    fill="none"
-                                                                >
-                                                                    <path
-                                                                        d="M9 6l6 6-6 6"
-                                                                        stroke="white"
-                                                                        strokeWidth="2"
-                                                                        strokeLinecap="round"
-                                                                        strokeLinejoin="round"
-                                                                    />
-                                                                </svg>
-                                                            </span>
+                                <svg
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                >
+                                  <path
+                                      d="M9 6l6 6-6 6"
+                                      stroke="white"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                  />
+                                </svg>
+                              </span>
                                                         </Link>
                                                     </div>
                                                 </div>
@@ -333,14 +297,12 @@ export default function ServicesSection({
                                 })
                             ) : (
                                 <div className="min-w-full text-center py-12 border border-dashed rounded-2xl opacity-70">
-                                    <p className="v-subline text-white">
-                                        No services available. Add services in WordPress.
-                                    </p>
+                                    <p className="v-subline text-white">No services available.</p>
                                 </div>
                             )}
                         </div>
 
-                        {/* arrows */}
+                        {/* Arrows */}
                         {hasItems && (
                             <>
                                 <button
@@ -356,12 +318,7 @@ export default function ServicesSection({
                                         active === 0 && "opacity-40 cursor-not-allowed"
                                     )}
                                 >
-                                    <svg
-                                        width="24"
-                                        height="24"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                    >
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                                         <path
                                             d="M15 6l-6 6 6 6"
                                             stroke="currentColor"
@@ -381,16 +338,10 @@ export default function ServicesSection({
                                         "w-10 h-10 flex items-center justify-center",
                                         "rounded-full bg-white/10 hover:bg-white/20 border border-white/20",
                                         "backdrop-blur-sm text-white pointer-events-auto transition",
-                                        active === items.length - 1 &&
-                                        "opacity-40 cursor-not-allowed"
+                                        active === items.length - 1 && "opacity-40 cursor-not-allowed"
                                     )}
                                 >
-                                    <svg
-                                        width="24"
-                                        height="24"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                    >
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                                         <path
                                             d="M9 6l6 6-6 6"
                                             stroke="currentColor"
@@ -404,7 +355,7 @@ export default function ServicesSection({
                         )}
                     </div>
 
-                    {/* dots */}
+                    {/* Dots */}
                     {hasItems && (
                         <div className="mt-6 flex justify-center gap-2">
                             {items.map((_, i) => (
@@ -423,7 +374,7 @@ export default function ServicesSection({
                     )}
                 </div>
 
-                {/* section CTA */}
+                {/* Section CTA */}
                 <div className="v-actions mt-10 text-center">
                     <Link
                         href={sectionCta?.href || "/services"}

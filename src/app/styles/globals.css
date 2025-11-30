@@ -9,17 +9,13 @@
 
 html {
   height: 100%;
-  /* זה מבטל את הגלילה מעבר לגבולות (הקפיץ) */
   /*overscroll-behavior-y: none;*/
-  /* מוודא שהרקע "מתחת" לאתר הוא גם בצבע הכהה */
   background-color: var(--bg-default);
   scroll-behavior: smooth;
 }
 
 body {
-  /* מינימום גובה מסך מלא */
   min-height: 100vh;
-  /* הופך את הגוף לקונטיינר גמיש כדי שהפוטר יישאר למטה */
   display: flex;
   flex-direction: column;
 
@@ -226,9 +222,9 @@ footer{
 }
 
 /* אל תחנוק שכבות של החיצים/תוכן */
-.v-sec.v-sec--carousel { overflow: visible; }
-.v-sec.v-sec--carousel .v-sec__container { overflow: visible; }
-.v-sec.v-sec--carousel .v-sec__body { overflow: visible; }
+/*.v-sec.v-sec--carousel { overflow: visible; }*/
+/*.v-sec.v-sec--carousel .v-sec__container { overflow: visible; }*/
+/*.v-sec.v-sec--carousel .v-sec__body { overflow: visible; }*/
 
 /* גלילת טאץ' תקינה */
 .touch-pan-x { touch-action: pan-x; }
