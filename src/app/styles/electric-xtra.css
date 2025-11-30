@@ -22,7 +22,7 @@
     background-image: var(--v-sec-bg-image, none);
     background-size: cover;
     background-position: center;
-    background-attachment: fixed;
+    /*background-attachment: fixed;*/
 }
 .v-head { display:flex; flex-direction:column; align-items:center; gap:16px; max-width:768px; }
 .v-head--center { text-align:center; }
@@ -570,7 +570,7 @@
     }
     .v-sec--scheme-2 {
         background-image: var(--v-sec-bg-image-mobile, var(--v-sec-bg-image, none));
-        background-attachment: fixed;
+        /*background-attachment: fixed;*/
     }
 
 }
