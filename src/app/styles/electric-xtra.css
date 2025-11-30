@@ -396,6 +396,158 @@
 
 
 
+/* ===== Veltiqo Service Card – Global Style ===== */
+
+.vx-card--service {
+    position: relative;
+    border-radius: 1.25rem;
+    padding: 1.25rem 1.5rem;
+    background: rgba(16, 18, 34, 0.72);
+    border: 1px solid color-mix(in oklab, var(--brand-accent) 24%, transparent);
+    box-shadow: 0 0 20px rgba(0, 194, 255, 0.16);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition:
+            transform 180ms ease-out,
+            box-shadow 200ms ease-out,
+            border-color 160ms ease-out,
+            background-color 160ms ease-out;
+}
+
+/* Dark theme tune (Cyber Mint) */
+:root.dark .vx-card--service {
+    border-color: color-mix(in oklab, var(--brand-primary) 26%, transparent);
+    box-shadow: 0 0 20px rgba(0, 194, 147, 0.20);
+}
+
+/* Hover / active */
+.vx-card--service:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in oklab, var(--brand-accent) 55%, transparent);
+    box-shadow:
+            0 0 24px rgba(0, 194, 255, 0.28),
+            0 0 0 1px color-mix(in oklab, var(--brand-accent) 35%, transparent);
+    background: rgba(16, 18, 34, 0.82);
+}
+
+/* Focus-visible for keyboard users */
+.vx-card--service:focus-visible {
+    outline: 2px solid var(--brand-primary);
+    outline-offset: 3px;
+    box-shadow:
+            0 0 0 1px rgba(0,0,0,0.8),
+            0 0 0 4px color-mix(in oklab, var(--brand-primary) 40%, transparent);
+}
+
+/* Eyebrow / kicker */
+.vx-card__kicker {
+    font-family: var(--font-b);
+    font-weight: 600;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--brand-accent);
+}
+
+/* Title */
+.vx-card__title {
+    font-family: var(--font-h);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    font-size: clamp(1.35rem, 2.1vw, 1.9rem);
+    line-height: 1.25;
+    color: #FFFFFF;
+}
+
+/* Excerpt – 2–3 lines clamp */
+.vx-card__excerpt {
+    font-family: var(--font-b);
+    font-weight: 400;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.90);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* CTA row */
+.vx-card__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+}
+
+/* Primary pill CTA */
+.vx-card__cta-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.55rem 1.1rem;
+    border-radius: 999px;
+    font-family: var(--font-b);
+    font-weight: 500;
+    font-size: 0.95rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border: 1px solid color-mix(in oklab, var(--brand-primary) 70%, white);
+    color: #fff;
+    background-image: linear-gradient(90deg, var(--brand-primary), var(--brand-accent));
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    transition:
+            transform 140ms ease-out,
+            box-shadow 180ms ease-out,
+            filter 160ms ease-out;
+}
+
+.vx-card__cta-primary:hover {
+    transform: translateY(-1px);
+    filter: saturate(1.06) brightness(1.04);
+    box-shadow: 0 16px 34px rgba(0,0,0,0.45);
+}
+
+/* Ghost / text CTA with arrow */
+.vx-card__cta-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: var(--font-b);
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: #ffffff;
+    text-decoration: none;
+    opacity: 0.9;
+    transition: opacity 140ms ease-out, transform 140ms ease-out, color 160ms ease-out;
+}
+
+.vx-card__cta-secondary svg {
+    width: 18px;
+    height: 18px;
+}
+
+.vx-card__cta-secondary:hover {
+    opacity: 1;
+    color: var(--brand-accent);
+    transform: translateX(2px);
+}
+
+/* Respect reduced motion for hover-y transforms too */
+@media (prefers-reduced-motion: reduce) {
+    .vx-card--service,
+    .vx-card__cta-primary,
+    .vx-card__cta-secondary {
+        transition: none;
+        transform: none !important;
+    }
+}
+
+
+
+
+
 
 
 /* Mobile Query */

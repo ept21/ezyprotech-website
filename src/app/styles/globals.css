@@ -481,3 +481,144 @@ footer{
   border-color: var(--brand-primary);
   transform: translateY(-2px);
 }
+
+
+
+
+
+
+/* ===== Veltiqo Services Section – Global Background Variants ===== */
+
+.vx-section--services {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Electric Vector Fade (light-oriented) */
+.vx-bg-electric {
+  position: relative;
+}
+
+.vx-bg-electric::before,
+.vx-bg-electric::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -2;
+}
+
+/* Base gradient + dark overlay */
+.vx-bg-electric::before {
+  background:
+          radial-gradient(120% 60% at 10% -10%, rgba(10, 132, 255, 0.16), transparent),
+          radial-gradient(120% 60% at 90% 110%, rgba(0, 194, 255, 0.14), transparent),
+          linear-gradient(135deg, rgba(10,132,255,0.12), rgba(0,194,255,0.10), transparent),
+          rgba(11, 18, 32, 0.85);
+  background-blend-mode: soft-light, overlay, normal;
+}
+
+/* Beams / particles layer */
+.vx-bg-electric::after {
+  background:
+          conic-gradient(from 210deg at 20% 0%, rgba(255,255,255,0.08), transparent 35%, transparent 70%, rgba(255,255,255,0.06), transparent),
+          radial-gradient(3px 3px at 15% 25%, rgba(255,255,255,0.10), transparent),
+          radial-gradient(2px 2px at 75% 70%, rgba(255,255,255,0.08), transparent);
+  opacity: 0.65;
+  mix-blend-mode: soft-light;
+  animation: vx-beams 16s linear infinite alternate;
+}
+
+/* Dark mode tweak – reuse same class but shift hues */
+:root.dark .vx-bg-electric::before {
+  background:
+          radial-gradient(120% 60% at 10% -10%, rgba(0, 194, 147, 0.22), transparent),
+          radial-gradient(120% 60% at 90% 110%, rgba(0, 224, 166, 0.18), transparent),
+          linear-gradient(135deg, rgba(0,194,147,0.20), rgba(0,224,166,0.18), transparent),
+          #0D1117;
+  background-blend-mode: soft-light, overlay, normal;
+}
+
+/* Cyber Mint Mesh (dark / techy) */
+.vx-bg-cyber {
+  position: relative;
+}
+
+.vx-bg-cyber::before,
+.vx-bg-cyber::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -2;
+}
+
+/* Base gradient + subtle mint wash */
+.vx-bg-cyber::before {
+  background:
+          linear-gradient(145deg, rgba(0, 194, 147, 0.22), rgba(0, 224, 166, 0.18), transparent 70%),
+          #0D1117;
+  background-blend-mode: soft-light;
+}
+
+/* Mesh / grid hint – you יכול להחליף כאן ל-SVG data-uri אם תרצה */
+.vx-bg-cyber::after {
+  background-image:
+          linear-gradient(
+                  rgba(255, 255, 255, 0.06) 1px,
+                  transparent 1px
+          ),
+          linear-gradient(
+                  90deg,
+                  rgba(255, 255, 255, 0.06) 1px,
+                  transparent 1px
+          );
+  background-size: 80px 80px, 80px 80px;
+  opacity: 0.12;
+  mix-blend-mode: soft-light;
+  animation: vx-mesh-drift 18s linear infinite alternate;
+}
+
+/* Parallax-ish hover depth for desktop */
+@media (hover: hover) and (pointer: fine) {
+  .vx-section--services:hover .vx-bg-cyber::before,
+  .vx-section--services:hover .vx-bg-electric::before {
+    transform: translateY(-2px);
+    transition: transform 400ms ease-out;
+  }
+}
+
+/* Beams animation – very slow */
+@keyframes vx-beams {
+  0% {
+    transform: translate3d(-2%, -1%, 0) rotate(0deg);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate3d(1%, 2%, 0) rotate(2deg);
+    opacity: 0.80;
+  }
+  100% {
+    transform: translate3d(3%, 1%, 0) rotate(-1deg);
+    opacity: 0.55;
+  }
+}
+
+/* Mesh drift – ultra subtle */
+@keyframes vx-mesh-drift {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-8px, -6px, 0);
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .vx-bg-electric::after,
+  .vx-bg-cyber::after {
+    animation: none;
+  }
+}

@@ -1,6 +1,6 @@
 :root {
-    /* Veitiqo – Light (Electric Vector) */
-    --brand-primary: #3f9191;
+    /* Veltiqo – Light (Electric Vector) */
+    --brand-primary: #0A84FF;
     --brand-accent:  #00C2FF;
     --text-primary:  #0B1220;
     --text-secondary:#5E6975;
@@ -26,7 +26,7 @@
 }
 
 :root.dark {
-    /* Veitiqo – Dark (Cyber Mint) */
+    /* Veltiqo – Dark (Cyber Mint) */
     --brand-primary: #00C293;
     --brand-accent:  #00E0A6;
     --text-primary:  #C9D1D9;
