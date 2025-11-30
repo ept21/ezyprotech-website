@@ -132,14 +132,14 @@ export default function ServicesSection({
             <div className="v-sec__container relative">
                 {/* Head */}
                 <div className="v-sec__head text-center max-w-3xl mx-auto">
-                    {eyebrow ? <div className="v-eyebrow v-kicker--light">{eyebrow}</div> : null}
+                    {eyebrow ? <div className="v-eyebrow v-kicker--dark">{eyebrow}</div> : null}
                     <h2 className="v-h2 mt-2 text-white">{title}</h2>
                     {subtitle ? (
-                        <p className="v-subtitle mt-3 text-white/90">{subtitle}</p>
+                        <p className="v-subtitle mt-3 text-dark/90">{subtitle}</p>
                     ) : null}
                     {contentHtml ? (
                         <div
-                            className="v-copy mt-6 text-white/90"
+                            className="v-copy mt-6 text-dark/90"
                             dangerouslySetInnerHTML={{ __html: contentHtml }}
                         />
                     ) : null}
@@ -209,7 +209,7 @@ export default function ServicesSection({
                                                     className="absolute inset-0"
                                                     style={{
                                                         background:
-                                                            "linear-gradient(0deg, rgba(0,0,0,.40), rgba(0,0,0,.40))",
+                                                            "linear-gradient(0deg, rgba(0,0,0,.20), rgba(0,0,0,.20))",
                                                     }}
                                                 />
                                             </div>
@@ -224,14 +224,13 @@ export default function ServicesSection({
                                                 <div className="h-full flex flex-col justify-between pointer-events-auto">
                                                     <div className="flex flex-col gap-2">
                                                         {card?.kicker ? (
-                                                            <div className="v-kicker text-white">{card.kicker}</div>
+                                                            <div className="v-kicker">{card.kicker}</div>
                                                         ) : null}
                                                         <h3
                                                             className={cx(
                                                                 isCurrentActive
                                                                     ? "text-4xl lg:text-[48px] leading-tight font-bold"
                                                                     : "v-h4",
-                                                                "text-white"
                                                             )}
                                                         >
                                                             <Link
@@ -247,7 +246,6 @@ export default function ServicesSection({
                                                                     isCurrentActive
                                                                         ? "text-lg leading-[27px]"
                                                                         : "v-body",
-                                                                    "text-white/90"
                                                                 )}
                                                             >
                                                                 {stripTags(card.excerpt)}
@@ -265,7 +263,7 @@ export default function ServicesSection({
                                                         <Link
                                                             href={card?.cta?.url || card?.href || "#"}
                                                             target={card?.cta?.target || undefined}
-                                                            className="flex items-center gap-2 text-white text-[18px] leading-[27px] font-medium hover:text-brand-accent transition"
+                                                            className="flex items-center gap-2 text-[18px] leading-[27px] font-medium hover:text-brand-accent transition"
                                                             aria-label={card?.cta?.title || "Learn"}
                                                         >
                                                             {card?.cta?.title || "Learn"}
