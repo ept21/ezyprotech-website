@@ -31,24 +31,20 @@ export default function ServicesSection({
     const observerRef = useRef(null);
     const timeoutRef = useRef(null);
 
-    // Prefer explicit mobile field, then legacy mobileBackgroundImage
+    // Resolve mobile background from CMS
     const resolvedMobileBgUrl = bgMobileUrl || mobileBackgroundImage || null;
     const hasBackground = !!(bgUrl || resolvedMobileBgUrl);
 
-    // Section style:
-    // - If we DO NOT have CMS images, use a branded gradient with fixed attachment
-    // - If we DO have CMS images, the images are handled via absolutely-positioned layers below
+    // Expose background URLs as CSS variables for the section.
+    // Global CSS decides which one to use per breakpoint.
     const sectionStyle = hasBackground
-        ? undefined
-        : {
-            backgroundImage:
-                "radial-gradient(120% 60% at 10% -10%, rgba(10,132,255,0.20), transparent), radial-gradient(120% 60% at 90% 110%, rgba(0,194,255,0.18), transparent)",
-            backgroundColor: "#0B1220",
-            backgroundAttachment: "fixed",
-            backgroundSize: "cover",
-            backgroundPosition: "center center",
-            backgroundRepeat: "no-repeat",
-        };
+        ? {
+            "--v-sec-bg-image": bgUrl ? `url('${bgUrl}')` : undefined,
+            "--v-sec-bg-image-mobile": resolvedMobileBgUrl
+                ? `url('${resolvedMobileBgUrl}')`
+                : undefined,
+        }
+        : undefined;
 
     // --- Core Observer Logic (center active card) ---
     const initializeObserver = useCallback(() => {
@@ -126,47 +122,7 @@ export default function ServicesSection({
             role="region"
             aria-label="Services carousel"
         >
-            {/* Background image layers:
-          - If both desktop and mobile exist:
-              * desktop: visible from sm and up
-              * mobile: visible below sm
-          - If only one exists: it is visible on all breakpoints
-       */}
-            {hasBackground && (
-                <>
-                    {bgUrl && (
-                        <div
-                            aria-hidden
-                            className={cx(
-                                "absolute inset-0 -z-20 bg-fixed bg-cover bg-center bg-no-repeat",
-                                resolvedMobileBgUrl ? "hidden sm:block" : ""
-                            )}
-                            style={{ backgroundImage: `url('${bgUrl}')` }}
-                        />
-                    )}
-
-                    {resolvedMobileBgUrl && (
-                        <div
-                            aria-hidden
-                            className={cx(
-                                "absolute inset-0 -z-20 bg-fixed bg-cover bg-center bg-no-repeat",
-                                bgUrl ? "sm:hidden" : ""
-                            )}
-                            style={{ backgroundImage: `url('${resolvedMobileBgUrl}')` }}
-                        />
-                    )}
-                </>
-            )}
-
-            {/* Dark overlay for readability over any light background */}
-            <div
-                aria-hidden
-                className="absolute inset-0 -z-10 pointer-events-none"
-                style={{
-                    background:
-                        "radial-gradient(120% 60% at 0% 0%, rgba(0,0,0,0.55), transparent), radial-gradient(140% 80% at 100% 100%, rgba(0,0,0,0.65), transparent)",
-                }}
-            />
+            {/* NOTE: removed dark overlay so the CMS background stays bright and clean */}
 
             <div className="v-sec__container relative">
                 {/* Head */}
@@ -251,12 +207,12 @@ export default function ServicesSection({
                                                         priority={idx < 3}
                                                     />
                                                 ) : null}
-                                                {/* Softer overlay so the image pops more */}
+                                                {/* Softer overlay so the image still reads as light */}
                                                 <div
                                                     className="absolute inset-0"
                                                     style={{
                                                         background:
-                                                            "linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.78))",
+                                                            "linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.60))",
                                                     }}
                                                 />
                                             </div>
@@ -341,21 +297,21 @@ export default function ServicesSection({
                                                                 aria-hidden
                                                                 className="inline-block translate-y-[1px]"
                                                             >
-                                <svg
-                                    width="20"
-                                    height="20"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                >
-                                  <path
-                                      d="M9 6l6 6-6 6"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                  />
-                                </svg>
-                              </span>
+                                                                <svg
+                                                                    width="20"
+                                                                    height="20"
+                                                                    viewBox="0 0 24 24"
+                                                                    fill="none"
+                                                                >
+                                                                    <path
+                                                                        d="M9 6l6 6-6 6"
+                                                                        stroke="currentColor"
+                                                                        strokeWidth="2"
+                                                                        strokeLinecap="round"
+                                                                        strokeLinejoin="round"
+                                                                    />
+                                                                </svg>
+                                                            </span>
                                                         </Link>
                                                     </div>
                                                 </div>
