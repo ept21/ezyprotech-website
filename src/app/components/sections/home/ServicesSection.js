@@ -1,4 +1,4 @@
-
+// /src/app/components/sections/home/ServicesSection.js
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -204,14 +204,9 @@ export default function ServicesSection({
                                             )}
                                             tabIndex={0}
                                         >
-                                            {/* Media background */}
-                                            <div className="relative w-full pointer-events-none">
-                                                <div
-                                                    className={
-                                                        isCurrentActive ? "h-[335px]" : "h-[339px]"
-                                                    }
-                                                />
-                                                {card?.image ? (
+                                            {/* Media background across full card */}
+                                            {card?.image && (
+                                                <div className="absolute inset-0 -z-10 pointer-events-none">
                                                     <Image
                                                         src={card.image}
                                                         alt={card?.title || "Service image"}
@@ -220,24 +215,24 @@ export default function ServicesSection({
                                                         sizes="(min-width: 1024px) 33vw, 88vw"
                                                         priority={idx < 3}
                                                     />
-                                                ) : null}
-                                                <div
-                                                    className="absolute inset-0"
-                                                    style={{
-                                                        background:
-                                                            "linear-gradient(180deg, rgba(255,255,255,0.20), rgba(255,255,255,0.70))",
-                                                    }}
-                                                />
-                                            </div>
+                                                    <div
+                                                        className="absolute inset-0"
+                                                        style={{
+                                                            background:
+                                                                "linear-gradient(180deg, rgba(255,255,255,0.20), rgba(255,255,255,0.70))",
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
 
                                             {/* Content overlay */}
                                             <div
                                                 className={cx(
-                                                    "absolute inset-0",
+                                                    "relative z-10",
                                                     isCurrentActive ? "p-6 md:p-8" : "p-6"
                                                 )}
                                             >
-                                                <div className="h-full flex flex-col items-center justify-center text-center gap-4 pointer-events-auto">
+                                                <div className="min-h-[340px] md:min-h-[360px] flex flex-col items-center justify-center text-center gap-4 pointer-events-auto">
                                                     <div className="flex flex-col gap-2 items-center text-center">
                                                         {card?.kicker ? (
                                                             <div className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--brand-primary)]">
@@ -406,7 +401,7 @@ export default function ServicesSection({
                                         "h-2 rounded-full transition-all duration-200 transform",
                                         i === active
                                             ? "w-6 bg-[var(--brand-primary)] scale-110"
-                                            : "w-3 bg-[rgba(10,132,255,0.40)] hover:bg-[rgba(10,132,255,0.70)] hover:scale-105"
+                                            : "w-3 bg-[#dbdbdb] hover:bg-[rgba(10,132,255,0.70)] hover:scale-105"
                                     )}
                                 />
                             ))}
