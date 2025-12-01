@@ -9,8 +9,9 @@ export default function BundlesSection({
                                            subtitle = "Flexible packages designed to match your business growth trajectory.",
                                            contentHtml = "",
                                            bgUrl = null,
+                                           bgMobileUrl = null,
                                            items = [],
-                                           sectionCta = null
+                                           sectionCta = null,
                                        }) {
     const HTML = ({ html }) => (
         <div
@@ -19,23 +20,62 @@ export default function BundlesSection({
         />
     );
 
-    const sectionBg = bgUrl ? { backgroundImage: `url(${bgUrl})` } : undefined;
-
     return (
         <section
             id="pricing"
             data-v="pricing"
-            style={sectionBg}
-            className="v-sec v-sec--scheme-1 relative bg-center bg-cover bg-no-repeat"
+            className="v-sec v-sec--scheme-1 relative overflow-hidden"
         >
-            {/* overlay for readability */}
-            {bgUrl && <div className="absolute inset-0 bg-black/35" aria-hidden="true" />}
+            {/* Background images: desktop vs mobile */}
+            {(bgUrl || bgMobileUrl) && (
+                <>
+                    {/* Desktop background */}
+                    {bgUrl && (
+                        <div
+                            aria-hidden="true"
+                            className="absolute inset-0 hidden md:block bg-center bg-cover bg-no-repeat"
+                            style={{ backgroundImage: `url(${bgUrl})` }}
+                        />
+                    )}
+
+                    {/* Mobile background (if provided) */}
+                    {bgMobileUrl && (
+                        <div
+                            aria-hidden="true"
+                            className="absolute inset-0 md:hidden bg-center bg-cover bg-no-repeat"
+                            style={{ backgroundImage: `url(${bgMobileUrl})` }}
+                        />
+                    )}
+
+                    {/* Fallback: if mobile image is missing, reuse desktop on mobile */}
+                    {!bgMobileUrl && bgUrl && (
+                        <div
+                            aria-hidden="true"
+                            className="absolute inset-0 md:hidden bg-center bg-cover bg-no-repeat"
+                            style={{ backgroundImage: `url(${bgUrl})` }}
+                        />
+                    )}
+
+                    {/* Overlay for readability */}
+                    <div
+                        className="absolute inset-0 bg-black/35"
+                        aria-hidden="true"
+                    />
+                </>
+            )}
 
             <div className="v-sec__container relative z-10">
-                <header className="v-head v-head--center" data-v="pricing-head">
-                    {eyebrow && <div className="v-kicker--light">{eyebrow}</div>}
+                <header
+                    className="v-head v-head--center"
+                    data-v="pricing-head"
+                >
+                    {eyebrow && (
+                        <div className="v-kicker--light">{eyebrow}</div>
+                    )}
                     <h2 className="v-title-xl text-[#ebe8e8]">{title}</h2>
-                    {subtitle && <p className="v-sub--light">{subtitle}</p>}
+                    {subtitle && (
+                        <p className="v-sub--light">{subtitle}</p>
+                    )}
                     {contentHtml ? <HTML html={contentHtml} /> : null}
                 </header>
 
@@ -59,13 +99,13 @@ export default function BundlesSection({
                                     <div className="v-price__value flex items-baseline gap-1">
                                         {pkg.price ? (
                                             <span className="v-price__amount !text-lg md:!text-xl font-semibold tracking-tight leading-none">
-                        {pkg.price}
-                      </span>
+                                                {pkg.price}
+                                            </span>
                                         ) : null}
                                         {pkg.per ? (
                                             <span className="v-price__per !text-[10px] md:!text-xs opacity-80 leading-none">
-                        {pkg.per}
-                      </span>
+                                                {pkg.per}
+                                            </span>
                                         ) : null}
                                     </div>
                                 )}
@@ -78,7 +118,9 @@ export default function BundlesSection({
                                 {pkg.featuresHtml ? (
                                     <HTML html={pkg.featuresHtml} />
                                 ) : (
-                                    <div className="v-li">Details will be provided.</div>
+                                    <div className="v-li">
+                                        Details will be provided.
+                                    </div>
                                 )}
                             </div>
 
@@ -92,7 +134,9 @@ export default function BundlesSection({
                                                 href={c.url}
                                                 target={c.target ?? "_self"}
                                                 className="btn-brand px-3 py-2 text-xs md:text-sm"
-                                                aria-label={`${pkg.title} — ${c.title ?? "Select"}`}
+                                                aria-label={`${pkg.title} — ${
+                                                    c.title ?? "Select"
+                                                }`}
                                             >
                                                 {c.title ?? "Select"}
                                             </Link>
@@ -103,8 +147,8 @@ export default function BundlesSection({
                                         className="btn-brand px-3 py-2 text-xs md:text-sm"
                                         aria-disabled="true"
                                     >
-                    Select plan
-                  </span>
+                                        Select plan
+                                    </span>
                                 )}
                             </div>
                         </article>

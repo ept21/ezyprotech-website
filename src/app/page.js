@@ -26,7 +26,7 @@ import { getAcfImageUrl } from "@/app/lib/wp";
 import "@/styles/electric-xtra.css";
 
 /** NOTE: All comments must remain in English only. */
-const getAcfLinkUrl = (l) => (typeof l === "string" ? l : (l?.url ?? null));
+const getAcfLinkUrl = (l) => (typeof l === "string" ? l : l?.url ?? null);
 const stripHtml = (html) =>
     typeof html === "string" ? html.replace(/<[^>]*>/g, "").trim() : "";
 
@@ -75,7 +75,8 @@ export default async function HomePage() {
 
     const heroTitle = hero?.heroTitle || "Build the Future of Your Business";
     const heroSubtitle =
-        hero?.heroSubtitle || "Headless web, AI systems, and automated marketing.";
+        hero?.heroSubtitle ||
+        "Headless web, AI systems, and automated marketing.";
     const kicker = hero?.kicker || "Default Kicker";
     const heroContent = hero?.heroContent || "";
 
@@ -84,9 +85,6 @@ export default async function HomePage() {
     const cta2Label = hero?.herocta2url?.title || "See Pricing";
     const cta2Href = getAcfLinkUrl(hero?.herocta2url) || "#pricing";
 
-
-
-    /* ---- SERVICES (Home section) ---- */
     /* ---- SERVICES (Home section) ---- */
     const servicesRes = await gqlRequest(SERVICES_HOME_PAGE_QUERY, {
         id: homePageDbId,
@@ -96,7 +94,9 @@ export default async function HomePage() {
     const showServices = servicesSlice?.showServices ?? true;
 
     const servicesBgUrl = getAcfImageUrl(servicesSlice?.servicesBgImage);
-    const servicesBgMobileUrl = getAcfImageUrl(servicesSlice?.mobileBackgroundImage);
+    const servicesBgMobileUrl = getAcfImageUrl(
+        servicesSlice?.mobileBackgroundImage
+    );
     const servicesKicker = servicesSlice?.kicker || "Accelerate";
     const servicesTitle = servicesSlice?.servicesTitle || "Our core services";
     const servicesSubtitle =
@@ -108,10 +108,7 @@ export default async function HomePage() {
     const rawLimit =
         servicesSlice?.servicesdisplaylimit || rawCategories.length || 0;
 
-    const displayLimit = Math.max(
-        1,
-        Math.min(24, rawLimit)
-    );
+    const displayLimit = Math.max(1, Math.min(24, rawLimit));
 
     const serviceCards = rawCategories.slice(0, displayLimit).map((term, i) => {
         const fields = term?.servicesCategory || {};
@@ -121,7 +118,7 @@ export default async function HomePage() {
             (term.name && term.name.trim()) ||
             "Untitled category";
 
-        const kicker = fields.kicker?.trim?.() || "Category";
+        const catKicker = fields.kicker?.trim?.() || "Category";
 
         const excerpt =
             fields.bullets ||
@@ -136,7 +133,7 @@ export default async function HomePage() {
         return {
             id: term?.id || String(i),
             title,
-            kicker,
+            kicker: catKicker,
             excerpt,
             image,
             href,
@@ -150,11 +147,6 @@ export default async function HomePage() {
         target: servicesSlice?.ctaurl?.target || null,
     };
 
-
-
-
-
-
     /* ---- BUNDLES (Home section) ---- */
     const bundlesFirstDefault = 12;
     const bundlesRes = await gqlRequest(BUNDLES_HOME_PAGE_QUERY, {
@@ -166,6 +158,9 @@ export default async function HomePage() {
     const showBundles = bundlesSlice?.showBundles ?? true;
 
     const bundlesBgUrl = getAcfImageUrl(bundlesSlice?.bundlesBgImage);
+    const bundlesBgMobileUrl = getAcfImageUrl(
+        bundlesSlice?.mobileBackgroundImage
+    );
     const bundlesKicker = bundlesSlice?.kicker || "Scale";
     const bundlesTitle = bundlesSlice?.bundlesTitle || "Pricing plans";
     const bundlesSubtitle =
@@ -221,7 +216,9 @@ export default async function HomePage() {
     };
 
     /* ---- ABOUT (Home section) ---- */
-    const aboutRes = await gqlRequest(ABOUT_HOME_PAGE_QUERY, { id: homePageDbId });
+    const aboutRes = await gqlRequest(ABOUT_HOME_PAGE_QUERY, {
+        id: homePageDbId,
+    });
     const aboutSlice = aboutRes?.page?.homePageFields?.about || {};
     const showAbout = aboutSlice?.showabout ?? true;
 
@@ -309,10 +306,13 @@ export default async function HomePage() {
 
     /* ---- TESTIMONIALS (Home section) ---- */
     const testimonialsFirstDefault = 12;
-    const testimonialsRes = await gqlRequest(TESTIMONIALS_HOME_PAGE_QUERY, {
-        id: homePageDbId,
-        first: testimonialsFirstDefault,
-    });
+    const testimonialsRes = await gqlRequest(
+        TESTIMONIALS_HOME_PAGE_QUERY,
+        {
+            id: homePageDbId,
+            first: testimonialsFirstDefault,
+        }
+    );
 
     const testimonialsSlice =
         testimonialsRes?.page?.homePageFields?.testimonials || {};
@@ -480,6 +480,7 @@ export default async function HomePage() {
                     subtitle={bundlesSubtitle}
                     contentHtml={bundlesContent}
                     bgUrl={bundlesBgUrl}
+                    bgMobileUrl={bundlesBgMobileUrl}
                     items={bundleCards}
                     sectionCta={bundlesSectionCta}
                 />

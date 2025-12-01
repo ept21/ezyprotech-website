@@ -94,6 +94,7 @@ export const BUNDLES_HOME_PAGE_QUERY = gql`
         bundles {
           showBundles
           bundlesBgImage { node { mediaItemUrl sourceUrl altText } }
+          mobileBackgroundImage { node { mediaItemUrl sourceUrl altText } }
           kicker
           bundlesTitle
           bundlesSubtitle
