@@ -259,7 +259,7 @@ export default function ServicesSection({
                                                             <p
                                                                 className={cx(
                                                                     "text-[15px] md:text-[16px] leading-relaxed",
-                                                                    "text-[#5E6975]",
+                                                                    "text-[#000]",
                                                                     "line-clamp-3"
                                                                 )}
                                                             >
