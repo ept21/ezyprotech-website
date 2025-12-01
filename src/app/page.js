@@ -36,21 +36,6 @@ const getFeaturedUrl = (node) =>
     node?.featuredImage?.node?.sourceUrl ||
     null;
 
-/** Derive a presentable title from ACF override or core title */
-const getServiceTitle = (node) =>
-    node?.serviceFields?.title?.trim?.() || node?.title || "Untitled";
-
-/** Choose excerpt: ACF excerpt → ACF content → core content (stripped) */
-const getServiceExcerpt = (node) => {
-    const acfEx = node?.serviceFields?.excerpt;
-    if (acfEx) return acfEx;
-    const acfContent = node?.serviceFields?.content;
-    if (acfContent) return stripHtml(acfContent).slice(0, 220);
-    const coreContent = node?.content;
-    if (coreContent) return stripHtml(coreContent).slice(0, 220);
-    return "";
-};
-
 export default async function HomePage() {
     const homePageDbId = process.env.NEXT_PUBLIC_FRONT_PAGE_ID
         ? Number(process.env.NEXT_PUBLIC_FRONT_PAGE_ID)
@@ -59,7 +44,9 @@ export default async function HomePage() {
     if (!homePageDbId) {
         return (
             <main className="text-center py-20 text-white">
-                <h1 className="text-3xl font-bold">⚠️ Missing NEXT_PUBLIC_FRONT_PAGE_ID</h1>
+                <h1 className="text-3xl font-bold">
+                    ⚠️ Missing NEXT_PUBLIC_FRONT_PAGE_ID
+                </h1>
                 <p>Set your front page databaseId in .env.local</p>
             </main>
         );
@@ -97,20 +84,19 @@ export default async function HomePage() {
     const cta2Label = hero?.herocta2url?.title || "See Pricing";
     const cta2Href = getAcfLinkUrl(hero?.herocta2url) || "#pricing";
 
+
+
     /* ---- SERVICES (Home section) ---- */
-    const firstDefault = 12;
+    /* ---- SERVICES (Home section) ---- */
     const servicesRes = await gqlRequest(SERVICES_HOME_PAGE_QUERY, {
         id: homePageDbId,
-        first: firstDefault,
     });
 
     const servicesSlice = servicesRes?.page?.homePageFields?.services || {};
     const showServices = servicesSlice?.showServices ?? true;
 
     const servicesBgUrl = getAcfImageUrl(servicesSlice?.servicesBgImage);
-    const servicesBgMobileUrl = getAcfImageUrl(
-        servicesSlice?.mobileBackgroundImage
-    );
+    const servicesBgMobileUrl = getAcfImageUrl(servicesSlice?.mobileBackgroundImage);
     const servicesKicker = servicesSlice?.kicker || "Accelerate";
     const servicesTitle = servicesSlice?.servicesTitle || "Our core services";
     const servicesSubtitle =
@@ -118,42 +104,43 @@ export default async function HomePage() {
         "Innovative solutions designed to drive your business forward with precision and intelligence.";
     const servicesContentHtml = servicesSlice?.servicesContent || "";
 
+    const rawCategories = servicesSlice?.servicesItems?.nodes || [];
+    const rawLimit =
+        servicesSlice?.servicesdisplaylimit || rawCategories.length || 0;
+
     const displayLimit = Math.max(
         1,
-        Math.min(24, servicesSlice?.servicesDisplayLimit || firstDefault)
+        Math.min(24, rawLimit)
     );
 
-    // Manual vs Auto source
-    let rawItems = [];
-    if (servicesSlice?.servicesSource === "manual") {
-        rawItems = servicesSlice?.servicesItems?.nodes || [];
-    } else {
-        // AUTO fallback list
-        rawItems = servicesRes?.services?.nodes || [];
-    }
+    const serviceCards = rawCategories.slice(0, displayLimit).map((term, i) => {
+        const fields = term?.servicesCategory || {};
 
-    // Trim to limit
-    rawItems = rawItems.slice(0, displayLimit);
+        const title =
+            (fields.title && fields.title.trim()) ||
+            (term.name && term.name.trim()) ||
+            "Untitled category";
 
-    // Map to UI-friendly shape (without changing your visual layout)
-    const serviceCards = rawItems.map((n, i) => {
-        const title = getServiceTitle(n);
-        const kicker = n?.serviceFields?.kicker || "Service";
-        const subtitle = n?.serviceFields?.subtitle || null;
-        const excerpt = n?.serviceFields?.excerpt || getServiceExcerpt(n);
-        const image = getFeaturedUrl(n);
-        const href = n?.uri || "#";
-        const cta = n?.serviceFields?.ctaurl1 || null;
+        const kicker = fields.kicker?.trim?.() || "Category";
+
+        const excerpt =
+            fields.bullets ||
+            (term.description ? term.description : "");
+
+        const image = getAcfImageUrl(fields.serviceCategoryImage) || null;
+
+        const href = term?.uri || "#";
+
+        const cta = fields.ctaButton || null;
 
         return {
-            id: n?.id || String(i),
+            id: term?.id || String(i),
             title,
             kicker,
-            subtitle,
             excerpt,
             image,
             href,
-            cta, // { url, title, target } or null
+            cta,
         };
     });
 
@@ -162,6 +149,11 @@ export default async function HomePage() {
         label: servicesSlice?.ctaurl?.title || "View all services",
         target: servicesSlice?.ctaurl?.target || null,
     };
+
+
+
+
+
 
     /* ---- BUNDLES (Home section) ---- */
     const bundlesFirstDefault = 12;
@@ -251,7 +243,7 @@ export default async function HomePage() {
         getAcfImageUrl(aboutSlice?.image4),
     ].filter(Boolean);
 
-    const aboutCta1 = aboutSlice?.ctaurl1 || null; // {url,title,target}
+    const aboutCta1 = aboutSlice?.ctaurl1 || null;
     const aboutCta2 = aboutSlice?.ctaurl2 || null;
 
     /* ---- PROJECTS (Home section) ---- */
@@ -278,7 +270,6 @@ export default async function HomePage() {
         Math.min(24, projectsSlice?.projectsDisplayLimit || projectsFirstDefault)
     );
 
-    // Manual vs Auto
     let rawProjects = [];
     if (projectsSlice?.projectsSource === "manual") {
         rawProjects = projectsSlice?.projectsItems?.nodes || [];
@@ -287,7 +278,6 @@ export default async function HomePage() {
     }
     rawProjects = rawProjects.slice(0, projectsDisplayLimit);
 
-    // Map WP → UI shape that matches your current cards
     const projectCards = rawProjects.map((n, i) => {
         const pf = n?.projectsFields || {};
         const title =
@@ -298,7 +288,7 @@ export default async function HomePage() {
             getAcfImageUrl(pf?.projectimage) || getFeaturedUrl(n);
         const href = getAcfLinkUrl(pf?.projectlink) || n?.uri || "#";
 
-        const cta1 = pf?.ctaurl1 || null; // { url, title, target }
+        const cta1 = pf?.ctaurl1 || null;
         const cta2 = pf?.ctaurl2 || null;
 
         return {
@@ -352,7 +342,6 @@ export default async function HomePage() {
         )
     );
 
-    // Manual vs Auto source
     let rawTestimonials = [];
     if (testimonialsSlice?.testimonialsSource === "manual") {
         rawTestimonials = testimonialsSlice?.testimonialsItems?.nodes || [];
@@ -364,7 +353,6 @@ export default async function HomePage() {
         testimonialsDisplayLimit
     );
 
-    // Map WP → UI shape
     const testimonialCards = rawTestimonials.map((n, i) => {
         const tf = n?.testimonialsFields || {};
 
@@ -375,7 +363,7 @@ export default async function HomePage() {
             "Anonymous";
         const company = tf?.companyname || "";
         const businessType = tf?.typeofbusiness || "";
-        const kicker = tf?.kicker || null;
+        const tk = tf?.kicker || null;
 
         const quote =
             tf?.excerpt ||
@@ -389,7 +377,7 @@ export default async function HomePage() {
         return {
             id: n?.id || String(i),
             stars,
-            kicker,
+            kicker: tk,
             quote,
             name,
             company,
@@ -429,7 +417,7 @@ export default async function HomePage() {
         "Let's discuss how our AI-driven solutions can transform your business strategy and performance.";
     const ctaContentHtml = ctaSlice?.content || "";
 
-    const ctaPrimary = ctaSlice?.ctaurl1 || null; // { url, title, target }
+    const ctaPrimary = ctaSlice?.ctaurl1 || null;
     const ctaSecondary = ctaSlice?.ctaurl2 || null;
 
     /* ---- CONTACT (Home section) ---- */
@@ -484,7 +472,7 @@ export default async function HomePage() {
                 />
             )}
 
-            {/* BUNDLES (pricing) */}
+            {/* BUNDLES */}
             {showBundles && (
                 <BundlesSection
                     eyebrow={bundlesKicker}

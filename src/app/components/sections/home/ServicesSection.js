@@ -1,4 +1,4 @@
-// /src/app/components/sections/home/ServicesSection.js
+
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -47,7 +47,7 @@ export default function ServicesSection({
         }
         : undefined;
 
-    // --- Core Observer Logic (center active card) ---
+    // Core observer logic (center active card)
     const initializeObserver = useCallback(() => {
         if (cardRefs.current.length === 0 || !trackRef.current) return;
 
@@ -59,7 +59,9 @@ export default function ServicesSection({
             if (isScrollingByJSRef.current) return;
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
-            const mostVisible = entries.find((entry) => entry.intersectionRatio >= 0.75);
+            const mostVisible = entries.find(
+                (entry) => entry.intersectionRatio >= 0.75
+            );
 
             if (mostVisible) {
                 const index = Number(mostVisible.target.dataset.index);
@@ -97,7 +99,8 @@ export default function ServicesSection({
         if (!el || !target) return;
 
         isScrollingByJSRef.current = true;
-        const offset = target.offsetLeft - el.clientWidth / 2 + target.clientWidth / 2;
+        const offset =
+            target.offsetLeft - el.clientWidth / 2 + target.clientWidth / 2;
         el.scrollTo({ left: offset, behavior: "smooth" });
         setActive(i);
 
@@ -152,14 +155,12 @@ export default function ServicesSection({
                 </div>
 
                 {/* Carousel */}
-                {/* Reduced vertical gap: was mt-6 md:mt-8, now tighter */}
                 <div className="v-sec__body mt-3 md:mt-4 w-full">
                     <div className="relative overflow-visible">
                         <div
                             ref={trackRef}
                             className={cx(
                                 "flex overflow-x-auto relative",
-                                // was py-6 md:py-8
                                 "py-3 md:py-4",
                                 "gap-6 md:gap-8",
                                 "snap-x snap-mandatory",
@@ -177,10 +178,9 @@ export default function ServicesSection({
                                 items.map((card, idx) => {
                                     const isCurrentActive = idx === active;
 
-                                    // Slightly narrower on mobile so the card is not cut at the edges
                                     const widthClasses = cx(
                                         "flex-none",
-                                        "w-[88vw]", // was 90vw
+                                        "w-[88vw]",
                                         "md:w-[calc(33.333%-16px)]",
                                         "lg:w-[calc(33.333%-20px)]",
                                         "xl:w-[calc(33.333%-20px)]"
@@ -194,7 +194,6 @@ export default function ServicesSection({
                                             className={cx(
                                                 "relative snap-center overflow-hidden",
                                                 widthClasses,
-                                                // Light glass card with softer neon glow and softer border
                                                 "rounded-2xl bg-white/80 backdrop-blur-md border border-white/40",
                                                 "shadow-[0_0_18px_rgba(10,132,255,0.18)]",
                                                 "transition-all duration-300 ease-out transform will-change-transform",
@@ -207,8 +206,11 @@ export default function ServicesSection({
                                         >
                                             {/* Media background */}
                                             <div className="relative w-full pointer-events-none">
-                                                {/* Fixed height stub to keep layout stable */}
-                                                <div className={isCurrentActive ? "h-[335px]" : "h-[339px]"} />
+                                                <div
+                                                    className={
+                                                        isCurrentActive ? "h-[335px]" : "h-[339px]"
+                                                    }
+                                                />
                                                 {card?.image ? (
                                                     <Image
                                                         src={card.image}
@@ -219,7 +221,6 @@ export default function ServicesSection({
                                                         priority={idx < 3}
                                                     />
                                                 ) : null}
-                                                {/* Soft white overlay so the image is visible but subtle */}
                                                 <div
                                                     className="absolute inset-0"
                                                     style={{
@@ -274,6 +275,7 @@ export default function ServicesSection({
 
                                                     {/* CTAs row */}
                                                     <div className="mt-2 flex items-center justify-center gap-4 flex-wrap">
+                                                        {/* 1. Explore -> category page */}
                                                         <Link
                                                             href={card?.href || "#"}
                                                             className={cx(
@@ -289,9 +291,9 @@ export default function ServicesSection({
                                                             Explore
                                                         </Link>
 
+                                                        {/* 2. Book a strategy call -> /contact */}
                                                         <Link
-                                                            href={card?.cta?.url || card?.href || "#"}
-                                                            target={card?.cta?.target || undefined}
+                                                            href="/contact"
                                                             className={cx(
                                                                 "inline-flex items-center gap-2",
                                                                 "text-sm font-medium",
@@ -302,9 +304,9 @@ export default function ServicesSection({
                                                                 "shadow-[0_0_14px_rgba(10,132,255,0.22)]",
                                                                 "transition-colors transition-shadow duration-200 ease-out"
                                                             )}
-                                                            aria-label={card?.cta?.title || "Learn"}
+                                                            aria-label="Book a strategy call"
                                                         >
-                                                            {card?.cta?.title || "Learn"}
+                                                            Book a strategy call
                                                             <span
                                                                 aria-hidden
                                                                 className="inline-block translate-y-[1px]"

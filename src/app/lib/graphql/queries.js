@@ -24,15 +24,10 @@ export const HERO_QUERY = gql`
   }
 `
 
+
 /* ---------- Services (Home section) ---------- */
-/**
- * Pulls the Services section slice from the Home page.
- * Also fetches a fallback "services" list for AUTO mode.
- *
- * NOTE: Replace "serviceFields" below if your ACF group name differs.
- */
 export const SERVICES_HOME_PAGE_QUERY = gql`
-  query ServicesHome($id: ID!, $first: Int = 12) {
+  query ServicesHome($id: ID!) {
     page(id: $id, idType: DATABASE_ID) {
       id
       homePageFields {
@@ -44,28 +39,35 @@ export const SERVICES_HOME_PAGE_QUERY = gql`
           servicesTitle
           servicesSubtitle
           servicesContent
-          servicesSource
-          servicesDisplayLimit
-          servicesOrderBy
-          servicesOrder
+          servicesdisplaylimit
           ctaurl { url title target }
 
           servicesItems {
             nodes {
-              ... on Service {
+              ... on ServiceCategory {
                 id
                 databaseId
+                name
+                slug
                 uri
-                title
-                featuredImage { node { mediaItemUrl sourceUrl altText } }
-                serviceFields {
+                description
+
+                servicesCategory {
                   kicker
                   title
-                  subtitle
-                  excerpt
-                  content
-                  ctaurl1 { url title target }
-                  ctaurl2 { url title target }
+                  bullets
+                  serviceCategoryImage {
+                    node {
+                      mediaItemUrl
+                      sourceUrl
+                      altText
+                    }
+                  }
+                  ctaButton {
+                    url
+                    title
+                    target
+                  }
                 }
               }
             }
@@ -73,27 +75,14 @@ export const SERVICES_HOME_PAGE_QUERY = gql`
         }
       }
     }
-
-    services(first: $first, where: { orderby: { field: DATE, order: DESC } }) {
-      nodes {
-        id
-        databaseId
-        uri
-        title
-        featuredImage { node { mediaItemUrl sourceUrl altText } }
-        serviceFields {
-          kicker
-          title
-          subtitle
-          excerpt
-          content
-          ctaurl1 { url title target }
-          ctaurl2 { url title target }
-        }
-      }
-    }
   }
 `;
+
+
+
+
+
+
 
 
 /* ---------- Bundles (Home section) ---------- */
@@ -187,7 +176,6 @@ export const ABOUT_HOME_PAGE_QUERY = gql`
     }
   }
 `;
-
 
 
 /* ---------- Projects (Home section) ---------- */
@@ -340,7 +328,6 @@ export const TESTIMONIALS_HOME_PAGE_QUERY = gql`
 `;
 
 
-
 /* ---------- CTA (Home section) ---------- */
 export const CTA_HOME_PAGE_QUERY = gql`
   query CtaHome($id: ID!) {
@@ -386,18 +373,6 @@ export const CONTACT_HOME_PAGE_QUERY = gql`
 `;
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 /* ---------- Generic Pages ---------- */
 export const PAGE_BY_SLUG_QUERY = gql`
   query PageBySlug($slug: ID!) {
@@ -438,7 +413,6 @@ export const PROJECT_QUERY = gql`
 `
 
 /* ---------- Globals ---------- */
-/* NOTE: keep field names as they are in your ACF */
 export const GLOBALS_QUERY = gql`
   query Globals {
     page(id: 39, idType: DATABASE_ID) {
