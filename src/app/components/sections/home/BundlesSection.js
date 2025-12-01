@@ -14,7 +14,7 @@ export default function BundlesSection({
                                        }) {
     const HTML = ({ html }) => (
         <div
-            className="prose prose-invert max-w-none"
+            className="prose prose-invert max-w-none text-white"
             dangerouslySetInnerHTML={{ __html: html || "" }}
         />
     );
@@ -33,9 +33,9 @@ export default function BundlesSection({
 
             <div className="v-sec__container relative z-10">
                 <header className="v-head v-head--center" data-v="pricing-head">
-                    {eyebrow && <div className="v-kicker">{eyebrow}</div>}
-                    <h2 className="v-title-xl">{title}</h2>
-                    {subtitle && <p className="v-sub">{subtitle}</p>}
+                    {eyebrow && <div className="v-kicker--light">{eyebrow}</div>}
+                    <h2 className="v-title-xl text-[#ebe8e8]">{title}</h2>
+                    {subtitle && <p className="v-sub--light">{subtitle}</p>}
                     {contentHtml ? <HTML html={contentHtml} /> : null}
                 </header>
 

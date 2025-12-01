@@ -33,7 +33,6 @@
 }
 .v-kicker--light { color: white; }
 .v-title-xl {
-    color: var(--text-primary, #C9D1D9);
     font-family: "Plus Jakarta Sans", Inter, system-ui, sans-serif;
     font-weight: 700;
     line-height: 72px;
@@ -46,10 +45,16 @@
     font-size: 32px;
     line-height: 1.3;
 }
-.v-sub {
+.v-sub-dark {
     color: var(--text-secondary, #8B949E);
     font: 400 20px/30px Inter, system-ui, sans-serif;
 }
+
+.v-sub--light {
+    color: #ebe8e8;
+    font: 400 20px/30px Inter, system-ui, sans-serif;
+}
+
 
 /* ===== HERO ===== */
 .v-hero {

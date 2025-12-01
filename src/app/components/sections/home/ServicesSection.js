@@ -235,7 +235,7 @@ export default function ServicesSection({
                                                 <div className="min-h-[340px] md:min-h-[360px] flex flex-col items-center justify-center text-center gap-4 pointer-events-auto">
                                                     <div className="flex flex-col gap-2 items-center text-center">
                                                         {card?.kicker ? (
-                                                            <div className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--brand-primary)]">
+                                                            <div className="text-[11px] tracking-[0.18em] uppercase text-[#12d6f9] font-bold [text-shadow:_2px_2px_4px_rgba(0,0,0,0.5)] ">
                                                                 {card.kicker}
                                                             </div>
                                                         ) : null}
