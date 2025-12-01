@@ -638,3 +638,24 @@ footer{
     animation: none;
   }
 }
+
+#services {
+  background-image:
+          var(--v-services-bg-desktop),
+          radial-gradient(120% 60% at 10% -10%, rgba(10,132,255,0.18), transparent),
+          radial-gradient(130% 80% at 100% 120%, rgba(0,194,255,0.16), transparent);
+  background-color: #0b1220;
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+@media (max-width: 768px) {
+  #services {
+    background-image:
+            var(--v-services-bg-mobile),
+            radial-gradient(120% 60% at 10% -10%, rgba(10,132,255,0.18), transparent),
+            radial-gradient(130% 80% at 100% 120%, rgba(0,194,255,0.16), transparent);
+  }
+}

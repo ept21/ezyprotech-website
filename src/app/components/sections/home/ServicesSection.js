@@ -35,14 +35,18 @@ export default function ServicesSection({
     const resolvedMobileBgUrl = bgMobileUrl || mobileBackgroundImage || null;
     const hasBackground = !!(bgUrl || resolvedMobileBgUrl);
 
-    // Expose background URLs as CSS variables for the section.
-    // Global CSS decides which one to use per breakpoint.
+    // Expose background URLs as CSS custom properties.
+    // Global CSS (already added earlier) should read these:
+    // #services { background-image: var(--v-services-bg-desktop); ... }
+    // @media (max-width: 768px) { #services { background-image: var(--v-services-bg-mobile); ... } }
     const sectionStyle = hasBackground
         ? {
-            "--v-sec-bg-image": bgUrl ? `url('${bgUrl}')` : undefined,
-            "--v-sec-bg-image-mobile": resolvedMobileBgUrl
+            "--v-services-bg-desktop": bgUrl ? `url('${bgUrl}')` : "none",
+            "--v-services-bg-mobile": resolvedMobileBgUrl
                 ? `url('${resolvedMobileBgUrl}')`
-                : undefined,
+                : bgUrl
+                    ? `url('${bgUrl}')`
+                    : "none",
         }
         : undefined;
 
@@ -122,7 +126,15 @@ export default function ServicesSection({
             role="region"
             aria-label="Services carousel"
         >
-            {/* NOTE: removed dark overlay so the CMS background stays bright and clean */}
+            {/* Dark overlay for readability over any light background */}
+            <div
+                aria-hidden
+                className="absolute inset-0 -z-10 pointer-events-none"
+                style={{
+                    background:
+                        "radial-gradient(120% 60% at 0% 0%, rgba(0,0,0,0.40), transparent), radial-gradient(140% 80% at 100% 100%, rgba(0,0,0,0.52), transparent)",
+                }}
+            />
 
             <div className="v-sec__container relative">
                 {/* Head */}
@@ -143,13 +155,14 @@ export default function ServicesSection({
                 </div>
 
                 {/* Carousel */}
-                <div className="v-sec__body mt-10 w-full">
+                {/* Reduced vertical gap: was mt-10, now tighter */}
+                <div className="v-sec__body mt-6 md:mt-8 w-full">
                     <div className="relative overflow-visible">
                         <div
                             ref={trackRef}
                             className={cx(
                                 "flex overflow-x-auto relative",
-                                "py-8",
+                                "py-6 md:py-8",
                                 "gap-6 md:gap-8",
                                 "snap-x snap-mandatory",
                                 "scroll-pl-[5vw] pr-[5vw] md:scroll-pl-0 md:pr-0",
@@ -166,9 +179,10 @@ export default function ServicesSection({
                                 items.map((card, idx) => {
                                     const isCurrentActive = idx === active;
 
+                                    // Slightly narrower on mobile so the card is not cut at the edges
                                     const widthClasses = cx(
                                         "flex-none",
-                                        "w-[90vw]",
+                                        "w-[88vw]", // was 90vw
                                         "md:w-[calc(33.333%-16px)]",
                                         "lg:w-[calc(33.333%-20px)]",
                                         "xl:w-[calc(33.333%-20px)]"
@@ -182,13 +196,13 @@ export default function ServicesSection({
                                             className={cx(
                                                 "relative snap-center overflow-hidden",
                                                 widthClasses,
-                                                // Light glass card with glow
-                                                "rounded-2xl bg-white/80 backdrop-blur-md border border-white/60",
-                                                "shadow-[0_0_26px_rgba(10,132,255,0.22)]",
-                                                "transition-all duration-300 ease-out",
-                                                "hover:-translate-y-1 hover:shadow-[0_0_40px_rgba(10,132,255,0.45)]",
+                                                // Light glass card with softer neon glow and softer border
+                                                "rounded-2xl bg-white/80 backdrop-blur-md border border-white/40",
+                                                "shadow-[0_0_18px_rgba(10,132,255,0.18)]",
+                                                "transition-all duration-300 ease-out transform will-change-transform",
+                                                "hover:-translate-y-1 hover:shadow-[0_0_28px_rgba(10,132,255,0.32)]",
                                                 isCurrentActive
-                                                    ? "opacity-100 ring-2 ring-[rgba(10,132,255,0.8)]"
+                                                    ? "opacity-100 ring-2 ring-[rgba(10,132,255,0.55)] scale-[1.01]"
                                                     : "opacity-90 ring-1 ring-transparent"
                                             )}
                                             tabIndex={0}
@@ -203,16 +217,16 @@ export default function ServicesSection({
                                                         alt={card?.title || "Service image"}
                                                         fill
                                                         className="object-cover"
-                                                        sizes="(min-width: 1024px) 33vw, 90vw"
+                                                        sizes="(min-width: 1024px) 33vw, 88vw"
                                                         priority={idx < 3}
                                                     />
                                                 ) : null}
-                                                {/* Softer overlay so the image still reads as light */}
+                                                {/* Soft white overlay so the image is visible but subtle */}
                                                 <div
                                                     className="absolute inset-0"
                                                     style={{
                                                         background:
-                                                            "linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.60))",
+                                                            "linear-gradient(180deg, rgba(255,255,255,0.20), rgba(255,255,255,0.70))",
                                                     }}
                                                 />
                                             </div>
@@ -269,9 +283,9 @@ export default function ServicesSection({
                                                                 "rounded-full px-4 py-2",
                                                                 "text-sm font-semibold",
                                                                 "bg-[var(--brand-primary)] text-white",
-                                                                "shadow-[0_0_24px_rgba(10,132,255,0.55)]",
+                                                                "shadow-[0_0_20px_rgba(10,132,255,0.45)]",
                                                                 "transition-transform transition-shadow duration-200 ease-out",
-                                                                "hover:-translate-y-[1px] hover:shadow-[0_0_34px_rgba(10,132,255,0.75)]"
+                                                                "hover:-translate-y-[1px] hover:shadow-[0_0_28px_rgba(10,132,255,0.60)]"
                                                             )}
                                                         >
                                                             Explore
@@ -285,9 +299,9 @@ export default function ServicesSection({
                                                                 "text-sm font-medium",
                                                                 "text-[#0B1220]",
                                                                 "px-3 py-1.5 rounded-full",
-                                                                "border border-[rgba(10,132,255,0.35)]",
+                                                                "border border-[rgba(10,132,255,0.30)]",
                                                                 "bg-white/60 hover:bg-white",
-                                                                "shadow-[0_0_16px_rgba(10,132,255,0.25)]",
+                                                                "shadow-[0_0_14px_rgba(10,132,255,0.22)]",
                                                                 "transition-colors transition-shadow duration-200 ease-out"
                                                             )}
                                                             aria-label={card?.cta?.title || "Learn"}
@@ -389,8 +403,10 @@ export default function ServicesSection({
                                     aria-label={`Go to slide ${i + 1}`}
                                     aria-current={i === active ? "true" : "false"}
                                     className={cx(
-                                        "h-2 rounded-full transition-all",
-                                        i === active ? "w-6 bg-white" : "w-2 bg-white/40"
+                                        "h-2 rounded-full transition-all duration-200 transform",
+                                        i === active
+                                            ? "w-6 bg-[var(--brand-primary)] scale-110"
+                                            : "w-3 bg-[rgba(10,132,255,0.40)] hover:bg-[rgba(10,132,255,0.70)] hover:scale-105"
                                     )}
                                 />
                             ))}
