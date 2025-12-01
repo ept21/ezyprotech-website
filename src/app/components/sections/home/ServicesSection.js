@@ -36,9 +36,6 @@ export default function ServicesSection({
     const hasBackground = !!(bgUrl || resolvedMobileBgUrl);
 
     // Expose background URLs as CSS custom properties.
-    // Global CSS (already added earlier) should read these:
-    // #services { background-image: var(--v-services-bg-desktop); ... }
-    // @media (max-width: 768px) { #services { background-image: var(--v-services-bg-mobile); ... } }
     const sectionStyle = hasBackground
         ? {
             "--v-services-bg-desktop": bgUrl ? `url('${bgUrl}')` : "none",
@@ -155,14 +152,15 @@ export default function ServicesSection({
                 </div>
 
                 {/* Carousel */}
-                {/* Reduced vertical gap: was mt-10, now tighter */}
-                <div className="v-sec__body mt-6 md:mt-8 w-full">
+                {/* Reduced vertical gap: was mt-6 md:mt-8, now tighter */}
+                <div className="v-sec__body mt-3 md:mt-4 w-full">
                     <div className="relative overflow-visible">
                         <div
                             ref={trackRef}
                             className={cx(
                                 "flex overflow-x-auto relative",
-                                "py-6 md:py-8",
+                                // was py-6 md:py-8
+                                "py-3 md:py-4",
                                 "gap-6 md:gap-8",
                                 "snap-x snap-mandatory",
                                 "scroll-pl-[5vw] pr-[5vw] md:scroll-pl-0 md:pr-0",
@@ -311,21 +309,21 @@ export default function ServicesSection({
                                                                 aria-hidden
                                                                 className="inline-block translate-y-[1px]"
                                                             >
-                                                                <svg
-                                                                    width="20"
-                                                                    height="20"
-                                                                    viewBox="0 0 24 24"
-                                                                    fill="none"
-                                                                >
-                                                                    <path
-                                                                        d="M9 6l6 6-6 6"
-                                                                        stroke="currentColor"
-                                                                        strokeWidth="2"
-                                                                        strokeLinecap="round"
-                                                                        strokeLinejoin="round"
-                                                                    />
-                                                                </svg>
-                                                            </span>
+                                <svg
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                >
+                                  <path
+                                      d="M9 6l6 6-6 6"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                  />
+                                </svg>
+                              </span>
                                                         </Link>
                                                     </div>
                                                 </div>
