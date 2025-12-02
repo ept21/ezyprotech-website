@@ -578,6 +578,11 @@
         /*background-attachment: fixed;*/
     }
 
+    .v-title-xl {
+        line-height: 35px;
+    }
+
+
 }
 
 
