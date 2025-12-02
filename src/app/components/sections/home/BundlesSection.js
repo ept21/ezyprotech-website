@@ -29,6 +29,9 @@ export default function BundlesSection({
         />
     );
 
+    // Create a reversed copy so we do not mutate props
+    const orderedItems = [...items].reverse();
+
     return (
         <section
             id="pricing"
@@ -94,7 +97,7 @@ export default function BundlesSection({
                     className="v-pricing grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 lg:gap-8"
                     data-v="pricing-grid"
                 >
-                    {items.map((pkg, idx) => {
+                    {orderedItems.map((pkg, idx) => {
                         // Middle card = featured (like "PRO" in the reference)
                         const isFeatured = idx === 1;
 
