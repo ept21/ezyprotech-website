@@ -35,7 +35,7 @@ export default function ServicesSection({
     const resolvedMobileBgUrl = bgMobileUrl || mobileBackgroundImage || null;
     const hasBackground = !!(bgUrl || resolvedMobileBgUrl);
 
-    // Expose CMS background images as CSS custom properties
+    // Expose background URLs as CSS custom properties.
     const sectionStyle = hasBackground
         ? {
             "--v-services-bg-desktop": bgUrl ? `url('${bgUrl}')` : "none",
@@ -47,18 +47,7 @@ export default function ServicesSection({
         }
         : undefined;
 
-    // Section overlay: keep image visible but add contrast for content
-    const sectionOverlayStyle = hasBackground
-        ? {
-            background:
-                "radial-gradient(120% 120% at 50% 0%, rgba(255,255,255,0.78), transparent 55%), radial-gradient(120% 140% at 50% 100%, rgba(15,23,42,0.45), transparent 60%)",
-        }
-        : {
-            background:
-                "linear-gradient(135deg, #f5f7fa 0%, #e4ebf5 40%, #d7e2f1 100%)",
-        };
-
-    // IntersectionObserver logic
+    // Core observer logic (center active card)
     const initializeObserver = useCallback(() => {
         if (cardRefs.current.length === 0 || !trackRef.current) return;
 
@@ -130,46 +119,49 @@ export default function ServicesSection({
                 "v-sec",
                 "v-sec--scheme-2",
                 "v-sec--carousel",
-                "relative",
-                "overflow-hidden"
+                "relative overflow-hidden"
             )}
             style={sectionStyle}
             role="region"
             aria-label="Services carousel"
         >
-            {/* Overlay above section background image */}
+            {/* Overlay on top of the CMS background: light, futuristic */}
             <div
                 aria-hidden
                 className="absolute inset-0 -z-10 pointer-events-none"
-                style={sectionOverlayStyle}
+                style={{
+                    background: hasBackground
+                        ? "radial-gradient(130% 85% at 0% 0%, rgba(255,255,255,0.18), transparent), radial-gradient(140% 90% at 100% 100%, rgba(56,189,248,0.26), transparent)"
+                        : "linear-gradient(135deg,#f5f7fb 0%,#e3f3ff 40%,#f3fbff 100%)",
+                }}
             />
 
             <div className="v-sec__container relative">
                 {/* Head */}
                 <div className="v-sec__head text-center max-w-3xl mx-auto">
                     {eyebrow ? (
-                        <div className="v-eyebrow v-kicker--dark">{eyebrow}</div>
+                        <div className="v-kicker v-kicker--dark">{eyebrow}</div>
                     ) : null}
                     <h2 className="v-h2 mt-2 text-[#0B1220]">{title}</h2>
                     {subtitle ? (
-                        <p className="v-subtitle mt-3 text-[#1f2933]">{subtitle}</p>
+                        <p className="v-subtitle mt-3 text-[#253047]">{subtitle}</p>
                     ) : null}
                     {contentHtml ? (
                         <div
-                            className="v-copy mt-6 text-[#1f2933]"
+                            className="v-copy mt-6 text-[#253047]"
                             dangerouslySetInnerHTML={{ __html: contentHtml }}
                         />
                     ) : null}
                 </div>
 
                 {/* Carousel */}
-                <div className="v-sec__body mt-3 md:mt-4 w-full">
+                <div className="v-sec__body mt-4 md:mt-6 w-full">
                     <div className="relative overflow-visible">
                         <div
                             ref={trackRef}
                             className={cx(
                                 "flex overflow-x-auto relative",
-                                "py-3 md:py-4",
+                                "py-4 md:py-5",
                                 "gap-6 md:gap-8",
                                 "snap-x snap-mandatory",
                                 "scroll-pl-[5vw] pr-[5vw] md:scroll-pl-0 md:pr-0",
@@ -194,24 +186,15 @@ export default function ServicesSection({
                                         "xl:w-[calc(33.333%-20px)]"
                                     );
 
-                                    const outerCardClasses = cx(
+                                    const outerClasses = cx(
                                         "relative snap-center",
                                         widthClasses,
-                                        "rounded-[26px] p-[1px]",
-                                        "bg-[radial-gradient(circle_at_top,_rgba(10,132,255,0.45),_rgba(0,194,255,0.22))]",
+                                        "rounded-[30px] p-[1px] overflow-hidden",
+                                        "bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.65),_rgba(15,23,42,0.45))]",
+                                        "transition-transform transition-shadow duration-300 ease-out",
                                         isCurrentActive
-                                            ? "shadow-[0_0_10px_rgba(10,132,255,0.32)] scale-[1.03]"
-                                            : "shadow-[0_7px_10px_rgba(15,23,42,0.18)]",
-                                        "transition-all duration-300 ease-out will-change-transform",
-                                        "hover:scale-[1.035]"
-                                    );
-
-                                    const innerCardClasses = cx(
-                                        "relative h-full overflow-hidden",
-                                        "rounded-[24px]",
-                                        "bg-white/60 backdrop-blur-2xl",
-                                        "border border-white/80",
-                                        "flex flex-col"
+                                            ? "scale-[1.03] shadow-[0_0_10px_rgba(45,212,191,0.9)]"
+                                            : "scale-[0.99] opacity-95 shadow-[0_0_10px_rgba(15,23,42,0.35)] hover:scale-[1.01] hover:opacity-100"
                                     );
 
                                     return (
@@ -219,22 +202,18 @@ export default function ServicesSection({
                                             key={card?.id ?? idx}
                                             data-index={idx}
                                             ref={(el) => (cardRefs.current[idx] = el)}
-                                            className={outerCardClasses}
+                                            className={outerClasses}
                                             tabIndex={0}
                                         >
-                                            <div className={innerCardClasses}>
-                                                {/* Card highlight overlay for glassy feel */}
-                                                <div
-                                                    aria-hidden
-                                                    className="pointer-events-none absolute inset-0 rounded-[24px]"
-                                                    style={{
-                                                        background:
-                                                            "linear-gradient(140deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.55) 26%, rgba(255,255,255,0.24) 55%, rgba(255,255,255,0.08) 100%)",
-                                                        mixBlendMode: "screen",
-                                                    }}
-                                                />
-
-                                                {/* Media background */}
+                                            {/* Inner glass card */}
+                                            <div
+                                                className={cx(
+                                                    "relative flex h-full flex-col rounded-[28px] overflow-hidden",
+                                                    "bg-white/8 backdrop-blur-xl",
+                                                    "border border-white/60"
+                                                )}
+                                            >
+                                                {/* Card background image */}
                                                 {card?.image && (
                                                     <div className="absolute inset-0 -z-10 pointer-events-none">
                                                         <Image
@@ -245,120 +224,119 @@ export default function ServicesSection({
                                                             sizes="(min-width: 1024px) 33vw, 88vw"
                                                             priority={idx < 3}
                                                         />
+                                                        {/* Light glass overlay */}
                                                         <div
                                                             className="absolute inset-0"
                                                             style={{
-                                                                // Softer overlay so the image is clearly visible
                                                                 background:
-                                                                    "radial-gradient(circle at 15% 0%, rgba(255,255,255,0.7) 0, rgba(255,255,255,0.35) 32%, transparent 60%), linear-gradient(170deg, rgba(248,250,252,0.45) 0%, rgba(241,245,249,0.75) 45%, rgba(226,232,240,0.9) 100%)",
+                                                                    "linear-gradient(180deg,rgba(255,255,255,0.74),rgba(255,255,255,0.40))",
+                                                            }}
+                                                        />
+                                                        {/* Subtle diagonal highlight */}
+                                                        <div
+                                                            className="absolute -left-1/3 -top-1/4 w-2/3 h-2/3 rotate-[18deg]"
+                                                            style={{
+                                                                background:
+                                                                    "linear-gradient(120deg,rgba(255,255,255,0.65),transparent)",
                                                             }}
                                                         />
                                                     </div>
                                                 )}
 
                                                 {/* Content */}
-                                                <div
-                                                    className={cx(
-                                                        "relative z-10 flex-1",
-                                                        isCurrentActive ? "p-6 md:p-7" : "p-5 md:p-6"
-                                                    )}
-                                                >
-                                                    <div className="min-h-[320px] md:min-h-[340px] flex flex-col items-center justify-center text-center gap-4">
-                                                        <div className="flex flex-col gap-2 items-center text-center">
-                                                            {card?.kicker ? (
-                                                                <div className="inline-flex items-center rounded-full border border-[rgba(10,132,255,0.22)] bg-white/70 px-3 py-1 shadow-[0_6px_18px_rgba(15,23,42,0.16)]">
-                                                                    <span className="text-[11px] tracking-[0.18em] uppercase text-[#0A84FF] font-semibold">
-                                                                        {card.kicker}
-                                                                    </span>
-                                                                </div>
-                                                            ) : null}
-
-                                                            <h3
+                                                <div className="relative z-10 flex h-full flex-col justify-between px-6 py-6 md:px-8 md:py-7 text-center">
+                                                    <div className="flex flex-col items-center gap-3">
+                                                        {/* Kicker pill */}
+                                                        {card?.kicker && (
+                                                            <div
                                                                 className={cx(
-                                                                    "font-heading font-bold",
-                                                                    isCurrentActive
-                                                                        ? "text-[24px] md:text-[28px] leading-tight"
-                                                                        : "text-[22px] leading-snug",
-                                                                    "text-[#0B1220]"
+                                                                    "inline-flex items-center justify-center rounded-full",
+                                                                    "px-4 py-1 text-[11px] tracking-[0.16em] uppercase font-semibold",
+                                                                    "bg-white/80 text-[#0A84FF] shadow-[0_0_18px_rgba(59,130,246,0.35)]"
                                                                 )}
                                                             >
-                                                                <Link
-                                                                    href={card?.href || "#"}
-                                                                    className="no-underline hover:underline decoration-[var(--brand-primary)]"
-                                                                >
-                                                                    {card?.title || "Untitled service"}
-                                                                </Link>
-                                                            </h3>
+                                                                {card.kicker}
+                                                            </div>
+                                                        )}
 
-                                                            {card?.excerpt ? (
-                                                                <p
-                                                                    className={cx(
-                                                                        "text-[14px] md:text-[15px] leading-relaxed",
-                                                                        "text-[#243b53]",
-                                                                        "line-clamp-3"
-                                                                    )}
-                                                                >
-                                                                    {stripTags(card.excerpt)}
-                                                                </p>
-                                                            ) : null}
-                                                        </div>
-
-                                                        {/* CTAs row */}
-                                                        <div className="mt-2 flex items-center justify-center gap-4 flex-wrap">
-                                                            {/* 1. Explore -> category page */}
+                                                        {/* Title */}
+                                                        <h3
+                                                            className={cx(
+                                                                "font-heading font-semibold",
+                                                                "text-[22px] md:text-[24px] leading-snug",
+                                                                "text-[#0B1220]"
+                                                            )}
+                                                        >
                                                             <Link
                                                                 href={card?.href || "#"}
-                                                                className={cx(
-                                                                    "inline-flex items-center justify-center",
-                                                                    "rounded-full px-4 py-2",
-                                                                    "text-sm font-semibold",
-                                                                    "bg-gradient-to-r from-[#008D7F] to-[#00C5FF]",
-                                                                    "text-white",
-                                                                    "shadow-[0_0_20px_rgba(0,197,255,0.8)]",
-                                                                    "transition-transform transition-shadow duration-200 ease-out",
-                                                                    "hover:-translate-y-[1px] hover:shadow-[0_0_30px_rgba(0,197,255,0.95)]"
-                                                                )}
+                                                                className="no-underline hover:underline decoration-[var(--brand-primary)]"
                                                             >
-                                                                Explore
+                                                                {card?.title || "Untitled service"}
                                                             </Link>
+                                                        </h3>
 
-                                                            {/* 2. Book a strategy call -> /contact */}
-                                                            <Link
-                                                                href="/contact"
-                                                                className={cx(
-                                                                    "inline-flex items-center gap-2",
-                                                                    "text-sm font-medium",
-                                                                    "text-[#0B1220]",
-                                                                    "px-3 py-1.5 rounded-full",
-                                                                    "border border-[rgba(10,132,255,0.3)]",
-                                                                    "bg-white/75 hover:bg-white",
-                                                                    "shadow-[0_0_14px_rgba(10,132,255,0.2)]",
-                                                                    "transition-colors transition-shadow duration-200 ease-out"
-                                                                )}
-                                                                aria-label="Book a strategy call"
+                                                        {/* Excerpt */}
+                                                        {card?.excerpt && (
+                                                            <p className="text-[14px] md:text-[15px] leading-relaxed text-[#253047] line-clamp-3">
+                                                                {stripTags(card.excerpt)}
+                                                            </p>
+                                                        )}
+                                                    </div>
+
+                                                    {/* CTAs row */}
+                                                    <div className="mt-5 flex items-center justify-center gap-4 flex-wrap">
+                                                        {/* 1. Explore -> category page */}
+                                                        <Link
+                                                            href={card?.href || "#"}
+                                                            className={cx(
+                                                                "inline-flex items-center justify-center",
+                                                                "rounded-full px-5 py-2",
+                                                                "text-[13px] md:text-[14px] font-semibold",
+                                                                "bg-gradient-to-r from-[#008D7F] via-[#00C293] to-[#00C5FF]",
+                                                                "text-white shadow-[0_0_22px_rgba(0,197,255,0.65)]",
+                                                                "transition-transform transition-shadow duration-200 ease-out",
+                                                                "hover:-translate-y-[1px] hover:shadow-[0_0_30px_rgba(0,197,255,0.85)]"
+                                                            )}
+                                                        >
+                                                            Explore
+                                                        </Link>
+
+                                                        {/* 2. Book a strategy call -> /contact */}
+                                                        <Link
+                                                            href="/contact"
+                                                            className={cx(
+                                                                "inline-flex items-center gap-2",
+                                                                "text-[13px] md:text-[14px] font-medium",
+                                                                "text-[#0B1220]",
+                                                                "px-4 py-2 rounded-full",
+                                                                "border border-[rgba(10,132,255,0.35)]",
+                                                                "bg-white/80 hover:bg-white",
+                                                                "shadow-[0_0_16px_rgba(10,132,255,0.25)]",
+                                                                "transition-colors transition-shadow duration-200 ease-out"
+                                                            )}
+                                                            aria-label="Book a strategy call"
+                                                        >
+                                                            Book a strategy call
+                                                            <span
+                                                                aria-hidden
+                                                                className="inline-block translate-y-[1px]"
                                                             >
-                                                                Book a strategy call
-                                                                <span
-                                                                    aria-hidden
-                                                                    className="inline-block translate-y-[1px]"
-                                                                >
-                                                                    <svg
-                                                                        width="20"
-                                                                        height="20"
-                                                                        viewBox="0 0 24 24"
-                                                                        fill="none"
-                                                                    >
-                                                                        <path
-                                                                            d="M9 6l6 6-6 6"
-                                                                            stroke="currentColor"
-                                                                            strokeWidth="2"
-                                                                            strokeLinecap="round"
-                                                                            strokeLinejoin="round"
-                                                                        />
-                                                                    </svg>
-                                                                </span>
-                                                            </Link>
-                                                        </div>
+                                <svg
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                >
+                                  <path
+                                      d="M9 6l6 6-6 6"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                  />
+                                </svg>
+                              </span>
+                                                        </Link>
                                                     </div>
                                                 </div>
                                             </div>
@@ -366,10 +344,8 @@ export default function ServicesSection({
                                     );
                                 })
                             ) : (
-                                <div className="min-w-full text-center py-12 border border-dashed rounded-2xl opacity-70">
-                                    <p className="v-subline text-[#243b53]">
-                                        No services available.
-                                    </p>
+                                <div className="min-w-full text-center py-12 border border-dashed rounded-2xl opacity-70 bg-white/40 backdrop-blur-md">
+                                    <p className="v-subline text-[#253047]">No services available.</p>
                                 </div>
                             )}
                         </div>
@@ -385,8 +361,8 @@ export default function ServicesSection({
                                     className={cx(
                                         "absolute left-2 md:left-[-16px] top-1/2 -translate-y-1/2 z-[999]",
                                         "w-10 h-10 flex items-center justify-center",
-                                        "rounded-full bg-white/80 hover:bg-white border border-[rgba(148,163,184,0.7)]",
-                                        "backdrop-blur-sm text-[#0B1220] pointer-events-auto transition",
+                                        "rounded-full bg-white/70 hover:bg-white border border-white/80",
+                                        "backdrop-blur-md text-[#0B1220] pointer-events-auto transition",
                                         active === 0 && "opacity-40 cursor-not-allowed"
                                     )}
                                 >
@@ -408,8 +384,8 @@ export default function ServicesSection({
                                     className={cx(
                                         "absolute right-2 md:right-[-16px] top-1/2 -translate-y-1/2 z-[999]",
                                         "w-10 h-10 flex items-center justify-center",
-                                        "rounded-full bg-white/80 hover:bg-white border border-[rgba(148,163,184,0.7)]",
-                                        "backdrop-blur-sm text-[#0B1220] pointer-events-auto transition",
+                                        "rounded-full bg-white/70 hover:bg-white border border-white/80",
+                                        "backdrop-blur-md text-[#0B1220] pointer-events-auto transition",
                                         active === items.length - 1 && "opacity-40 cursor-not-allowed"
                                     )}
                                 >
@@ -439,8 +415,8 @@ export default function ServicesSection({
                                     className={cx(
                                         "h-2 rounded-full transition-all duration-200 transform",
                                         i === active
-                                            ? "w-6 bg-[var(--brand-primary)] scale-110"
-                                            : "w-3 bg-[#d0d7e2] hover:bg-[rgba(10,132,255,0.70)] hover:scale-105"
+                                            ? "w-7 bg-[var(--brand-primary)] scale-110"
+                                            : "w-3 bg-[#d5dde8] hover:bg-[rgba(10,132,255,0.70)] hover:scale-105"
                                     )}
                                 />
                             ))}

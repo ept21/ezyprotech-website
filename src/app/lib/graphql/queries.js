@@ -162,6 +162,7 @@ export const ABOUT_HOME_PAGE_QUERY = gql`
         about {
           showabout
           aboutBgImage { node { mediaItemUrl sourceUrl altText } }
+          mobileBackgroundImage  { node { mediaItemUrl sourceUrl altText } }
           kicker
           aboutTitle
           aboutSubtitle

@@ -223,6 +223,8 @@ export default async function HomePage() {
     const showAbout = aboutSlice?.showabout ?? true;
 
     const aboutBgUrl = getAcfImageUrl(aboutSlice?.aboutBgImage);
+    const aboutMobileBgUrl = getAcfImageUrl(aboutSlice?.mobileBackgroundImage);
+
     const aboutKicker = aboutSlice?.kicker || "Transform";
     const aboutTitle =
         aboutSlice?.aboutTitle ||
@@ -232,14 +234,25 @@ export default async function HomePage() {
         "We bridge the gap between cutting-edge AI technologies and practical business solutions.";
     const aboutContent = aboutSlice?.aboutContent || "";
 
-    // Resolve up to 4 images (null-safe)
-    const aboutImages = [
-        getAcfImageUrl(aboutSlice?.image1),
-        getAcfImageUrl(aboutSlice?.image2),
-        getAcfImageUrl(aboutSlice?.image3),
-        getAcfImageUrl(aboutSlice?.image4),
-    ].filter(Boolean);
+    const rawAboutImages = [
+        aboutSlice?.image1,
+        aboutSlice?.image2,
+        aboutSlice?.image3,
+        aboutSlice?.image4,
+    ];
 
+    const aboutImages = rawAboutImages
+        .map((img) => {
+            const node = img?.node;
+            const src = getAcfImageUrl(img);
+            if (!src) return null;
+
+            const alt = node?.altText || "";
+            const label = node?.altText || "";
+
+            return { src, alt, label };
+        })
+        .filter(Boolean);
     const aboutCta1 = aboutSlice?.ctaurl1 || null;
     const aboutCta2 = aboutSlice?.ctaurl2 || null;
 
@@ -486,7 +499,6 @@ export default async function HomePage() {
                 />
             )}
 
-            {/* ABOUT */}
             {showAbout && (
                 <AboutSection
                     eyebrow={aboutKicker}
@@ -494,6 +506,7 @@ export default async function HomePage() {
                     subtitle={aboutSubtitle}
                     contentHtml={aboutContent}
                     bgUrl={aboutBgUrl}
+                    bgMobileUrl={aboutMobileBgUrl}
                     images={aboutImages}
                     ctas={[aboutCta1, aboutCta2].filter(Boolean)}
                 />

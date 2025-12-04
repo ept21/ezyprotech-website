@@ -1,3 +1,4 @@
+// /src/app/components/sections/home/AboutSection.jsx
 "use client";
 
 import Image from "next/image";
@@ -10,8 +11,9 @@ export default function AboutSection({
                                          subtitle = "We bridge the gap between cutting-edge AI technologies and practical business solutions.",
                                          contentHtml = "",
                                          bgUrl = null,
-                                         images = [],            // array of up to 4 image URLs
-                                         ctas = []               // [{url,title,target}, ...]
+                                         bgMobileUrl = null, // mobile background
+                                         images = [],        // array of up to 4 { src, alt, label } OR string URLs
+                                         ctas = [],          // [{url,title,target}, ...]
                                      }) {
     const HTML = ({ html }) => (
         <div
@@ -20,45 +22,101 @@ export default function AboutSection({
         />
     );
 
-    const sectionBg = bgUrl ? { backgroundImage: `url(${bgUrl})` } : undefined;
+    const hasBackground = Boolean(bgUrl || bgMobileUrl);
 
     return (
         <section
             id="about"
             data-v="about"
-            style={sectionBg}
-            className="v-sec v-sec--scheme-1 relative bg-center bg-cover bg-no-repeat"
+            className="v-sec v-sec--scheme-1 relative overflow-hidden"
+            role="region"
+            aria-label="About Veltiqo"
         >
-            {bgUrl && <div className="absolute inset-0 bg-black/35" aria-hidden="true" />}
+            {/* Background handling: desktop + mobile + fallback */}
+            {hasBackground ? (
+                <>
+                    {bgUrl && (
+                        <div
+                            aria-hidden="true"
+                            className="absolute inset-0 hidden md:block bg-center bg-cover bg-no-repeat bg-fixed"
+                            style={{ backgroundImage: `url(${bgUrl})` }}
+                        />
+                    )}
+
+                    {bgMobileUrl && (
+                        <div
+                            aria-hidden="true"
+                            className="absolute inset-0 md:hidden bg-center bg-cover bg-no-repeat"
+                            style={{ backgroundImage: `url(${bgMobileUrl})` }}
+                        />
+                    )}
+
+                    {!bgMobileUrl && bgUrl && (
+                        <div
+                            aria-hidden="true"
+                            className="absolute inset-0 md:hidden bg-center bg-cover bg-no-repeat"
+                            style={{ backgroundImage: `url(${bgUrl})` }}
+                        />
+                    )}
+                </>
+            ) : (
+                <div
+                    aria-hidden="true"
+                    className="absolute inset-0 bg-[radial-gradient(circle_at_top,_#f9fbff,_#e4ecf7)] md:bg-fixed"
+                />
+            )}
+
             <div className="v-sec__container relative z-10">
                 {/* Heading */}
                 <header className="v-head v-head--center">
-                    {eyebrow && <div className="v-kicker v-kicker--light">{eyebrow}</div>}
+                    {eyebrow && <div className="v-kicker v-kicker--dark">{eyebrow}</div>}
                     <h2 className="v-title-xl">{title}</h2>
-                    {subtitle && <p className="v-sub">{subtitle}</p>}
+                    {subtitle && <h3 className="v-sub font-bold">{subtitle}</h3>}
                     {contentHtml ? <HTML html={contentHtml} /> : null}
                 </header>
 
-                {/* Images grid (no cropping) */}
+                {/* Simple round icons */}
                 {images?.length ? (
-                    <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {images.slice(0, 4).map((src, i) => (
-                            <div
-                                key={i}
-                                className="rounded-xl bg-white/5 flex items-center justify-center p-3 md:p-4"
-                                style={{ height: i === 0 ? 112 : 96 }} // ~28px/24px * 4 (tweak as you like)
-                            >
-                                <Image
-                                    src={src}
-                                    alt=""
-                                    width={800}
-                                    height={600}
-                                    sizes="(max-width: 768px) 50vw, 25vw"
-                                    className="max-h-full w-auto object-contain"
-                                    priority={i === 0}
-                                />
-                            </div>
-                        ))}
+                    <div className="flex flex-wrap items-start justify-center gap-6 md:gap-10">
+                        {images.slice(0, 4).map((img, i) => {
+                            const isObj = img && typeof img === "object";
+                            const src = isObj ? img.src : img;
+                            const alt = isObj ? img.alt || "" : "";
+                            const label = isObj ? img.label || img.alt || "" : "";
+
+                            if (!src) return null;
+
+                            return (
+                                <div
+                                    key={i}
+                                    className="flex flex-col items-center justify-start gap-3"
+                                >
+                                    <Image
+                                        src={src}
+                                        alt={alt}
+                                        width={140}
+                                        height={140}
+                                        sizes="(max-width: 768px) 35vw, 15vw"
+                                        className="
+                      w-[120px] h-[120px] md:w-[140px] md:h-[140px]
+                      rounded-[100px]
+                      object-cover
+                      border border-white/70
+                      shadow-[0_18px_30px_rgba(15,23,42,0.3)]
+                      bg-white/10
+                      backdrop-blur-xl
+                    "
+                                        priority={i === 0}
+                                    />
+
+                                    {(label || alt) && (
+                                        <p className="text-[11px] md:text-xs font-medium text-slate-900/85 text-center leading-snug max-w-[160px]">
+                                            {label || alt}
+                                        </p>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 ) : null}
 
@@ -71,9 +129,12 @@ export default function AboutSection({
                                     key={i}
                                     href={c.url}
                                     target={c.target ?? "_self"}
-                                    className={i === 0 ? "btn-pill btn-pill--light" : "btn-link-dark"}
+                                    className={
+                                        i === 0 ? "btn-pill btn-pill--light" : "btn-link-dark"
+                                    }
                                 >
-                                    {c.title ?? "Learn more"} {i !== 0 ? <span aria-hidden="true">→</span> : null}
+                                    {c.title ?? "Learn more"}{" "}
+                                    {i !== 0 ? <span aria-hidden="true">→</span> : null}
                                 </Link>
                             ) : null
                         )}

@@ -27,7 +27,6 @@
 .v-head { display:flex; flex-direction:column; align-items:center; gap:16px; max-width:768px; }
 .v-head--center { text-align:center; }
 .v-kicker {
-    color: var(--text-secondary);
     font: 600 16px/24px Inter, system-ui, sans-serif;
     letter-spacing: .02em;
 }
