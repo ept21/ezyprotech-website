@@ -450,6 +450,7 @@ export default async function HomePage() {
     const showContact = contactSlice?.showContact ?? true;
 
     const contactBgUrl = getAcfImageUrl(contactSlice?.contactBgImage);
+    const contactMobileBgUrl = getAcfImageUrl(contactSlice?.mobileBackgroundImage);
     const contactKicker = contactSlice?.kicker || "Connect";
     const contactTitle =
         contactSlice?.contactTitle || "Contact Veltiqo";
@@ -565,6 +566,7 @@ export default async function HomePage() {
             {showContact && (
                 <ContactSection
                     bgUrl={contactBgUrl}
+                    mobileBgUrl={contactMobileBgUrl}
                     eyebrow={contactKicker}
                     title={contactTitle}
                     subtitle={contactSubtitle}

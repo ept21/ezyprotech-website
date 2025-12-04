@@ -18,32 +18,36 @@ export default function CtaWideSection({
     // Helper to safely render WYSIWYG HTML
     const HTML = ({ html }) => (
         <div
-            className="prose prose-invert max-w-2xl mx-auto mt-4"
+            className="prose prose-invert max-w-2xl mx-auto mt-4 text-slate-100/90"
             dangerouslySetInnerHTML={{ __html: html || "" }}
         />
     );
 
     // Normalize CTAs with fallbacks
     const primaryHref = primaryCta?.url || "/contact";
-    const primaryLabel = primaryCta?.title || "Get started";
+    const primaryLabel = primaryCta?.title || "Send a message";
     const primaryTarget = primaryCta?.target || "_self";
 
-    const secondaryHref = secondaryCta?.url || "#book-consultation";
-    const secondaryLabel = secondaryCta?.title || "Book consultation";
+    const secondaryHref = secondaryCta?.url || "#contact";
+    const secondaryLabel = secondaryCta?.title || "Contact us";
     const secondaryTarget = secondaryCta?.target || "_self";
 
     return (
         <section
             id="ctasection"
             data-v="cta"
-            className="v-sec v-sec--scheme-1 relative overflow-hidden"
+            className="
+        relative overflow-hidden
+        v-sec v-sec--scheme-1
+        text-center
+      "
             role="region"
-            aria-label="Call to action"
+            aria-label="Final call to action"
         >
-            {/* Background: desktop + mobile, fixed only on desktop */}
+            {/* Background from CMS: desktop + mobile */}
             {bgUrl || mobileBgUrl ? (
                 <>
-                    {/* Desktop background (fixed) */}
+                    {/* Desktop background with fixed attachment (no mobile fixed) */}
                     {bgUrl && (
                         <div
                             aria-hidden="true"
@@ -52,71 +56,154 @@ export default function CtaWideSection({
                         />
                     )}
 
-                    {/* Mobile background (no fixed to avoid issues) */}
-                    <div
-                        aria-hidden="true"
-                        className="absolute inset-0 md:hidden bg-center bg-cover bg-no-repeat"
-                        style={{ backgroundImage: `url(${mobileBgUrl || bgUrl || ""})` }}
-                    />
+                    {/* Mobile background (scroll) */}
+                    {mobileBgUrl && (
+                        <div
+                            aria-hidden="true"
+                            className="absolute inset-0 md:hidden bg-center bg-cover bg-no-repeat"
+                            style={{ backgroundImage: `url(${mobileBgUrl})` }}
+                        />
+                    )}
 
-                    {/* Dark wash over background for readability */}
+                    {/* Fallback – use desktop bg on mobile if no mobile image */}
+                    {!mobileBgUrl && bgUrl && (
+                        <div
+                            aria-hidden="true"
+                            className="absolute inset-0 md:hidden bg-center bg-cover bg-no-repeat"
+                            style={{ backgroundImage: `url(${bgUrl})` }}
+                        />
+                    )}
+
+                    {/* Dark / neon overlay for readability, like the mockup */}
                     <div
                         aria-hidden="true"
-                        className="absolute inset-0 bg-gradient-to-b from-slate-950/85 via-slate-950/80 to-slate-900/85"
+                        className="
+              absolute inset-0
+              bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.35),_rgba(15,23,42,0.85))]
+            "
+                    />
+                    <div
+                        aria-hidden="true"
+                        className="
+              pointer-events-none absolute inset-0
+              bg-[radial-gradient(circle_at_bottom,_rgba(56,189,248,0.35),transparent_60%)]
+              mix-blend-screen opacity-80
+            "
                     />
                 </>
             ) : (
-                // Fallback dark gradient if no image
+                // Default gradient if no image at all
                 <div
                     aria-hidden="true"
-                    className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950"
+                    className="absolute inset-0 bg-[radial-gradient(circle_at_top,_#0b1120,_#020617)]"
                 />
             )}
 
-            <div className="v-sec__container relative z-10">
-                {/* Heading */}
-                <header className="v-head v-head--center">
-                    {eyebrow && (
-                        <p className="v-kicker v-kicker--light">
-                            {eyebrow}
-                        </p>
-                    )}
-                    <h2 className="v-title-xl text-white">{title}</h2>
-                    {subtitle && (
-                        <p className="v-sub text-slate-200">
-                            {subtitle}
-                        </p>
-                    )}
-                    {contentHtml ? <HTML html={contentHtml} /> : null}
-                </header>
+            {/* Content */}
+            <div className="relative z-10">
+                <div
+                    className="
+            v-sec__container
+            flex flex-col items-center justify-center
+            min-h-[460px] md:min-h-[540px] lg:min-h-[620px]
+            py-16 md:py-24
+          "
+                >
+                    <header className="max-w-4xl mx-auto">
+                        {eyebrow && (
+                            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-200/80">
+                                {eyebrow}
+                            </p>
+                        )}
 
-                {/* CTA buttons */}
-                <div className="v-actions">
-                    <Link
-                        href={primaryHref}
-                        target={primaryTarget}
-                        className="btn-brand"
+                        <h2
+                            className="
+                text-3xl sm:text-4xl md:text-5xl lg:text-[3.4rem]
+                font-semibold md:font-bold
+                leading-tight md:leading-snug
+                tracking-[-0.04em]
+                text-white
+              "
+                        >
+                            {title}
+                        </h2>
+
+                        {subtitle && (
+                            <p className="mt-5 text-sm sm:text-base md:text-lg leading-relaxed text-slate-100/85 max-w-3xl mx-auto">
+                                {subtitle}
+                            </p>
+                        )}
+
+                        {contentHtml ? <HTML html={contentHtml} /> : null}
+                    </header>
+
+                    {/* CTA buttons – same row, responsive */}
+                    <div
+                        className="
+              mt-[-40px]
+              flex flex-wrap items-center justify-center
+              gap-4 sm:gap-5
+            "
                     >
-                        {primaryLabel}
-                    </Link>
-                    <Link
-                        href={secondaryHref}
-                        target={secondaryTarget}
-                        className="btn-pill btn-pill--light"
-                    >
-                        {secondaryLabel}
-                    </Link>
+                        {/* Primary button – neon gradient pill */}
+                        <Link
+                            href={primaryHref}
+                            target={primaryTarget}
+                            className="
+                inline-flex items-center justify-center
+                rounded-full
+                px-4 sm:px-4 md:px-4
+                py-3.5 sm:py-4
+                text-sm sm:text-base md:text-lg
+                font-semibold tracking-tight
+                text-slate-900
+                bg-[linear-gradient(90deg,#00C293,#00C2FF)]
+                shadow-[0_10px_23px_rgba(0,194,255,0.55)]
+                border border-white/50
+                transition-all duration-200
+                hover:shadow-[0_12px_30px_rgba(0,194,255,0.8)]
+                hover:-translate-y-[1px]
+              "
+                        >
+                            {primaryLabel}
+                        </Link>
+
+                        {/* Secondary button – glass outline pill */}
+                        <Link
+                            href={secondaryHref}
+                            target={secondaryTarget}
+                            className="
+                inline-flex items-center justify-center
+                rounded-full
+                px-4 sm:px-4 md:px-4
+                py-3.5 sm:py-4
+                text-sm sm:text-base md:text-lg
+                font-semibold tracking-tight
+                text-cyan-100
+                border border-cyan-200/70
+                bg-white/5
+                backdrop-blur-xl
+                shadow-[0_8px_10px_rgba(15,23,42,0.7)]
+                transition-all duration-200
+                hover:bg-white/10
+                hover:shadow-[0_8px_26px_rgba(15,23,42,0.95)]
+                hover:-translate-y-[1px]
+              "
+                        >
+                            {secondaryLabel}
+                        </Link>
+                    </div>
+
+                    {/* Optional wide image below (kept for backwards compatibility) */}
+                    {imageUrl && (
+                        <img
+                            className="v-img-wide mt-10 max-w-5xl mx-auto"
+                            src={imageUrl}
+                            alt=""
+                            loading="lazy"
+                        />
+                    )}
                 </div>
-
-                {/* Wide image below CTAs, if provided */}
-                {imageUrl && (
-                    <img
-                        className="v-img-wide"
-                        src={imageUrl}
-                        alt=""
-                        loading="lazy"
-                    />
-                )}
             </div>
         </section>
     );
