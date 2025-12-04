@@ -37,7 +37,7 @@ export default function ProjectsSection({
                     {bgUrl && (
                         <div
                             aria-hidden="true"
-                            className="absolute inset-0 hidden md:block bg-center bg-cover bg-no-repeat bg-fixed"
+                            className="absolute inset-0 hidden md:block bg-center bg-cover bg-no-repeat"
                             style={{ backgroundImage: `url(${bgUrl})` }}
                         />
                     )}
@@ -67,7 +67,7 @@ export default function ProjectsSection({
                 <>
                     <div
                         aria-hidden="true"
-                        className="absolute inset-0 bg-[radial-gradient(circle_at_top,_#020617,_#020617)] md:bg-fixed"
+                        className="absolute inset-0 bg-[radial-gradient(circle_at_top,_#020617,_#020617)]"
                     />
                     <div
                         aria-hidden="true"
@@ -81,7 +81,7 @@ export default function ProjectsSection({
                 <header className="v-head v-head--center">
                     {eyebrow && <p className="v-kicker v-kicker--light">{eyebrow}</p>}
                     <h2 className="v-title-xl text-white">{title}</h2>
-                    {subtitle && <p className="v-sub text-white">{subtitle}</p>}
+                    {subtitle && <h3 className="v-sub font-bold text-white">{subtitle}</h3>}
                     {contentHtml ? <HTML html={contentHtml} /> : null}
                 </header>
 
@@ -102,6 +102,7 @@ export default function ProjectsSection({
                                     backdrop-blur-2xl
                                     min-h-[320px] md:min-h-[360px]
                                     flex
+                                    text-center
                                 "
                             >
                                 {/* Project image as soft background */}
@@ -192,6 +193,7 @@ export default function ProjectsSection({
                                             flex flex-nowrap items-center
                                             gap-3 md:gap-4
                                             pt-4 border-t border-white/10
+                                            justify-center
                                         "
                                     >
                                         {/* Icon button */}

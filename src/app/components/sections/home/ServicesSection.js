@@ -119,7 +119,8 @@ export default function ServicesSection({
                 "v-sec",
                 "v-sec--scheme-2",
                 "v-sec--carousel",
-                "relative overflow-hidden"
+                "relative overflow-hidden",
+                "bg-fixed"
             )}
             style={sectionStyle}
             role="region"
@@ -128,7 +129,7 @@ export default function ServicesSection({
             {/* Overlay on top of the CMS background: light, futuristic */}
             <div
                 aria-hidden
-                className="absolute inset-0 -z-10 pointer-events-none"
+                className="absolute inset-0 -z-10 pointer-events-none "
                 style={{
                     background: hasBackground
                         ? "radial-gradient(130% 85% at 0% 0%, rgba(255,255,255,0.18), transparent), radial-gradient(140% 90% at 100% 100%, rgba(56,189,248,0.26), transparent)"
