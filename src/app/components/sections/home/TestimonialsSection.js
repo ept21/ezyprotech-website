@@ -121,7 +121,7 @@ export default function TestimonialsSection({
                 </header>
 
                 {/* Cards grid */}
-                <div className="mt-10 grid gap-6 md:gap-8 md:grid-cols-3">
+                <div className="mt-[-20px] grid gap-6 md:gap-8 md:grid-cols-3">
                     {items.map((t, idx) => {
                         const hasBottomLinks = t.singleReview || t.googleReview || t.videoUrl;
 
