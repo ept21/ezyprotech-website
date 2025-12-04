@@ -85,7 +85,7 @@ export default function ProjectsSection({
                 <header className="v-head v-head--center">
                     {eyebrow && <p className="v-kicker v-kicker--light">{eyebrow}</p>}
                     <h2 className="v-title-xl text-white">{title}</h2>
-                    {subtitle && <p className="v-sub text-white">{subtitle}</p>}
+                    {subtitle && <h3 className="v-sub font-bold text-white">{subtitle}</h3>}
                     {contentHtml ? <HTML html={contentHtml} /> : null}
                 </header>
 
