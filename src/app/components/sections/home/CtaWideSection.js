@@ -26,7 +26,9 @@ export default function CtaWideSection({
             backgroundImage: `url(${bgUrl})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
-        }
+            backgroundAttachment: "fixed",
+
+}
         : undefined;
 
     // Normalize CTAs with fallbacks

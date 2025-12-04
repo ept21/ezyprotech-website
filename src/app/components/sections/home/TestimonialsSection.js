@@ -81,7 +81,7 @@ export default function TestimonialsSection({
                     {mobileBgUrl && (
                         <div
                             aria-hidden="true"
-                            className="absolute inset-0 md:hidden bg-center bg-cover bg-no-repeat bg-fixed"
+                            className="absolute inset-0 md:hidden bg-center bg-cover bg-no-repeat"
                             style={{ backgroundImage: `url(${mobileBgUrl})` }}
                         />
                     )}
