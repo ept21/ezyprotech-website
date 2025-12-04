@@ -341,6 +341,7 @@ export const CTA_HOME_PAGE_QUERY = gql`
         ctaSection {
           showCtaSection
           backgroundImage { node { mediaItemUrl sourceUrl altText } }
+          mobileBackgroundImage { node { mediaItemUrl sourceUrl altText } }
           kicker
           title
           subtitle

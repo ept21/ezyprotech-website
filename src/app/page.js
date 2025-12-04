@@ -422,6 +422,8 @@ export default async function HomePage() {
     const showCtaSection = ctaSlice?.showCtaSection ?? true;
 
     const ctaBgUrl = getAcfImageUrl(ctaSlice?.backgroundImage);
+    const ctaMobileBgUrl = getAcfImageUrl(ctaSlice?.mobileBackgroundImage);
+
     const ctaImageUrl =
         getAcfImageUrl(ctaSlice?.ctaImage) ||
         (typeof ctaSlice?.ctaImage === "string"
@@ -553,6 +555,7 @@ export default async function HomePage() {
                     subtitle={ctaSubtitle}
                     contentHtml={ctaContentHtml}
                     bgUrl={ctaBgUrl}
+                    mobileBgUrl={ctaMobileBgUrl}
                     imageUrl={ctaImageUrl}
                     primaryCta={ctaPrimary}
                     secondaryCta={ctaSecondary}

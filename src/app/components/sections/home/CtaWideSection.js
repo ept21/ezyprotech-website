@@ -1,3 +1,4 @@
+// /src/app/components/sections/home/CtaWideSection.jsx
 "use client";
 
 import Link from "next/link";
@@ -9,6 +10,7 @@ export default function CtaWideSection({
                                            subtitle = "Let's discuss how our AI-driven solutions can transform your business strategy and performance.",
                                            contentHtml = "",
                                            bgUrl = null,
+                                           mobileBgUrl = null,
                                            imageUrl = null,
                                            primaryCta = null,   // { url, title, target }
                                            secondaryCta = null, // { url, title, target }
@@ -20,16 +22,6 @@ export default function CtaWideSection({
             dangerouslySetInnerHTML={{ __html: html || "" }}
         />
     );
-
-    const sectionBgStyle = bgUrl
-        ? {
-            backgroundImage: `url(${bgUrl})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundAttachment: "fixed",
-
-}
-        : undefined;
 
     // Normalize CTAs with fallbacks
     const primaryHref = primaryCta?.url || "/contact";
@@ -43,27 +35,58 @@ export default function CtaWideSection({
     return (
         <section
             id="ctasection"
-            className="v-sec v-sec--scheme-1 relative bg-center bg-cover bg-no-repeat"
             data-v="cta"
-            style={sectionBgStyle}
+            className="v-sec v-sec--scheme-1 relative overflow-hidden"
+            role="region"
+            aria-label="Call to action"
         >
-            {/* Optional dark overlay if background image exists */}
-            {bgUrl && (
+            {/* Background: desktop + mobile, fixed only on desktop */}
+            {bgUrl || mobileBgUrl ? (
+                <>
+                    {/* Desktop background (fixed) */}
+                    {bgUrl && (
+                        <div
+                            aria-hidden="true"
+                            className="absolute inset-0 hidden md:block bg-center bg-cover bg-no-repeat bg-fixed"
+                            style={{ backgroundImage: `url(${bgUrl})` }}
+                        />
+                    )}
+
+                    {/* Mobile background (no fixed to avoid issues) */}
+                    <div
+                        aria-hidden="true"
+                        className="absolute inset-0 md:hidden bg-center bg-cover bg-no-repeat"
+                        style={{ backgroundImage: `url(${mobileBgUrl || bgUrl || ""})` }}
+                    />
+
+                    {/* Dark wash over background for readability */}
+                    <div
+                        aria-hidden="true"
+                        className="absolute inset-0 bg-gradient-to-b from-slate-950/85 via-slate-950/80 to-slate-900/85"
+                    />
+                </>
+            ) : (
+                // Fallback dark gradient if no image
                 <div
-                    className="absolute inset-0 bg-black/40"
                     aria-hidden="true"
+                    className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950"
                 />
             )}
 
             <div className="v-sec__container relative z-10">
+                {/* Heading */}
                 <header className="v-head v-head--center">
                     {eyebrow && (
                         <p className="v-kicker v-kicker--light">
                             {eyebrow}
                         </p>
                     )}
-                    <h2 className="v-title-xl">{title}</h2>
-                    {subtitle && <p className="v-sub">{subtitle}</p>}
+                    <h2 className="v-title-xl text-white">{title}</h2>
+                    {subtitle && (
+                        <p className="v-sub text-slate-200">
+                            {subtitle}
+                        </p>
+                    )}
                     {contentHtml ? <HTML html={contentHtml} /> : null}
                 </header>
 
