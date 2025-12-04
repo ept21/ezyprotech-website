@@ -110,9 +110,9 @@ export default function AboutSection({
                                     />
 
                                     {(label || alt) && (
-                                        <p className="text-[11px] md:text-xs font-medium text-slate-900/85 text-center leading-snug max-w-[160px]">
+                                        <h3 className="font-bold text-[11px] md:text-xs text-slate-900/85 text-center leading-snug max-w-[160px]">
                                             {label || alt}
-                                        </p>
+                                        </h3>
                                     )}
                                 </div>
                             );
