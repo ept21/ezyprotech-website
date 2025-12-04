@@ -75,9 +75,9 @@ export default function AboutSection({
                     {contentHtml ? <HTML html={contentHtml} /> : null}
                 </header>
 
-                {/* Simple round icons */}
+                {/* Images grid with circular icons */}
                 {images?.length ? (
-                    <div className="flex flex-wrap items-start justify-center gap-6 md:gap-10">
+                    <div className="mt-[-40px] grid grid-cols-2 md:grid-cols-4 gap-4">
                         {images.slice(0, 4).map((img, i) => {
                             const isObj = img && typeof img === "object";
                             const src = isObj ? img.src : img;
@@ -89,29 +89,41 @@ export default function AboutSection({
                             return (
                                 <div
                                     key={i}
-                                    className="flex flex-col items-center justify-start gap-3"
+                                    className="flex flex-col items-center justify-start gap-2"
                                 >
-                                    <Image
-                                        src={src}
-                                        alt={alt}
-                                        width={140}
-                                        height={140}
-                                        sizes="(max-width: 768px) 35vw, 15vw"
+                                    {/* Circular image */}
+                                    <div
                                         className="
-                      w-[120px] h-[120px] md:w-[140px] md:h-[140px]
-                      rounded-[100px]
-                      object-cover
-                      border border-white/70
-                      shadow-[0_18px_30px_rgba(15,23,42,0.3)]
-                      bg-white/10
-                      backdrop-blur-xl
-                    "
-                                        priority={i === 0}
-                                    />
+              flex items-center justify-center
+              w-[96px] h-[96px] md:w-[110px] md:h-[110px]
+              rounded-full
+              bg-white/6
+              shadow-[0_10px_28px_rgba(15,23,42,0.35)]
+              backdrop-blur-xl
+              overflow-hidden
+            "
+                                    >
+                                        <Image
+                                            src={src}
+                                            alt={alt}
+                                            width={110}
+                                            height={110}
+                                            sizes="(max-width: 768px) 35vw, 15vw"
+                                            className="w-full h-full object-cover rounded-full"
+                                            priority={i === 0}
+                                        />
+                                    </div>
 
-                                    {(label || alt) && (
-                                        <h3 className="font-bold text-[11px] md:text-xs text-slate-900/85 text-center leading-snug max-w-[160px]">
-                                            {label || alt}
+                                    {/* Label under icon – fixed height for alignment */}
+                                    {label && (
+                                        <h3
+                                            className="
+                text-[14px] md:text-xs text-center leading-snug px-2 text-black font-bold
+                min-h-[32px] md:min-h-[30px]
+                flex items-center justify-center
+              "
+                                        >
+                                            {label}
                                         </h3>
                                     )}
                                 </div>

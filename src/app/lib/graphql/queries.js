@@ -189,6 +189,7 @@ export const PROJECTS_HOME_PAGE_QUERY = gql`
         projects {
           showProjects
           projectsBgImage { node { mediaItemUrl sourceUrl altText } }
+          mobileBackgroundImage { node { mediaItemUrl sourceUrl altText } }
           kicker
           projectsTitle
           projectsSubtitle

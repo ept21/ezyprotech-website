@@ -1,3 +1,4 @@
+// /src/app/components/sections/home/ProjectsSection.jsx
 "use client";
 
 import Link from "next/link";
@@ -9,43 +10,86 @@ export default function ProjectsSection({
                                             title = "Featured projects",
                                             subtitle = "A snapshot of recent work — fast, scalable, and designed for growth.",
                                             contentHtml = "",
-                                            bgUrl = null,
+                                            bgUrl = null,          // desktop background
+                                            MobilebgUrl = null,    // mobile background
                                             items = [],            // [{ id, title, category, desc, image, href, ctas }]
-                                            ctas = []              // optional section-level CTAs [{ url, title, target }]
+                                            ctas = [],             // optional section-level CTAs [{ url, title, target }]
                                         }) {
     const HTML = ({ html }) => (
         <div
-            className="prose prose-invert max-w-none"
+            className="prose prose-invert max-w-none text-white"
             dangerouslySetInnerHTML={{ __html: html || "" }}
         />
     );
 
-    const sectionBgStyle = bgUrl
-        ? {
-            backgroundImage: `url(${bgUrl})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-        }
-        : undefined;
+    const hasBackground = Boolean(bgUrl || MobilebgUrl);
 
     return (
         <section
             id="projects"
-            className="v-sec v-sec--scheme-2 relative bg-center bg-cover bg-no-repeat"
-            style={sectionBgStyle}
+            className="v-sec v-sec--scheme-2 relative overflow-hidden"
             data-v="projects"
         >
-            {bgUrl && <div className="absolute inset-0 bg-black/25" aria-hidden="true" />}
+            {/* Background handling: desktop + mobile + fallback */}
+            {hasBackground ? (
+                <>
+                    {/* Desktop background */}
+                    {bgUrl && (
+                        <div
+                            aria-hidden="true"
+                            className="absolute inset-0 hidden md:block bg-center bg-cover bg-no-repeat"
+                            style={{ backgroundImage: `url(${bgUrl})` }}
+                        />
+                    )}
+
+                    {/* Mobile background */}
+                    {MobilebgUrl && (
+                        <div
+                            aria-hidden="true"
+                            className="absolute inset-0 md:hidden bg-center bg-cover bg-no-repeat"
+                            style={{ backgroundImage: `url(${MobilebgUrl})` }}
+                        />
+                    )}
+
+                    {/* Fallback: reuse desktop for mobile if mobile image is not set */}
+                    {!MobilebgUrl && bgUrl && (
+                        <div
+                            aria-hidden="true"
+                            className="absolute inset-0 md:hidden bg-center bg-cover bg-no-repeat"
+                            style={{ backgroundImage: `url(${bgUrl})` }}
+                        />
+                    )}
+
+                    {/* Dark overlay for readability */}
+                    <div
+                        aria-hidden="true"
+                        className="absolute inset-0 bg-black/25"
+                    />
+                </>
+            ) : (
+                <>
+                    {/* Default light background if no images were provided */}
+                    <div
+                        aria-hidden="true"
+                        className="absolute inset-0 bg-[radial-gradient(circle_at_top,_#f4f7fb,_#dde5f3)]"
+                    />
+                    <div
+                        aria-hidden="true"
+                        className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,_rgba(15,23,42,0.25),_transparent)]"
+                    />
+                </>
+            )}
 
             <div className="v-sec__container relative z-10">
+                {/* Header */}
                 <header className="v-head v-head--center">
                     {eyebrow && <p className="v-kicker v-kicker--light">{eyebrow}</p>}
-                    <h2 className="v-title-xl">{title}</h2>
-                    {subtitle && <p className="v-sub">{subtitle}</p>}
+                    <h2 className="v-title-xl text-white">{title}</h2>
+                    {subtitle && <p className="v-sub text-white">{subtitle}</p>}
                     {contentHtml ? <HTML html={contentHtml} /> : null}
                 </header>
 
-                {/* Grid Layout - Full width and stretching items */}
+                {/* Grid Layout */}
                 <div className="v-grid-projects v-grid-projects--xl4 max-w-7xl mx-auto">
                     {items.map((p, idx) => (
                         <article
@@ -63,18 +107,22 @@ export default function ProjectsSection({
                                     priority={idx < 2}
                                 />
                             ) : (
-                                <div className="v-project__img absolute inset-0 bg-white/5" aria-hidden="true" />
+                                <div
+                                    className="v-project__img absolute inset-0 bg-white/5"
+                                    aria-hidden="true"
+                                />
                             )}
 
+                            {/* Gradient overlay */}
                             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
 
                             {/* Content */}
                             <div className="v-project__content relative z-10">
-
-                                {/* Body: Badge + Title + Desc */}
                                 <div className="v-project__body">
                                     {p.category && (
-                                        <span className="v-badge self-start">{p.category}</span>
+                                        <span className="v-badge self-start">
+                                            {p.category}
+                                        </span>
                                     )}
 
                                     <h3 className="v-project__title" title={p.title}>
@@ -88,9 +136,9 @@ export default function ProjectsSection({
                                     )}
                                 </div>
 
-                                {/* Actions: ALL buttons in ONE single row */}
+                                {/* Actions */}
                                 <div className="v-project__actions">
-                                    {/* 1. Icon Button */}
+                                    {/* Icon Button */}
                                     <Link
                                         href={p.href || "#"}
                                         className="btn-icon-only inline-flex items-center justify-center rounded-full border border-white/40 bg-white/10 hover:bg-white/20 transition text-white"
@@ -112,7 +160,7 @@ export default function ProjectsSection({
                                         </svg>
                                     </Link>
 
-                                    {/* 2. CTA Buttons - Direct siblings of the icon for one-line layout */}
+                                    {/* CTAs */}
                                     {Array.isArray(p.ctas) && p.ctas.length > 0 && (
                                         <>
                                             {p.ctas.map((c, i) =>

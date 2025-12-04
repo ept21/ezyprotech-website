@@ -267,6 +267,7 @@ export default async function HomePage() {
     const showProjects = projectsSlice?.showProjects ?? true;
 
     const projectsBgUrl = getAcfImageUrl(projectsSlice?.projectsBgImage);
+    const MobileprojectsBgUrl = getAcfImageUrl(projectsSlice?.mobileBackgroundImage);
     const projectsKicker = projectsSlice?.kicker || "Deliver";
     const projectsTitle =
         projectsSlice?.projectsTitle || "Featured projects";
@@ -520,6 +521,7 @@ export default async function HomePage() {
                     subtitle={projectsSubtitle}
                     contentHtml={projectsContent}
                     bgUrl={projectsBgUrl}
+                    MobilebgUrl={MobileprojectsBgUrl}
                     items={projectCards}
                     ctas={projectsCtas}
                 />
