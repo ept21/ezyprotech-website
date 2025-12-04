@@ -336,6 +336,11 @@ export default async function HomePage() {
     const testimonialsBgUrl = getAcfImageUrl(
         testimonialsSlice?.testimonialsBgImage
     );
+
+    const mobileTestimonialsBgUrl = getAcfImageUrl(
+        testimonialsSlice?.mobileBackgroundImage
+    );
+
     const testimonialsKicker =
         testimonialsSlice?.kicker || "Trust";
     const testimonialsTitle =
@@ -535,6 +540,7 @@ export default async function HomePage() {
                     subtitle={testimonialsSubtitle}
                     contentHtml={testimonialsContent}
                     bgUrl={testimonialsBgUrl}
+                    mobileBgUrl={mobileTestimonialsBgUrl}
                     items={testimonialCards}
                     ctas={testimonialsCtas}
                 />

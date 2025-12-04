@@ -264,6 +264,7 @@ export const TESTIMONIALS_HOME_PAGE_QUERY = gql`
         testimonials {
           showTestimonials
           testimonialsBgImage { node { mediaItemUrl sourceUrl altText } }
+          mobileBackgroundImage { node { mediaItemUrl sourceUrl altText } }
           kicker
           testimonialsTitle
           testimonialsSubtitle

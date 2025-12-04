@@ -373,7 +373,7 @@ footer{
     flex-direction: column;
     isolation: isolate;
     background-color: var(--bg-elevated);
-    border: 1px solid var(--border-subtle);
+    border: 1px solid var(--brand-primary);
 }
 
 .v-project__img {
