@@ -13,7 +13,7 @@ export default function ProjectsSection({
                                             bgUrl = null,
                                             MobilebgUrl = null,
                                             items = [],     // [{ id, title, category, desc, image, href, ctas }]
-                                            ctas = [],      // optional section-level CTAs [{ url, title, target }]
+                                            ctas = [],      // section-level CTAs [{ url, title, target }]
                                         }) {
     const HTML = ({ html }) => (
         <div
@@ -34,7 +34,6 @@ export default function ProjectsSection({
             {/* Background handling: desktop + mobile + fallback */}
             {hasBackground ? (
                 <>
-                    {/* Desktop background (fixed) */}
                     {bgUrl && (
                         <div
                             aria-hidden="true"
@@ -43,7 +42,6 @@ export default function ProjectsSection({
                         />
                     )}
 
-                    {/* Mobile background (scroll) */}
                     {MobilebgUrl && (
                         <div
                             aria-hidden="true"
@@ -52,7 +50,6 @@ export default function ProjectsSection({
                         />
                     )}
 
-                    {/* Fallback: reuse desktop for mobile if mobile not set */}
                     {!MobilebgUrl && bgUrl && (
                         <div
                             aria-hidden="true"
@@ -61,7 +58,6 @@ export default function ProjectsSection({
                         />
                     )}
 
-                    {/* Dark overlay for contrast */}
                     <div
                         aria-hidden="true"
                         className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.75),_rgba(0,0,0,0.96))]"
@@ -69,7 +65,6 @@ export default function ProjectsSection({
                 </>
             ) : (
                 <>
-                    {/* Default dark gradient background */}
                     <div
                         aria-hidden="true"
                         className="absolute inset-0 bg-[radial-gradient(circle_at_top,_#020617,_#020617)] md:bg-fixed"
@@ -91,7 +86,7 @@ export default function ProjectsSection({
                 </header>
 
                 {/* Grid of project cards */}
-                <div className="v-grid-projects v-grid-projects--xl3 max-w-6xl mx-auto">
+                <div className="v-grid-projects v-grid-projects--xl3 max-w-7xl mx-auto">
                     {items.map((p, idx) => {
                         const cardCtas = Array.isArray(p.ctas) ? p.ctas.filter(Boolean) : [];
 
@@ -105,6 +100,8 @@ export default function ProjectsSection({
                                     bg-black/40
                                     shadow-[0_26px_70px_rgba(0,0,0,0.85)]
                                     backdrop-blur-2xl
+                                    min-h-[320px] md:min-h-[360px]
+                                    flex
                                 "
                             >
                                 {/* Project image as soft background */}
@@ -119,7 +116,7 @@ export default function ProjectsSection({
                                     />
                                 )}
 
-                                {/* Inner gradient overlay to create the glass look */}
+                                {/* Inner glow overlay */}
                                 <div
                                     aria-hidden="true"
                                     className="
@@ -130,17 +127,17 @@ export default function ProjectsSection({
                                     "
                                 />
 
-                                {/* Dark fade from bottom for text readability */}
+                                {/* Dark fade from bottom for text */}
                                 <div
                                     aria-hidden="true"
                                     className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent"
                                 />
 
                                 {/* Card content */}
-                                <div className="relative z-10 flex h-full flex-col justify-between px-6 pt-6 pb-5 md:px-8 md:pt-7 md:pb-6">
+                                <div className="relative z-10 flex flex-col justify-between w-full px-4 md:px-5 pt-6 md:pt-7 pb-7 md:pb-8">
                                     {/* Top: kicker pill */}
                                     {p.category && (
-                                        <div className="flex justify-end mb-5">
+                                        <div className="flex justify-end mb-4 md:mb-5">
                                             <span
                                                 className="
                                                     inline-flex items-center
@@ -180,7 +177,7 @@ export default function ProjectsSection({
                                                     text-xs md:text-sm
                                                     text-slate-100/85
                                                     leading-relaxed
-                                                    line-clamp-4
+                                                    line-clamp-3
                                                 "
                                             >
                                                 {p.desc}
@@ -188,21 +185,23 @@ export default function ProjectsSection({
                                         )}
                                     </div>
 
-                                    {/* Bottom: icon + CTAs in one row */}
+                                    {/* Bottom: icon + CTAs */}
                                     <div
                                         className="
                                             mt-6 md:mt-7
-                                            flex items-center gap-3 md:gap-4
+                                            flex flex-nowrap items-center
+                                            gap-3 md:gap-4
                                             pt-4 border-t border-white/10
-                                            flex-wrap md:flex-nowrap
                                         "
                                     >
-                                        {/* Icon button (main link) */}
+                                        {/* Icon button */}
                                         <Link
                                             href={p.href || "#"}
                                             className="
                                                 inline-flex items-center justify-center
-                                                w-10 h-10 md:w-11 md:h-11
+                                                shrink-0
+                                                aspect-square
+                                                w-9 md:w-10
                                                 rounded-full
                                                 bg-[linear-gradient(90deg,#00C293_0%,#00E0A6_45%,#0A84FF_100%)]
                                                 text-slate-900
@@ -215,7 +214,7 @@ export default function ProjectsSection({
                                             <svg
                                                 xmlns="http://www.w3.org/2000/svg"
                                                 viewBox="0 0 24 24"
-                                                className="w-5 h-5"
+                                                className="w-4 h-4 md:w-5 md:h-5"
                                                 fill="none"
                                             >
                                                 <path
@@ -239,8 +238,8 @@ export default function ProjectsSection({
                                                         className="
                                                             inline-flex items-center justify-center
                                                             rounded-full
-                                                            px-6 md:px-7 py-2.5
-                                                            text-xs md:text-sm font-semibold
+                                                            px-4 md:px-5 py-2.5
+                                                            text-[11px] md:text-sm font-semibold
                                                             text-slate-900
                                                             whitespace-nowrap
                                                             bg-[linear-gradient(90deg,#00C293_0%,#00E0A6_45%,#0A84FF_100%)]
@@ -267,7 +266,7 @@ export default function ProjectsSection({
                     })}
                 </div>
 
-                {/* Bottom section-level CTA(s) */}
+                {/* Bottom CTA(s) */}
                 {ctas?.length ? (
                     <div className="v-actions">
                         {ctas.map((c, i) =>
