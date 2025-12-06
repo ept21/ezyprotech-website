@@ -74,7 +74,7 @@ export default async function RootLayout({ children }) {
                 tagline="Build the Future of Your Business"
             />
         </head>
-        <body>
+        <body suppressHydrationWarning>
         <Header
             menu={mainMenuTree}
             siteTitle={siteTitle}
