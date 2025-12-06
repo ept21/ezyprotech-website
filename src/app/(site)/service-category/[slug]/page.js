@@ -1,4 +1,3 @@
-// src/app/(site)/service-category/[slug]/page.js
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { gqlRequest } from "@/app/lib/graphql/client";
@@ -10,6 +9,26 @@ import { getAcfImageUrl } from "@/app/lib/wp";
 
 export const revalidate = 300;
 
+/* ----------------------------------------
+   Helpers
+---------------------------------------- */
+
+// Remove HTML tags & return bullet text array
+function extractBulletsFromHtml(html) {
+    if (!html || typeof html !== "string") return [];
+
+    return html
+        .split("</li>")
+        .map((part) =>
+            part
+                .replace(/<\/?[^>]+(>|$)/g, "") // remove HTML tags
+                .replace(/\s+/g, " ")
+                .trim()
+        )
+        .filter(Boolean);
+}
+
+// Normalize ACF link fields
 function mapAcfLink(link, fallbackHref = "/contact") {
     if (!link) {
         return { href: fallbackHref, label: "", target: "_self" };
@@ -22,26 +41,28 @@ function mapAcfLink(link, fallbackHref = "/contact") {
     return { href, label, target };
 }
 
-async function getServiceCategoryPageData(slug) {
-    if (!slug) return null;
+/* ----------------------------------------
+   Fetch Service Category Page Data
+---------------------------------------- */
 
+async function getServiceCategoryPageData(slug) {
     const data = await gqlRequest(SERVICE_CATEGORY_PAGE_QUERY, { slug });
+
     const category = data?.serviceCategory;
     if (!category) return null;
 
     const fields = category.servicesCategory || {};
 
+    // Handle bullets (HTML or array)
     let chips = [];
     if (Array.isArray(fields.bullets)) {
-        chips = fields.bullets
-            .map((item) => {
-                if (!item) return "";
-                if (typeof item === "string") return item;
-                return item.text || item.label || "";
-            })
-            .filter(Boolean);
+        chips = fields.bullets.map((item) => {
+            if (!item) return "";
+            if (typeof item === "string") return item;
+            return item.text || item.label || "";
+        });
     } else if (typeof fields.bullets === "string") {
-        chips = [fields.bullets];
+        chips = extractBulletsFromHtml(fields.bullets);
     }
 
     const hero = {
@@ -58,7 +79,6 @@ async function getServiceCategoryPageData(slug) {
 
     const services = (category.services?.nodes || []).map((s) => {
         const serviceFields = s.serviceFields || {};
-
         return {
             slug: s.slug,
             title: s.title,
@@ -76,6 +96,10 @@ async function getServiceCategoryPageData(slug) {
     };
 }
 
+/* ----------------------------------------
+   Static Params (SSG)
+---------------------------------------- */
+
 export async function generateStaticParams() {
     const data = await gqlRequest(SERVICE_CATEGORY_SLUGS_QUERY, {});
     const nodes = data?.serviceCategories?.nodes || [];
@@ -85,37 +109,33 @@ export async function generateStaticParams() {
         .map((node) => ({ slug: node.slug }));
 }
 
+/* ----------------------------------------
+   Page Component
+---------------------------------------- */
+
 export default async function ServiceCategoryPage({ params }) {
-    // In Next 16, params can be a Promise and can even be a JSON string.
-    const raw = await params;
-    const resolvedParams =
-        typeof raw === "string" ? JSON.parse(raw) : raw || {};
-
-    const slug = resolvedParams.slug;
-
-    if (!slug) {
-        console.log("ServiceCategoryPage: missing slug param", resolvedParams);
-        notFound();
-    }
+    const { slug } = await params;
 
     const data = await getServiceCategoryPageData(slug);
 
     if (!data) {
-        console.log("ServiceCategoryPage: no category for slug", slug);
         notFound();
     }
 
     return <ServiceCategoryTemplate category={data} />;
 }
 
-/* ---------------- UI Template ---------------- */
+/* ----------------------------------------
+   UI Template
+---------------------------------------- */
 
 function ServiceCategoryTemplate({ category }) {
     const { hero, services } = category;
 
     return (
         <main className="bg-[#0D1117] text-[#C9D1D9]">
-            {/* Hero section */}
+
+            {/* Hero */}
             <section className="relative overflow-hidden border-b border-[#30363D]">
                 {hero.bgDesktop && (
                     <div className="hidden md:block absolute inset-0">
@@ -141,8 +161,8 @@ function ServiceCategoryTemplate({ category }) {
                     <div className="max-w-3xl">
                         {hero.kicker && (
                             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase border border-[#0A84FF]/40 bg-[#0A84FF]/10 text-[#0A84FF]">
-                {hero.kicker}
-              </span>
+                                {hero.kicker}
+                            </span>
                         )}
 
                         <h1 className="mt-4 text-3xl md:text-5xl font-extrabold text-white tracking-tight">
@@ -155,15 +175,16 @@ function ServiceCategoryTemplate({ category }) {
                             </p>
                         )}
 
-                        {hero.chips && hero.chips.length > 0 && (
+                        {/* Chips */}
+                        {hero.chips?.length > 0 && (
                             <div className="mt-8 flex flex-wrap gap-2">
-                <span className="px-4 py-2 rounded-full bg-[#C9D1D9] text-[#0D1117] font-semibold text-xs md:text-sm">
-                  All services
-                </span>
+                                <span className="px-4 py-2 rounded-full bg-[#C9D1D9] text-[#0D1117] font-semibold text-xs md:text-sm">
+                                    All services
+                                </span>
+
                                 {hero.chips.map((chip, idx) => (
                                     <button
-                                        key={`${chip}-${idx}`}
-                                        type="button"
+                                        key={idx}
                                         className="px-4 py-2 rounded-full border border-[#30363D] text-[#8B949E] hover:text-white hover:border-[#C9D1D9] transition-all text-xs md:text-sm"
                                     >
                                         {chip}
@@ -172,17 +193,13 @@ function ServiceCategoryTemplate({ category }) {
                             </div>
                         )}
 
-                        {hero.cta && hero.cta.href && hero.cta.label && (
+                        {/* CTA */}
+                        {hero.cta && hero.cta.label && (
                             <div className="mt-8">
                                 <Link
                                     href={hero.cta.href}
                                     target={hero.cta.target}
-                                    rel={
-                                        hero.cta.target === "_blank"
-                                            ? "noreferrer noopener"
-                                            : undefined
-                                    }
-                                    className="inline-flex items-center justify-center px-6 py-3 rounded-2xl font-semibold bg-[#0A84FF] hover:bg-[#0070E0] text-white text-sm md:text-base shadow-[0_0_20px_rgba(10,132,255,0.3)] hover:shadow-[0_0_30px_rgba(10,132,255,0.5)] transition-all"
+                                    className="inline-flex items-center px-6 py-3 rounded-2xl font-semibold bg-[#0A84FF] text-white hover:bg-[#0070E0]"
                                 >
                                     {hero.cta.label}
                                 </Link>
@@ -201,26 +218,17 @@ function ServiceCategoryTemplate({ category }) {
                             className="group bg-[#161B22] border border-[#30363D] rounded-3xl overflow-hidden flex flex-col h-full hover:border-[#00C293]/50 transition-all duration-300 hover:shadow-2xl hover:shadow-[#00C293]/5"
                         >
                             <div className="h-40 bg-[#0D1117] relative overflow-hidden">
-                                <div className="absolute inset-0 bg-gradient-to-br from-[#0D1117] to-[#161B22]" />
-                                <div
-                                    className="absolute inset-0 opacity-20"
-                                    style={{
-                                        backgroundImage:
-                                            "radial-gradient(circle at 2px 2px, #30363D 1px, transparent 0)",
-                                        backgroundSize: "20px 20px",
-                                    }}
-                                />
                                 {service.kicker && (
                                     <div className="absolute top-4 left-4">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase border border-[#0A84FF]/40 bg-[#0A84FF]/10 text-[#0A84FF]">
-                      {service.kicker}
-                    </span>
+                                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase border border-[#0A84FF]/40 bg-[#0A84FF]/10 text-[#0A84FF]">
+                                            {service.kicker}
+                                        </span>
                                     </div>
                                 )}
                             </div>
 
                             <div className="p-6 flex flex-col flex-grow">
-                                <h2 className="text-lg md:text-xl font-bold text-white mb-3 font-sans group-hover:text-[#00C293] transition-colors">
+                                <h2 className="text-lg md:text-xl font-bold text-white mb-3 group-hover:text-[#00C293] transition-colors">
                                     {service.title}
                                 </h2>
 
@@ -235,7 +243,7 @@ function ServiceCategoryTemplate({ category }) {
                                         href={`/service/${service.slug}`}
                                         className="inline-flex items-center text-sm font-semibold text-white group-hover:text-[#00C293] transition-colors"
                                     >
-                                        View details<span className="ml-1">→</span>
+                                        View details →
                                     </Link>
                                 </div>
                             </div>
@@ -256,14 +264,11 @@ function ServiceCategoryTemplate({ category }) {
                         </p>
                     </div>
                     <Link
-                        href={hero.cta.href || "/contact"}
+                        href={hero.cta.href}
                         target={hero.cta.target}
-                        rel={
-                            hero.cta.target === "_blank" ? "noreferrer noopener" : undefined
-                        }
                         className="inline-flex items-center text-sm font-semibold text-white hover:text-[#0A84FF] transition-colors"
                     >
-                        Book a discovery call<span className="ml-1">→</span>
+                        Book a discovery call →
                     </Link>
                 </div>
             </section>
