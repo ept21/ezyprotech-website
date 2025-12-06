@@ -670,12 +670,27 @@ export const PAGE_BY_SLUG_QUERY = gql`
 export const SERVICE_QUERY = gql`
   query Service($slug: ID!) {
     service(id: $slug, idType: SLUG) {
+      id
+      slug
       title
       content
       uri
       featuredImage {
         node {
           mediaItemUrl
+          sourceUrl
+          altText
+        }
+      }
+      serviceFields {
+        kicker
+        excerpt
+        serviceIcon {
+          node {
+            mediaItemUrl
+            sourceUrl
+            altText
+          }
         }
       }
       seo {
@@ -685,6 +700,7 @@ export const SERVICE_QUERY = gql`
     }
   }
 `;
+
 
 export const PROJECT_QUERY = gql`
   query Project($slug: ID!) {
