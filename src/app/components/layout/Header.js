@@ -181,7 +181,7 @@ export default function Header({
                                     href={item.url}
                                     className={`font-bold block w-full px-4 py-3 rounded-xl text-base transition
                     ${isActive(item.url)
-                                        ? "text-[var(--brand-primary)] bg-[color-mix(in_oklab,var(--brand-primary)_8%,transparent)]"
+                                        ? "text-black bg-[color-mix(in_oklab,var(--brand-primary)_8%,transparent)]"
                                         : "text-[var(--foreground)] hover:bg-[rgba(255,255,255,.04)]"}
                     focus:outline-none focus-visible:ring ring-[var(--brand-primary)]`}
                                 >
