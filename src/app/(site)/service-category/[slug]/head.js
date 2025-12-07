@@ -44,7 +44,7 @@ export default async function Head({ params }) {
 
     const category = categoryRes?.serviceCategory || null;
     const seo = category?.seo || null;
-    const seoEnhancements = category?.seoEnhancements || null;
+    const seoEnhancements=service?.seoEnhancements || pageNode?.seoEnhancements || null;
 
     return (
         <HeadMeta

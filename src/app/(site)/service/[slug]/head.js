@@ -43,7 +43,8 @@ export default async function Head({ params }) {
     const service = serviceRes?.service || null;
 
     const seo = service?.seo || null;
-    const seoEnhancements = service?.seoEnhancements || null;
+    const seoEnhancements=service?.seoEnhancements || pageNode?.seoEnhancements || null;
+
 
     return (
         <HeadMeta
