@@ -41,18 +41,22 @@ export default async function RootLayout({ children }) {
 
     const siteTitle = globalsRes?.generalSettings?.title ?? 'Veitiqo'
     const siteUrl = globalsRes?.generalSettings?.url ?? ''
-    const gs = globalsRes?.page?.globalSettings
+    const pageNode = globalsRes?.page
+    const gs = pageNode?.globalSettings
 
-    const faviconUrl = getAcfImageUrl(gs?.favicon) || "/favicon.ico";
+    const faviconUrl = getAcfImageUrl(gs?.favicon) || "/favicon.ico"
     const sitelogo = getAcfImageUrl(gs?.sitelogo)
     const defaultOg = getAcfImageUrl(gs?.defaultogimage)
     const ga4Code = gs?.ga4code || ''
     const metaPixelId = gs?.metapixelid || ''
     const address = gs?.address || ''
 
-    // Global contact info (field names can be adjusted to your ACF keys)
+    // Global contact info
     const phone = gs?.phone || gs?.phoneNumber || ''
     const whatsapp = gs?.whatsapp || gs?.whatsappNumber || ''
+
+    // New: SEO Enhancements from globals page (ID 39)
+    const seoEnhancements = pageNode?.seoEnhancements || null
 
     const mainItems = mainRes?.menuItems?.nodes ?? []
     const footerItems = footerRes?.menuItems?.nodes ?? []
@@ -72,6 +76,7 @@ export default async function RootLayout({ children }) {
                 faviconUrl={faviconUrl}
                 defaultOgImage={defaultOg}
                 tagline="Build the Future of Your Business"
+                seoEnhancements={seoEnhancements}
             />
         </head>
         <body suppressHydrationWarning>
@@ -99,7 +104,6 @@ export default async function RootLayout({ children }) {
             address={address}
         />
 
-        {/* Global floating contact FAB using global settings */}
         <FloatingContactFab
             phone={phone}
             whatsapp={whatsapp}

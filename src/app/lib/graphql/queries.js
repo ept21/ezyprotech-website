@@ -664,6 +664,14 @@ export const PAGE_BY_SLUG_QUERY = gql`
           altText
         }
       }
+      seoEnhancements {
+        seoKeywords
+        seoKeyphrases
+        seoContextTags
+        seoSchemaType
+        seoFaq
+      }
+      
       seo {
         title
         metaDesc
@@ -706,6 +714,14 @@ export const SERVICE_QUERY = gql`
           }
         }
       }
+       seoEnhancements {
+        seoKeywords
+        seoKeyphrases
+        seoContextTags
+        seoSchemaType
+        seoFaq
+      }
+      
       seo {
         title
         metaDesc
@@ -753,11 +769,14 @@ export const PROJECT_QUERY = gql`
   }
 `;
 
+// lib/graphql/queries.js
+
 export const GLOBALS_QUERY = gql`
   query Globals {
     page(id: 39, idType: DATABASE_ID) {
       id
       title
+
       globalSettings {
         sitelogo {
           node {
@@ -814,7 +833,16 @@ export const GLOBALS_QUERY = gql`
           url
         }
       }
+
+      seoEnhancements {
+        seoKeywords
+        seoKeyphrases
+        seoContextTags
+        seoSchemaType
+        seoFaq
+      }
     }
+
     generalSettings {
       title
       url
@@ -933,6 +961,14 @@ export const SERVICE_CATEGORY_PAGE_QUERY = gql`
             }
           }
         }
+      }
+
+      seoEnhancements {
+        seoKeywords
+        seoKeyphrases
+        seoContextTags
+        seoSchemaType
+        seoFaq
       }
 
       seo {
