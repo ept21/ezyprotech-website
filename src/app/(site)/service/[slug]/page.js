@@ -1,13 +1,48 @@
+// app/service/[slug]/page.js
+
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { gqlRequest } from "@/app/lib/graphql/client";
-import { SERVICE_QUERY } from "@/app/lib/graphql/queries";
+import { SERVICE_QUERY, GLOBALS_QUERY } from "@/app/lib/graphql/queries";
 import { getAcfImageUrl } from "@/app/lib/wp";
 import { yoastToMetadata } from "@/app/lib/seo";
 
 export const revalidate = 300;
 
-/* ---------------- Helpers ---------------- */
+/* ---------------- SEO helpers ---------------- */
+
+// Merge SEO enhancements with override-or-fallback semantics
+// - Page-level overrides globals when it has values
+// - Otherwise we fall back to global values
+function mergeSeoEnhancements(pageSeo, globalSeo) {
+    if (!pageSeo && !globalSeo) return null;
+
+    const page = pageSeo || {};
+    const global = globalSeo || {};
+
+    const normalizeLines = (value) =>
+        (value || "")
+            .split(/\r?\n/)
+            .map((l) => l.trim())
+            .filter(Boolean);
+
+    const mergeLines = (pageField, globalField) => {
+        const pageLines = normalizeLines(pageField);
+        if (pageLines.length > 0) {
+            return pageLines.join("\n"); // page overrides global
+        }
+        const globalLines = normalizeLines(globalField);
+        return globalLines.join("\n");
+    };
+
+    return {
+        seoKeywords: mergeLines(page.seoKeywords, global.seoKeywords),
+        seoKeyphrases: mergeLines(page.seoKeyphrases, global.seoKeyphrases),
+        seoContextTags: mergeLines(page.seoContextTags, global.seoContextTags),
+        seoSchemaType: page.seoSchemaType || global.seoSchemaType || "",
+        seoFaq: page.seoFaq || global.seoFaq || "",
+    };
+}
 
 // Handle both object and Promise for params (Next 16 behavior)
 async function resolveParams(params) {
@@ -30,6 +65,86 @@ async function getRawService(slug) {
     return data?.service || null;
 }
 
+/* ---------------- Metadata (Yoast + ACF seoEnhancements) ---------------- */
+
+export async function generateMetadata({ params }) {
+    const resolved = await resolveParams(params);
+    const slug = resolved.slug;
+
+    if (!slug) {
+        return {
+            title: "Service – Veltiqo",
+            description:
+                "Veltiqo services for AI-driven growth, automation, and web systems.",
+        };
+    }
+
+    const [globalsRes, serviceRes] = await Promise.all([
+        gqlRequest(GLOBALS_QUERY),
+        gqlRequest(SERVICE_QUERY, { slug }),
+    ]);
+
+    const service = serviceRes?.service || null;
+
+    if (!service) {
+        return {
+            title: "Service not found – Veltiqo",
+            description: "Requested service was not found.",
+        };
+    }
+
+    const wpSeo = service.seo;
+    const fields = service.serviceFields || {};
+    const fallbackImage = service.featuredImage?.node || null;
+
+    // Base metadata from Yoast
+    const baseMeta = yoastToMetadata({
+        wpSeo,
+        fallbackTitle: service.title,
+        fallbackDescription: fields.excerpt || "",
+        fallbackImage,
+    });
+
+    // Merge SEO enhancements (page + global)
+    const pageSeoEnhancements = service.seoEnhancements || null;
+    const globalSeoEnhancements = globalsRes?.page?.seoEnhancements || null;
+    const mergedSeo = mergeSeoEnhancements(
+        pageSeoEnhancements,
+        globalSeoEnhancements
+    );
+
+    const extraOther =
+        mergedSeo && (mergedSeo.seoKeywords || mergedSeo.seoKeyphrases)
+            ? {
+                "ai:keywords": mergedSeo.seoKeywords || undefined,
+                "ai:keyphrases": mergedSeo.seoKeyphrases || undefined,
+                "ai:context-tags": mergedSeo.seoContextTags || undefined,
+                "ai:schema-type": mergedSeo.seoSchemaType || undefined,
+                "ai:faq": mergedSeo.seoFaq || undefined,
+            }
+            : {};
+
+    // Optional: use seoKeywords also as classic <meta name="keywords">
+    const mergedKeywords =
+        mergedSeo?.seoKeywords?.length > 0
+            ? mergedSeo.seoKeywords
+                .split(/\r?\n|,/)
+                .map((k) => k.trim())
+                .filter(Boolean)
+            : baseMeta.keywords;
+
+    return {
+        ...baseMeta,
+        keywords: mergedKeywords,
+        other: {
+            ...(baseMeta.other || {}),
+            ...extraOther,
+        },
+    };
+}
+
+/* ---------------- UI mapping ---------------- */
+
 function mapServiceToUi(service) {
     const fields = service.serviceFields || {};
 
@@ -39,6 +154,7 @@ function mapServiceToUi(service) {
         kicker: fields.kicker || "Service",
         title: service.title || "",
         subtitle: fields.excerpt || "",
+        // Note: getAcfImageUrl expects an object with node or ACF image field
         bgDesktop: getAcfImageUrl(service.featuredImage) || null,
         bgMobile: getAcfImageUrl(service.featuredImage) || null,
         iconUrl: getAcfImageUrl(fields.serviceIcon),
@@ -50,40 +166,6 @@ function mapServiceToUi(service) {
         hero,
         content: service.content || "",
     };
-}
-
-/* ---------------- Metadata (Yoast) ---------------- */
-
-export async function generateMetadata({ params }) {
-    const resolved = await resolveParams(params);
-    const slug = resolved.slug;
-
-    // If for some reason Next calls this without a slug, return a generic meta
-    if (!slug) {
-        return {
-            title: "Service – Veltiqo",
-            description:
-                "Veltiqo services for AI-driven growth, automation, and web systems.",
-        };
-    }
-
-    const service = await getRawService(slug);
-    if (!service) {
-        return {
-            title: "Service not found – Veltiqo",
-            description: "Requested service was not found.",
-        };
-    }
-
-    const fields = service.serviceFields || {};
-    const fallbackImage = service.featuredImage?.node || null;
-
-    return yoastToMetadata({
-        wpSeo: service.seo,
-        fallbackTitle: service.title,
-        fallbackDescription: fields.excerpt || "",
-        fallbackImage,
-    });
 }
 
 /* ---------------- Page component ---------------- */

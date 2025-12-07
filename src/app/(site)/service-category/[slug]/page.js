@@ -1,9 +1,12 @@
+// app/service-category/[slug]/page.js
+
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { gqlRequest } from "@/app/lib/graphql/client";
 import {
     SERVICE_CATEGORY_PAGE_QUERY,
     SERVICE_CATEGORY_SLUGS_QUERY,
+    GLOBALS_QUERY,
 } from "@/app/lib/graphql/queries";
 import { getAcfImageUrl } from "@/app/lib/wp";
 import { yoastToMetadata } from "@/app/lib/seo";
@@ -47,6 +50,37 @@ function mapAcfLink(link, fallbackHref = "/contact") {
     const target = link.target && link.target !== "" ? link.target : "_self";
 
     return { href, label, target };
+}
+
+// Merge SEO enhancements with override-or-fallback semantics
+function mergeSeoEnhancements(pageSeo, globalSeo) {
+    if (!pageSeo && !globalSeo) return null;
+
+    const page = pageSeo || {};
+    const global = globalSeo || {};
+
+    const normalizeLines = (value) =>
+        (value || "")
+            .split(/\r?\n/)
+            .map((l) => l.trim())
+            .filter(Boolean);
+
+    const mergeLines = (pageField, globalField) => {
+        const pageLines = normalizeLines(pageField);
+        if (pageLines.length > 0) {
+            return pageLines.join("\n"); // page overrides global
+        }
+        const globalLines = normalizeLines(globalField);
+        return globalLines.join("\n");
+    };
+
+    return {
+        seoKeywords: mergeLines(page.seoKeywords, global.seoKeywords),
+        seoKeyphrases: mergeLines(page.seoKeyphrases, global.seoKeyphrases),
+        seoContextTags: mergeLines(page.seoContextTags, global.seoContextTags),
+        seoSchemaType: page.seoSchemaType || global.seoSchemaType || "",
+        seoFaq: page.seoFaq || global.seoFaq || "",
+    };
 }
 
 /* ---------------- Data fetch ---------------- */
@@ -111,12 +145,27 @@ function mapCategoryToUi(category) {
     };
 }
 
-/* ---------------- Metadata (Yoast) ---------------- */
+/* ---------------- Metadata (Yoast + ACF seoEnhancements) ---------------- */
 
 export async function generateMetadata({ params }) {
     // In Next 16 params is a Promise
-    const { slug: rawSlug } = await params;
-    const category = await getRawServiceCategory(rawSlug);
+    const resolved = typeof params.then === "function" ? await params : params;
+    const rawSlug = resolved.slug;
+    const slug = normalizeSlug(rawSlug);
+
+    if (!slug) {
+        return {
+            title: "Not found – Veltiqo",
+            description: "Requested service category was not found.",
+        };
+    }
+
+    const [globalsRes, categoryRes] = await Promise.all([
+        gqlRequest(GLOBALS_QUERY),
+        gqlRequest(SERVICE_CATEGORY_PAGE_QUERY, { slug }),
+    ]);
+
+    const category = categoryRes?.serviceCategory || null;
 
     if (!category) {
         return {
@@ -131,12 +180,49 @@ export async function generateMetadata({ params }) {
         fields.herocategorybgimagedesktop?.node ||
         null;
 
-    return yoastToMetadata({
+    // Base metadata from Yoast
+    const baseMeta = yoastToMetadata({
         wpSeo: category.seo,
         fallbackTitle: fields.title || category.name,
         fallbackDescription: fields.subTitle || category.description || "",
         fallbackImage,
     });
+
+    // Merge SEO enhancements (page + global)
+    const pageSeoEnhancements = category.seoEnhancements || null;
+    const globalSeoEnhancements = globalsRes?.page?.seoEnhancements || null;
+    const mergedSeo = mergeSeoEnhancements(
+        pageSeoEnhancements,
+        globalSeoEnhancements
+    );
+
+    const extraOther =
+        mergedSeo && (mergedSeo.seoKeywords || mergedSeo.seoKeyphrases)
+            ? {
+                "ai:keywords": mergedSeo.seoKeywords || undefined,
+                "ai:keyphrases": mergedSeo.seoKeyphrases || undefined,
+                "ai:context-tags": mergedSeo.seoContextTags || undefined,
+                "ai:schema-type": mergedSeo.seoSchemaType || undefined,
+                "ai:faq": mergedSeo.seoFaq || undefined,
+            }
+            : {};
+
+    const mergedKeywords =
+        mergedSeo?.seoKeywords?.length > 0
+            ? mergedSeo.seoKeywords
+                .split(/\r?\n|,/)
+                .map((k) => k.trim())
+                .filter(Boolean)
+            : baseMeta.keywords;
+
+    return {
+        ...baseMeta,
+        keywords: mergedKeywords,
+        other: {
+            ...(baseMeta.other || {}),
+            ...extraOther,
+        },
+    };
 }
 
 /* ---------------- Static params ---------------- */

@@ -20,13 +20,17 @@ import {
     CTA_HOME_PAGE_QUERY,
     CONTACT_HOME_PAGE_QUERY,
     GLOBALS_QUERY,
+    FRONT_PAGE_QUERY,
+    PAGE_BY_SLUG_QUERY,
 } from "@/app/lib/graphql/queries";
 import { getAcfImageUrl } from "@/app/lib/wp";
+import { yoastToMetadata } from "@/app/lib/seo";
 
 import "@/styles/electric-xtra.css";
 
 /** NOTE: All comments must remain in English only. */
 const getAcfLinkUrl = (l) => (typeof l === "string" ? l : l?.url ?? null);
+
 const stripHtml = (html) =>
     typeof html === "string" ? html.replace(/<[^>]*>/g, "").trim() : "";
 
@@ -35,6 +39,134 @@ const getFeaturedUrl = (node) =>
     node?.featuredImage?.node?.mediaItemUrl ||
     node?.featuredImage?.node?.sourceUrl ||
     null;
+
+/** Merge page-level and global SEO enhancements */
+function mergeSeoEnhancements(pageSeo, globalSeo) {
+    if (!pageSeo && !globalSeo) return null;
+
+    const page = pageSeo || {};
+    const global = globalSeo || {};
+
+    const normalizeLines = (value) =>
+        (value || "")
+            .split(/\r?\n|,/)
+            .map((l) => l.trim())
+            .filter(Boolean);
+
+    const mergeLines = (pageField, globalField) => {
+        const pageLines = normalizeLines(pageField);
+        if (pageLines.length > 0) {
+            return pageLines.join("\n"); // override
+        }
+        const globalLines = normalizeLines(globalField);
+        return globalLines.join("\n");
+    };
+
+    return {
+        seoKeywords: mergeLines(page.seoKeywords, global.seoKeywords),
+        seoKeyphrases: mergeLines(page.seoKeyphrases, global.seoKeyphrases),
+        seoContextTags: mergeLines(page.seoContextTags, global.seoContextTags),
+        seoSchemaType: page.seoSchemaType || global.seoSchemaType || "",
+        seoFaq: page.seoFaq || global.seoFaq || "",
+    };
+}
+
+/** Home page metadata */
+export async function generateMetadata() {
+    // Fetch globals + front page
+    const [globalsRes, frontRes] = await Promise.all([
+        gqlRequest(GLOBALS_QUERY),
+        gqlRequest(FRONT_PAGE_QUERY),
+    ]);
+
+    const siteTitle = globalsRes?.generalSettings?.title ?? "Veltiqo";
+    const siteUrl = globalsRes?.generalSettings?.url ?? "";
+    const globalsPage = globalsRes?.page;
+    const gs = globalsPage?.globalSettings;
+
+    const faviconUrl = getAcfImageUrl(gs?.favicon) || "/favicon.ico";
+    const defaultOg = getAcfImageUrl(gs?.defaultogimage);
+
+    // Find the WP page that is marked as front page
+    const frontNode =
+        frontRes?.pages?.nodes?.find((n) => n?.isFrontPage) || null;
+
+    let homePage = null;
+
+    if (frontNode?.uri) {
+        const homeRes = await gqlRequest(PAGE_BY_SLUG_QUERY, {
+            slug: frontNode.uri,
+        });
+        homePage = homeRes?.page || null;
+    }
+
+    const wpSeo = homePage?.seo || null;
+
+    const fallbackDescription =
+        (homePage?.content && stripHtml(homePage.content).slice(0, 160)) ||
+        "AI-driven web, marketing, and automation systems that move the needle.";
+
+    const baseMeta = yoastToMetadata({
+        wpSeo,
+        fallbackTitle: wpSeo?.title || `${siteTitle} | AI Driven Growth`,
+        fallbackDescription,
+        fallbackImage: homePage?.featuredImage?.node || null,
+    });
+
+    const pageSeoEnhancements = homePage?.seoEnhancements || null;
+    const globalSeoEnhancements = globalsPage?.seoEnhancements || null;
+    const mergedSeo = mergeSeoEnhancements(
+        pageSeoEnhancements,
+        globalSeoEnhancements
+    );
+
+    const mergedKeywords =
+        mergedSeo?.seoKeywords && mergedSeo.seoKeywords.length > 0
+            ? mergedSeo.seoKeywords
+                .split(/\r?\n|,/)
+                .map((k) => k.trim())
+                .filter(Boolean)
+            : baseMeta.keywords;
+
+    return {
+        ...baseMeta,
+        title: baseMeta.title || `${siteTitle} | AI Driven Growth`,
+        description: baseMeta.description || fallbackDescription,
+        keywords: mergedKeywords,
+        openGraph: {
+            ...(baseMeta.openGraph || {}),
+            url: siteUrl,
+            siteName: siteTitle,
+            images:
+                baseMeta.openGraph?.images?.length > 0
+                    ? baseMeta.openGraph.images
+                    : defaultOg
+                        ? [{ url: defaultOg }]
+                        : undefined,
+        },
+        twitter: {
+            ...(baseMeta.twitter || {}),
+            card: baseMeta.twitter?.card || "summary_large_image",
+        },
+        other: {
+            ...(baseMeta.other || {}),
+            ...(mergedSeo
+                ? {
+                    "ai:keywords": mergedSeo.seoKeywords || "",
+                    "ai:keyphrases": mergedSeo.seoKeyphrases || "",
+                    "ai:context-tags": mergedSeo.seoContextTags || "",
+                    "ai:schema-type": mergedSeo.seoSchemaType || "",
+                    "ai:faq": mergedSeo.seoFaq || "",
+                }
+                : {}),
+            "ai:tagline": "Build the Future of Your Business",
+        },
+        icons: {
+            icon: faviconUrl,
+            shortcut: faviconUrl,
+        },
+    };
+}
 
 export default async function HomePage() {
     const homePageDbId = process.env.NEXT_PUBLIC_FRONT_PAGE_ID
@@ -173,7 +305,6 @@ export default async function HomePage() {
         Math.min(24, bundlesSlice?.bundlesDisplayLimit || bundlesFirstDefault)
     );
 
-    // Manual vs Auto
     let rawBundles = [];
     if (bundlesSlice?.bundlesSource === "manual") {
         rawBundles = bundlesSlice?.bundlesItems?.nodes || [];
@@ -182,7 +313,6 @@ export default async function HomePage() {
     }
     rawBundles = rawBundles.slice(0, bundlesDisplayLimit);
 
-    // Map WP → UI
     const bundleCards = rawBundles.map((n, i) => {
         const bf = n?.bundlesFields || {};
         const title = bf?.title?.trim?.() || n?.title || "Untitled";
@@ -253,6 +383,7 @@ export default async function HomePage() {
             return { src, alt, label };
         })
         .filter(Boolean);
+
     const aboutCta1 = aboutSlice?.ctaurl1 || null;
     const aboutCta2 = aboutSlice?.ctaurl2 || null;
 
@@ -267,7 +398,9 @@ export default async function HomePage() {
     const showProjects = projectsSlice?.showProjects ?? true;
 
     const projectsBgUrl = getAcfImageUrl(projectsSlice?.projectsBgImage);
-    const MobileprojectsBgUrl = getAcfImageUrl(projectsSlice?.mobileBackgroundImage);
+    const MobileprojectsBgUrl = getAcfImageUrl(
+        projectsSlice?.mobileBackgroundImage
+    );
     const projectsKicker = projectsSlice?.kicker || "Deliver";
     const projectsTitle =
         projectsSlice?.projectsTitle || "Featured projects";
@@ -450,7 +583,9 @@ export default async function HomePage() {
     const showContact = contactSlice?.showContact ?? true;
 
     const contactBgUrl = getAcfImageUrl(contactSlice?.contactBgImage);
-    const contactMobileBgUrl = getAcfImageUrl(contactSlice?.mobileBackgroundImage);
+    const contactMobileBgUrl = getAcfImageUrl(
+        contactSlice?.mobileBackgroundImage
+    );
     const contactKicker = contactSlice?.kicker || "Connect";
     const contactTitle =
         contactSlice?.contactTitle || "Contact Veltiqo";
