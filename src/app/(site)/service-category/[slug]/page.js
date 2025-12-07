@@ -6,12 +6,20 @@ import {
     SERVICE_CATEGORY_SLUGS_QUERY,
 } from "@/app/lib/graphql/queries";
 import { getAcfImageUrl } from "@/app/lib/wp";
+import { yoastToMetadata } from "@/app/lib/seo";
 
 export const revalidate = 300;
 
-/* ----------------------------------------
-   Helpers
----------------------------------------- */
+/* ---------------- Helpers ---------------- */
+
+// Normalize any slug shape (string / array / weird)
+function normalizeSlug(rawSlug) {
+    if (!rawSlug) return "";
+    if (Array.isArray(rawSlug)) {
+        return rawSlug[rawSlug.length - 1] || "";
+    }
+    return String(rawSlug);
+}
 
 // Remove HTML tags & return bullet text array
 function extractBulletsFromHtml(html) {
@@ -21,7 +29,7 @@ function extractBulletsFromHtml(html) {
         .split("</li>")
         .map((part) =>
             part
-                .replace(/<\/?[^>]+(>|$)/g, "") // remove HTML tags
+                .replace(/<\/?[^>]+(>|$)/g, "")
                 .replace(/\s+/g, " ")
                 .trim()
         )
@@ -41,26 +49,33 @@ function mapAcfLink(link, fallbackHref = "/contact") {
     return { href, label, target };
 }
 
-/* ----------------------------------------
-   Fetch Service Category Page Data
----------------------------------------- */
+/* ---------------- Data fetch ---------------- */
 
-async function getServiceCategoryPageData(slug) {
+async function getRawServiceCategory(rawSlug) {
+    const slug = normalizeSlug(rawSlug);
+
+    if (!slug) {
+        console.warn("[ServiceCategory] Missing slug param in getRawServiceCategory");
+        return null;
+    }
+
     const data = await gqlRequest(SERVICE_CATEGORY_PAGE_QUERY, { slug });
+    return data?.serviceCategory || null;
+}
 
-    const category = data?.serviceCategory;
-    if (!category) return null;
-
+// Map WP data → UI shape (without SEO)
+function mapCategoryToUi(category) {
     const fields = category.servicesCategory || {};
 
-    // Handle bullets (HTML or array)
     let chips = [];
     if (Array.isArray(fields.bullets)) {
-        chips = fields.bullets.map((item) => {
-            if (!item) return "";
-            if (typeof item === "string") return item;
-            return item.text || item.label || "";
-        });
+        chips = fields.bullets
+            .map((item) => {
+                if (!item) return "";
+                if (typeof item === "string") return item;
+                return item.text || item.label || "";
+            })
+            .filter(Boolean);
     } else if (typeof fields.bullets === "string") {
         chips = extractBulletsFromHtml(fields.bullets);
     }
@@ -96,9 +111,35 @@ async function getServiceCategoryPageData(slug) {
     };
 }
 
-/* ----------------------------------------
-   Static Params (SSG)
----------------------------------------- */
+/* ---------------- Metadata (Yoast) ---------------- */
+
+export async function generateMetadata({ params }) {
+    // In Next 16 params is a Promise
+    const { slug: rawSlug } = await params;
+    const category = await getRawServiceCategory(rawSlug);
+
+    if (!category) {
+        return {
+            title: "Not found – Veltiqo",
+            description: "Requested service category was not found.",
+        };
+    }
+
+    const fields = category.servicesCategory || {};
+    const fallbackImage =
+        fields.serviceCategoryImage?.node ||
+        fields.herocategorybgimagedesktop?.node ||
+        null;
+
+    return yoastToMetadata({
+        wpSeo: category.seo,
+        fallbackTitle: fields.title || category.name,
+        fallbackDescription: fields.subTitle || category.description || "",
+        fallbackImage,
+    });
+}
+
+/* ---------------- Static params ---------------- */
 
 export async function generateStaticParams() {
     const data = await gqlRequest(SERVICE_CATEGORY_SLUGS_QUERY, {});
@@ -109,32 +150,29 @@ export async function generateStaticParams() {
         .map((node) => ({ slug: node.slug }));
 }
 
-/* ----------------------------------------
-   Page Component
----------------------------------------- */
+/* ---------------- Page component ---------------- */
 
 export default async function ServiceCategoryPage({ params }) {
-    const { slug } = await params;
+    // params is a Promise in Next 16 – must await
+    const { slug: rawSlug } = await params;
 
-    const data = await getServiceCategoryPageData(slug);
-
-    if (!data) {
+    const rawCategory = await getRawServiceCategory(rawSlug);
+    if (!rawCategory) {
         notFound();
     }
+
+    const data = mapCategoryToUi(rawCategory);
 
     return <ServiceCategoryTemplate category={data} />;
 }
 
-/* ----------------------------------------
-   UI Template
----------------------------------------- */
+/* ---------------- UI Template ---------------- */
 
 function ServiceCategoryTemplate({ category }) {
     const { hero, services } = category;
 
     return (
         <main className="bg-[#0D1117] text-[#C9D1D9]">
-
             {/* Hero */}
             <section className="relative overflow-hidden border-b border-[#30363D]">
                 {hero.bgDesktop && (
@@ -161,8 +199,8 @@ function ServiceCategoryTemplate({ category }) {
                     <div className="max-w-3xl">
                         {hero.kicker && (
                             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase border border-[#0A84FF]/40 bg-[#0A84FF]/10 text-[#0A84FF]">
-                                {hero.kicker}
-                            </span>
+                {hero.kicker}
+              </span>
                         )}
 
                         <h1 className="mt-4 text-3xl md:text-5xl font-extrabold text-white tracking-tight">
@@ -178,9 +216,9 @@ function ServiceCategoryTemplate({ category }) {
                         {/* Chips */}
                         {hero.chips?.length > 0 && (
                             <div className="mt-8 flex flex-wrap gap-2">
-                                <span className="px-4 py-2 rounded-full bg-[#C9D1D9] text-[#0D1117] font-semibold text-xs md:text-sm">
-                                    All services
-                                </span>
+                <span className="px-4 py-2 rounded-full bg-[#C9D1D9] text-[#0D1117] font-semibold text-xs md:text-sm">
+                  All services
+                </span>
 
                                 {hero.chips.map((chip, idx) => (
                                     <button
@@ -220,9 +258,9 @@ function ServiceCategoryTemplate({ category }) {
                             <div className="h-40 bg-[#0D1117] relative overflow-hidden">
                                 {service.kicker && (
                                     <div className="absolute top-4 left-4">
-                                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase border border-[#0A84FF]/40 bg-[#0A84FF]/10 text-[#0A84FF]">
-                                            {service.kicker}
-                                        </span>
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase border border-[#0A84FF]/40 bg-[#0A84FF]/10 text-[#0A84FF]">
+                      {service.kicker}
+                    </span>
                                     </div>
                                 )}
                             </div>

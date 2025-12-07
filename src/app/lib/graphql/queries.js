@@ -645,6 +645,11 @@ export const CONTACT_HOME_PAGE_QUERY = gql`
   }
 `;
 
+
+
+
+
+
 export const PAGE_BY_SLUG_QUERY = gql`
   query PageBySlug($slug: ID!) {
     page(id: $slug, idType: URI) {
@@ -662,6 +667,14 @@ export const PAGE_BY_SLUG_QUERY = gql`
       seo {
         title
         metaDesc
+        canonical
+        opengraphTitle
+        opengraphDescription
+        opengraphImage {
+          mediaItemUrl
+          sourceUrl
+          altText
+        }
       }
     }
   }
@@ -696,26 +709,45 @@ export const SERVICE_QUERY = gql`
       seo {
         title
         metaDesc
+        canonical
+        opengraphTitle
+        opengraphDescription
+        opengraphImage {
+          mediaItemUrl
+          sourceUrl
+          altText
+        }
       }
     }
   }
 `;
 
-
 export const PROJECT_QUERY = gql`
   query Project($slug: ID!) {
     project(id: $slug, idType: SLUG) {
+      id
+      slug
       title
       content
       uri
       featuredImage {
         node {
           mediaItemUrl
+          sourceUrl
+          altText
         }
       }
       seo {
         title
         metaDesc
+        canonical
+        opengraphTitle
+        opengraphDescription
+        opengraphImage {
+          mediaItemUrl
+          sourceUrl
+          altText
+        }
       }
     }
   }
@@ -833,16 +865,9 @@ export const FRONT_PAGE_QUERY = gql`
   }
 `;
 
-
-
-
-
-
-
-
 /* ---------  Service Category Queries   ----------  */
 
-export const SERVICE_CATEGORY_SLUGS_QUERY = `
+export const SERVICE_CATEGORY_SLUGS_QUERY = gql`
   query ServiceCategorySlugs {
     serviceCategories(first: 100) {
       nodes {
@@ -850,9 +875,9 @@ export const SERVICE_CATEGORY_SLUGS_QUERY = `
       }
     }
   }
-`
+`;
 
-export const SERVICE_CATEGORY_PAGE_QUERY = `
+export const SERVICE_CATEGORY_PAGE_QUERY = gql`
   query ServiceCategoryPage($slug: ID!, $first: Int = 50) {
     serviceCategory(id: $slug, idType: SLUG) {
       name
@@ -907,6 +932,19 @@ export const SERVICE_CATEGORY_PAGE_QUERY = `
               }
             }
           }
+        }
+      }
+
+      seo {
+        title
+        metaDesc
+        canonical
+        opengraphTitle
+        opengraphDescription
+        opengraphImage {
+          mediaItemUrl
+          sourceUrl
+          altText
         }
       }
     }

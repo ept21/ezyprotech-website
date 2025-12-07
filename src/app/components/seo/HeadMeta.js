@@ -1,37 +1,56 @@
-export default function HeadMeta({
-                                     siteTitle = 'Veltiqo',
-                                     siteUrl = '',
-                                     faviconUrl = '',
-                                     defaultOgImage = '',
-                                     tagline = 'Build the Future of Your Business'
-                                 }) {
-    // יצירת URL מלא לתמונת OG אם צריך
-    const ogImage = defaultOgImage || ''
+// components/seo/HeadMeta.jsx
 
+export default function HeadMeta({ seo, faviconUrl, defaultOgImage }) {
+    // Basic SEO values
+    const title = seo?.title || "Veltiqo – AI Driven Growth";
+    const description =
+        seo?.description ||
+        "AI-driven web, marketing, and automation systems that move the needle.";
+
+    // OG image:
+    const ogImageUrl =
+        seo?.openGraph?.image?.url ||
+        seo?.openGraph?.image || // in case it's just a string
+        defaultOgImage ||
+        null;
+
+    const canonical = seo?.canonical || null;
 
     return (
         <>
+            {/* Title + description */}
+            <title>{title}</title>
+            <meta name="description" content={description} />
+
+            {canonical && <link rel="canonical" href={canonical} />}
+
             {/* Favicon */}
-            {faviconUrl && <link rel="icon" href={faviconUrl} sizes="32x32" />}
-            {/* Title בסיסי */}
-            <title>{siteTitle}</title>
-            <meta name="description" content={tagline} />
+            {faviconUrl && (
+                <>
+                    <link rel="icon" href={faviconUrl} />
+                    <link rel="shortcut icon" href={faviconUrl} />
+                </>
+            )}
 
             {/* Open Graph */}
-            <meta property="og:type" content="website" />
-            {siteUrl && <meta property="og:url" content={siteUrl} />}
-            <meta property="og:title" content={siteTitle} />
-            <meta property="og:description" content={tagline} />
-            {ogImage && <meta property="og:image" content={ogImage} />}
+            <meta property="og:title" content={seo?.openGraph?.title || title} />
+            <meta
+                property="og:description"
+                content={seo?.openGraph?.description || description}
+            />
+            {ogImageUrl && <meta property="og:image" content={ogImageUrl} />}
 
             {/* Twitter */}
             <meta name="twitter:card" content="summary_large_image" />
-            <meta name="twitter:title" content={siteTitle} />
-            <meta name="twitter:description" content={tagline} />
-            {ogImage && <meta name="twitter:image" content={ogImage} />}
-
-            {/* צבעי רקע לדפדפנים תומכים */}
-            <meta name="theme-color" content="#0D1117" />
+            <meta
+                name="twitter:title"
+                content={seo?.openGraph?.title || title}
+            />
+            <meta
+                name="twitter:description"
+                content={seo?.openGraph?.description || description}
+            />
+            {ogImageUrl && <meta name="twitter:image" content={ogImageUrl} />}
         </>
-    )
+    );
 }

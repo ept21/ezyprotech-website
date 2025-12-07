@@ -43,7 +43,7 @@ export default async function RootLayout({ children }) {
     const siteUrl = globalsRes?.generalSettings?.url ?? ''
     const gs = globalsRes?.page?.globalSettings
 
-    const faviconUrl = getAcfImageUrl(gs?.favicon)
+    const faviconUrl = getAcfImageUrl(gs?.favicon) || "/favicon.ico";
     const sitelogo = getAcfImageUrl(gs?.sitelogo)
     const defaultOg = getAcfImageUrl(gs?.defaultogimage)
     const ga4Code = gs?.ga4code || ''

@@ -3,25 +3,46 @@ import { notFound } from "next/navigation";
 import { gqlRequest } from "@/app/lib/graphql/client";
 import { SERVICE_QUERY } from "@/app/lib/graphql/queries";
 import { getAcfImageUrl } from "@/app/lib/wp";
+import { yoastToMetadata } from "@/app/lib/seo";
 
 export const revalidate = 300;
 
-// Map the raw WP data into a clean shape for the UI
-async function getServicePageData(slug) {
+/* ---------------- Helpers ---------------- */
+
+// Handle both object and Promise for params (Next 16 behavior)
+async function resolveParams(params) {
+    if (!params) return {};
+    if (typeof params.then === "function") {
+        return await params;
+    }
+    return params;
+}
+
+/* ---------------- Data fetch ---------------- */
+
+async function getRawService(slug) {
+    if (!slug) {
+        console.warn("[Service] Missing slug param in getRawService");
+        return null;
+    }
+
     const data = await gqlRequest(SERVICE_QUERY, { slug });
+    return data?.service || null;
+}
 
-    const service = data?.service;
-    if (!service) return null;
-
+function mapServiceToUi(service) {
     const fields = service.serviceFields || {};
+
+    const featuredNode = service.featuredImage?.node || null;
 
     const hero = {
         kicker: fields.kicker || "Service",
         title: service.title || "",
         subtitle: fields.excerpt || "",
-        bgDesktop: getAcfImageUrl(service.featuredImage),
-        bgMobile: getAcfImageUrl(service.featuredImage),
+        bgDesktop: getAcfImageUrl(service.featuredImage) || null,
+        bgMobile: getAcfImageUrl(service.featuredImage) || null,
         iconUrl: getAcfImageUrl(fields.serviceIcon),
+        featuredNode,
     };
 
     return {
@@ -31,19 +52,61 @@ async function getServicePageData(slug) {
     };
 }
 
+/* ---------------- Metadata (Yoast) ---------------- */
+
+export async function generateMetadata({ params }) {
+    const resolved = await resolveParams(params);
+    const slug = resolved.slug;
+
+    // If for some reason Next calls this without a slug, return a generic meta
+    if (!slug) {
+        return {
+            title: "Service – Veltiqo",
+            description:
+                "Veltiqo services for AI-driven growth, automation, and web systems.",
+        };
+    }
+
+    const service = await getRawService(slug);
+    if (!service) {
+        return {
+            title: "Service not found – Veltiqo",
+            description: "Requested service was not found.",
+        };
+    }
+
+    const fields = service.serviceFields || {};
+    const fallbackImage = service.featuredImage?.node || null;
+
+    return yoastToMetadata({
+        wpSeo: service.seo,
+        fallbackTitle: service.title,
+        fallbackDescription: fields.excerpt || "",
+        fallbackImage,
+    });
+}
+
+/* ---------------- Page component ---------------- */
+
 export default async function ServicePage({ params }) {
-    const { slug } = await params;
+    const resolved = await resolveParams(params);
+    const slug = resolved.slug;
 
-    const data = await getServicePageData(slug);
-
-    if (!data) {
+    if (!slug) {
         notFound();
     }
+
+    const raw = await getRawService(slug);
+    if (!raw) {
+        notFound();
+    }
+
+    const data = mapServiceToUi(raw);
 
     return <ServiceTemplate service={data} />;
 }
 
-// ---------- UI Template (matches category style) ----------
+/* ---------------- UI Template ---------------- */
 
 function ServiceTemplate({ service }) {
     const { hero, content } = service;
@@ -52,7 +115,6 @@ function ServiceTemplate({ service }) {
         <main className="bg-[#0D1117] text-[#C9D1D9]">
             {/* Hero */}
             <section className="relative overflow-hidden border-b border-[#30363D]">
-                {/* Background desktop */}
                 {hero.bgDesktop && (
                     <div className="hidden md:block absolute inset-0">
                         <div
@@ -63,7 +125,6 @@ function ServiceTemplate({ service }) {
                     </div>
                 )}
 
-                {/* Background mobile */}
                 {hero.bgMobile && (
                     <div className="md:hidden absolute inset-0">
                         <div
