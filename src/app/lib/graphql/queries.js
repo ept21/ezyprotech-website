@@ -705,7 +705,33 @@ export const SERVICE_QUERY = gql`
       }
       serviceFields {
         kicker
+        title
         excerpt
+        content
+        herobg {
+          node {
+            mediaItemUrl
+            sourceUrl
+            altText
+          }
+        }
+        mobileherobg {
+          node {
+            mediaItemUrl
+            sourceUrl
+            altText
+          }
+        }
+        ctaurl1 {
+          url
+          title
+          target
+        }
+        ctaurl2 {
+          url
+          title
+          target
+        }
         serviceIcon {
           node {
             mediaItemUrl
@@ -714,14 +740,13 @@ export const SERVICE_QUERY = gql`
           }
         }
       }
-       seoEnhancements {
+      seoEnhancements {
         seoKeywords
         seoKeyphrases
         seoContextTags
         seoSchemaType
         seoFaq
       }
-      
       seo {
         title
         metaDesc
@@ -737,6 +762,7 @@ export const SERVICE_QUERY = gql`
     }
   }
 `;
+
 
 export const PROJECT_QUERY = gql`
   query Project($slug: ID!) {
@@ -905,6 +931,8 @@ export const SERVICE_CATEGORY_SLUGS_QUERY = gql`
   }
 `;
 
+
+
 export const SERVICE_CATEGORY_PAGE_QUERY = gql`
   query ServiceCategoryPage($slug: ID!, $first: Int = 50) {
     serviceCategory(id: $slug, idType: SLUG) {
@@ -917,6 +945,7 @@ export const SERVICE_CATEGORY_PAGE_QUERY = gql`
         title
         subTitle
         bullets
+        servicesCategoryContent
         serviceCategoryImage {
           node {
             sourceUrl
@@ -949,6 +978,13 @@ export const SERVICE_CATEGORY_PAGE_QUERY = gql`
         nodes {
           slug
           title
+          featuredImage {
+            node {
+              sourceUrl
+              mediaItemUrl
+              altText
+            }
+          }
           serviceFields {
             kicker
             excerpt
@@ -986,3 +1022,137 @@ export const SERVICE_CATEGORY_PAGE_QUERY = gql`
     }
   }
 `;
+
+
+export const SERVICES_PAGE_QUERY = gql`
+  query ServicesPage(
+    $slug: ID!
+    $firstServices: Int = 100
+    $firstCategories: Int = 20
+  ) {
+    page(id: $slug, idType: URI) {
+      id
+      title
+      content
+      featuredImage {
+        node {
+          mediaItemUrl
+          sourceUrl
+          altText
+        }
+      }
+      servicespageFields {
+        servicesherobgimage {
+          node {
+            mediaItemUrl
+            sourceUrl
+            altText
+          }
+        }
+        servicesheromobilebgimage {
+          node {
+            mediaItemUrl
+            sourceUrl
+            altText
+          }
+        }
+        kicker
+        servicestitle
+        servicessubtitle
+        servicesshortdescription
+        servicescontent
+        servicesimage {
+          node {
+            mediaItemUrl
+            sourceUrl
+            altText
+          }
+        }
+        ctaurl1 {
+          url
+          title
+          target
+        }
+        ctaurl2 {
+          url
+          title
+          target
+        }
+      }
+      seoEnhancements {
+        seoKeywords
+        seoKeyphrases
+        seoContextTags
+        seoSchemaType
+        seoFaq
+      }
+      seo {
+        title
+        metaDesc
+        canonical
+        opengraphTitle
+        opengraphDescription
+        opengraphImage {
+          mediaItemUrl
+          sourceUrl
+          altText
+        }
+      }
+    }
+
+    serviceCategories(first: $firstCategories) {
+      nodes {
+        slug
+        name
+        servicesCategory {
+          kicker
+          title
+          serviceCategoryImage {
+            node {
+              mediaItemUrl
+              sourceUrl
+              altText
+            }
+          }
+        }
+      }
+    }
+
+    services(first: $firstServices) {
+      nodes {
+        slug
+        title
+        featuredImage {
+          node {
+            mediaItemUrl
+            sourceUrl
+            altText
+          }
+        }
+        serviceFields {
+          kicker
+          excerpt
+          serviceIcon {
+            node {
+              mediaItemUrl
+              sourceUrl
+              altText
+            }
+          }
+        }
+        serviceCategories {
+          nodes {
+            slug
+            name
+          }
+        }
+      }
+    }
+  }
+`;
+
+
+
+
+
+

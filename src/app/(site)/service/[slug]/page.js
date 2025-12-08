@@ -53,6 +53,32 @@ async function resolveParams(params) {
     return params;
 }
 
+/* ---------------- Small helpers ---------------- */
+
+// Normalize ACF link fields
+function mapAcfLink(link, fallbackHref = "/contact") {
+    if (!link) {
+        return { href: fallbackHref, label: "", target: "_self" };
+    }
+
+    const href = link.url || fallbackHref;
+    const label = link.title || "";
+    const target = link.target && link.target !== "" ? link.target : "_self";
+
+    return { href, label, target };
+}
+
+// Decode basic HTML entities for short text fields (like excerpt)
+function decodeHtmlEntities(str) {
+    if (!str || typeof str !== "string") return "";
+    return str
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&#039;/g, "'");
+}
+
 /* ---------------- Data fetch ---------------- */
 
 async function getRawService(slug) {
@@ -97,15 +123,13 @@ export async function generateMetadata({ params }) {
     const fields = service.serviceFields || {};
     const fallbackImage = service.featuredImage?.node || null;
 
-    // Base metadata from Yoast
     const baseMeta = yoastToMetadata({
         wpSeo,
-        fallbackTitle: service.title,
+        fallbackTitle: fields.title || service.title,
         fallbackDescription: fields.excerpt || "",
         fallbackImage,
     });
 
-    // Merge SEO enhancements (page + global)
     const pageSeoEnhancements = service.seoEnhancements || null;
     const globalSeoEnhancements = globalsRes?.page?.seoEnhancements || null;
     const mergedSeo = mergeSeoEnhancements(
@@ -124,7 +148,6 @@ export async function generateMetadata({ params }) {
             }
             : {};
 
-    // Optional: use seoKeywords also as classic <meta name="keywords">
     const mergedKeywords =
         mergedSeo?.seoKeywords?.length > 0
             ? mergedSeo.seoKeywords
@@ -148,23 +171,44 @@ export async function generateMetadata({ params }) {
 function mapServiceToUi(service) {
     const fields = service.serviceFields || {};
 
-    const featuredNode = service.featuredImage?.node || null;
+    const kicker = fields.kicker || "Service";
+    const title = (fields.title && fields.title.trim()) || service.title || "";
+    const subtitle = decodeHtmlEntities(fields.excerpt || "");
 
-    const hero = {
-        kicker: fields.kicker || "Service",
-        title: service.title || "",
-        subtitle: fields.excerpt || "",
-        // Note: getAcfImageUrl expects an object with node or ACF image field
-        bgDesktop: getAcfImageUrl(service.featuredImage) || null,
-        bgMobile: getAcfImageUrl(service.featuredImage) || null,
-        iconUrl: getAcfImageUrl(fields.serviceIcon),
-        featuredNode,
-    };
+    // Hero background: only from herobg / mobileherobg, not from featured image
+    const bgDesktop = getAcfImageUrl(fields.herobg) || null;
+    const bgMobile =
+        getAcfImageUrl(fields.mobileherobg) ||
+        getAcfImageUrl(fields.herobg) ||
+        null;
+
+    const iconUrl = getAcfImageUrl(fields.serviceIcon) || null;
+
+    const featuredNode = service.featuredImage?.node || null;
+    const featuredUrl = getAcfImageUrl(service.featuredImage) || null;
+    const featuredAlt =
+        featuredNode?.altText || `${title || "Service visual"} illustration`;
+
+    const primaryCta = mapAcfLink(fields.ctaurl1, "/contact");
+    const secondaryCta = mapAcfLink(fields.ctaurl2, "/contact");
+
+    const contentHtml = fields.content || service.content || "";
 
     return {
         slug: service.slug,
-        hero,
-        content: service.content || "",
+        hero: {
+            kicker,
+            title,
+            subtitle,
+            bgDesktop,
+            bgMobile,
+            iconUrl,
+            featuredUrl,
+            featuredAlt,
+            primaryCta,
+            secondaryCta,
+        },
+        content: contentHtml,
     };
 }
 
@@ -218,21 +262,105 @@ function ServiceTemplate({ service }) {
                 )}
 
                 <div className="relative max-w-[1440px] mx-auto px-6 py-16 md:py-20">
-                    <div className="max-w-3xl">
-                        {hero.kicker && (
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase border border-[#0A84FF]/40 bg-[#0A84FF]/10 text-[#0A84FF]">
-                {hero.kicker}
-              </span>
-                        )}
+                    <div className="grid gap-10 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,1.2fr)] items-center">
+                        {/* Left column: text + CTAs */}
+                        <div className="max-w-3xl">
+                            {(hero.iconUrl || hero.kicker) && (
+                                <div className="mt-2 flex items-center gap-3">
+                                    {hero.iconUrl && (
+                                        <div className="inline-flex h-10 w-10 items-center justify-center">
+                                            <img
+                                                src={hero.iconUrl}
+                                                alt={hero.title || "Service icon"}
+                                                className="h-6 w-6 object-contain"
+                                            />
+                                        </div>
+                                    )}
 
-                        <h1 className="mt-4 text-3xl md:text-5xl font-extrabold text-white tracking-tight">
-                            {hero.title}
-                        </h1>
+                                    {hero.kicker && (
+                                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase border border-[#0A84FF]/40 bg-[#0A84FF]/10 text-[#0A84FF]">
+                      {hero.kicker}
+                    </span>
+                                    )}
+                                </div>
+                            )}
 
-                        {hero.subtitle && (
-                            <p className="mt-4 text-base md:text-lg text-[#8B949E] max-w-2xl">
-                                {hero.subtitle}
-                            </p>
+                            <h1 className="mt-4 text-3xl md:text-5xl font-extrabold text-white tracking-tight">
+                                {hero.title}
+                            </h1>
+
+                            {hero.subtitle && (
+                                <p className="mt-4 text-base md:text-lg text-[#8B949E] max-w-2xl">
+                                    {hero.subtitle}
+                                </p>
+                            )}
+
+                            {(hero.primaryCta?.label || hero.secondaryCta?.label) && (
+                                <div className="mt-8 flex flex-wrap gap-3">
+                                    {hero.primaryCta?.label && (
+                                        <Link
+                                            href={hero.primaryCta.href}
+                                            target={hero.primaryCta.target}
+                                            className="inline-flex items-center px-6 py-3 rounded-2xl font-semibold bg-[#0A84FF] text-white hover:bg-[#0070E0] shadow-[0_0_22px_rgba(10,132,255,0.55)] hover:shadow-[0_0_30px_rgba(10,132,255,0.8)] transition-all text-sm md:text-base"
+                                        >
+                                            {hero.primaryCta.label}
+                                        </Link>
+                                    )}
+
+                                    {hero.secondaryCta?.label && (
+                                        <Link
+                                            href={hero.secondaryCta.href}
+                                            target={hero.secondaryCta.target}
+                                            className="inline-flex items-center px-6 py-3 rounded-2xl font-semibold border border-[#00C293]/60 bg-[#0D1117]/60 text-[#C9D1D9] hover:border-[#00C293] hover:text-[#00C293] transition-all text-sm md:text-base"
+                                        >
+                                            {hero.secondaryCta.label}
+                                        </Link>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Right column: featured visual card */}
+                        {(hero.featuredUrl || hero.iconUrl) && (
+                            <div className="max-w-md w-full ml-auto">
+                                <div className="relative rounded-3xl border border-[#30363D] bg-[#0D1117]/90 overflow-hidden shadow-[0_0_34px_rgba(10,132,255,0.45)]">
+                                    {hero.featuredUrl ? (
+                                        <div className="relative w-full pt-[62%]">
+                                            <img
+                                                src={hero.featuredUrl}
+                                                alt={hero.featuredAlt}
+                                                className="absolute inset-0 w-full h-full object-cover"
+                                            />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-[#0D1117]/80 via-transparent to-transparent" />
+                                            {hero.iconUrl && (
+                                                <div className="absolute top-4 left-4 h-10 w-10 rounded-2xl bg-[#0D1117]/85 border border-[#00C293]/50 flex items-center justify-center shadow-[0_0_14px_rgba(0,194,147,0.45)]">
+                                                    <img
+                                                        src={hero.iconUrl}
+                                                        alt="Service icon"
+                                                        className="h-6 w-6 object-contain"
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center justify-center py-10 bg-[#0D1117]">
+                                            {hero.iconUrl && (
+                                                <img
+                                                    src={hero.iconUrl}
+                                                    alt="Service icon"
+                                                    className="h-16 w-16 object-contain"
+                                                />
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <div className="px-5 py-4 border-t border-[#30363D] bg-[#161B22]/95">
+                                        <p className="text-xs text-[#8B949E]">
+                                            Visual representation of this service in your stack.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -242,10 +370,10 @@ function ServiceTemplate({ service }) {
             <section className="max-w-[1440px] mx-auto px-6 py-16 md:py-20">
                 <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-10">
                     {/* Main content */}
-                    <article className="bg-[#161B22] border border-[#30363D] rounded-3xl p-6 md:p-8">
+                    <article className="bg-[#161B22] border border-[#30363D] rounded-3xl p-6 md:p-8 shadow-[0_0_30px_rgba(0,0,0,0.45)]">
                         {content ? (
                             <div
-                                className="prose prose-invert max-w-none prose-headings:text-white prose-p:text-[#C9D1D9] prose-a:text-[#0A84FF] prose-strong:text-white"
+                                className="prose prose-invert max-w-none prose-headings:text-white prose-p:text-[#C9D1D9] prose-a:text-[#0A84FF] prose-strong:text-white prose-li:text-[#C9D1D9]"
                                 dangerouslySetInnerHTML={{ __html: content }}
                             />
                         ) : (
@@ -257,7 +385,7 @@ function ServiceTemplate({ service }) {
 
                     {/* Side panel / CTA */}
                     <aside className="space-y-6">
-                        <div className="bg-[#161B22] border border-[#30363D] rounded-3xl p-6">
+                        <div className="bg-[#161B22] border border-[#30363D] rounded-3xl p-6 shadow-[0_0_26px_rgba(0,0,0,0.4)]">
                             <h2 className="text-base md:text-lg font-semibold text-white mb-2">
                                 Ready to implement this?
                             </h2>
@@ -266,10 +394,11 @@ function ServiceTemplate({ service }) {
                                 growth or automation plan tailored to your business.
                             </p>
                             <Link
-                                href="/contact"
+                                href={hero.primaryCta?.href || "/contact"}
+                                target={hero.primaryCta?.target || "_self"}
                                 className="inline-flex items-center justify-center px-5 py-2.5 rounded-2xl font-semibold bg-[#0A84FF] hover:bg-[#0070E0] text-white text-sm shadow-[0_0_20px_rgba(10,132,255,0.3)] hover:shadow-[0_0_30px_rgba(10,132,255,0.5)] transition-all"
                             >
-                                Talk to our team
+                                {hero.primaryCta?.label || "Talk to our team"}
                             </Link>
                         </div>
 
@@ -294,7 +423,7 @@ function ServiceTemplate({ service }) {
 
             {/* Bottom narrow CTA */}
             <section className="max-w-[1440px] mx-auto px-6 pb-10">
-                <div className="py-6 px-6 md:px-10 rounded-2xl bg-[#161B22]/60 border border-[#30363D] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="py-6 px-6 md:px-10  flex flex-col md:flex-row justify_between items-start md:items-center gap-4 shadow-[0_0_26px_rgba(0,0,0,0.4)]">
                     <div>
                         <h2 className="text-base md:text-lg font-semibold text-white">
                             Not sure if this is the right fit?

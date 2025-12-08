@@ -15,9 +15,16 @@ import { Menu, X } from "lucide-react";
 /** Normalize WP absolute URLs to local-relative Next routes */
 function normalizeUrl(url = "") {
     try {
-        const u = new URL(url, process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000");
+        const u = new URL(
+            url,
+            process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+        );
         // If it's our domain or a hash/relative, return pathname+hash
-        if (!u.host || u.host === (typeof window !== "undefined" ? window.location.host : "")) {
+        if (
+            !u.host ||
+            u.host ===
+            (typeof window !== "undefined" ? window.location.host : "")
+        ) {
             return u.pathname + (u.hash || "");
         }
         // External link — keep absolute
@@ -87,7 +94,12 @@ export default function Header({
         try {
             if (!href) return false;
             if (href.startsWith("#")) return pathname === "/";
-            const url = new URL(href, typeof window !== "undefined" ? window.location.origin : "http://localhost");
+            const url = new URL(
+                href,
+                typeof window !== "undefined"
+                    ? window.location.origin
+                    : "http://localhost"
+            );
             if (url.hash) return pathname === "/";
             return url.pathname === pathname;
         } catch {
@@ -96,8 +108,15 @@ export default function Header({
     };
 
     return (
-        <header className={`site-nav transition-all duration-300 ${navBg}`} role="banner">
-            <nav className="mx-auto flex items-center justify-between px-4 md:px-6 max-w-7xl" aria-label="Primary">
+        <header
+            className={`site-nav transition-all duration-300 ${navBg}`}
+            role="banner"
+        >
+            {/* main nav container – aligned to 1440px like the sections */}
+            <nav
+                className="mx-auto flex items-center justify-between max-w-[1440px] px-6 text-white"
+                aria-label="Primary"
+            >
                 {/* Logo */}
                 <Link
                     href="/"
@@ -135,9 +154,11 @@ export default function Header({
                                 href={item.url}
                                 aria-label={item.label}
                                 className={`menu-link px-3 py-2 rounded-lg text-sm font-medium transition
-                  ${isActive(item.url)
-                                    ? "text-[#ffffff]"
-                                    : "text-[var(--text-secondary)] hover:text-[#017373]"}
+                  ${
+                                    isActive(item.url)
+                                        ? "text-[#ffffff]"
+                                        : "text-[#ffffff] hover:text-[#017373]"
+                                }
                   focus:outline-none focus-visible:ring ring-[var(--brand-primary)]`}
                             >
                                 {item.label}
@@ -147,7 +168,11 @@ export default function Header({
 
                     {/* CTA (Contact) */}
                     <li>
-                        <Link href={contactCta.url} className="ml-1 btn-brand" aria-label={contactCta.label}>
+                        <Link
+                            href={contactCta.url}
+                            className="ml-1 btn-brand"
+                            aria-label={contactCta.label}
+                        >
                             {contactCta.label || "Get in touch"}
                         </Link>
                     </li>
@@ -162,7 +187,9 @@ export default function Header({
                     aria-label={open ? "Close menu" : "Open menu"}
                     onClick={() => setOpen((v) => !v)}
                 >
-                    <span className="sr-only">{open ? "Close menu" : "Open menu"}</span>
+          <span className="sr-only">
+            {open ? "Close menu" : "Open menu"}
+          </span>
                     {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                 </button>
             </nav>
@@ -180,9 +207,11 @@ export default function Header({
                                 <Link
                                     href={item.url}
                                     className={`font-bold block w-full px-4 py-3 rounded-xl text-base transition
-                    ${isActive(item.url)
-                                        ? "text-black bg-[color-mix(in_oklab,var(--brand-primary)_8%,transparent)]"
-                                        : "text-[var(--foreground)] hover:bg-[rgba(255,255,255,.04)]"}
+                    ${
+                                        isActive(item.url)
+                                            ? "text-black bg-[color-mix(in_oklab,var(--brand-primary)_8%,transparent)]"
+                                            : "text-[var(--foreground)] hover:bg-[rgba(255,255,255,.04)]"
+                                    }
                     focus:outline-none focus-visible:ring ring-[var(--brand-primary)]`}
                                 >
                                     {item.label}
@@ -191,7 +220,11 @@ export default function Header({
                         ))}
                         {/* CTA at bottom */}
                         <li className="px-2 pt-2 pb-1">
-                            <Link href={contactCta.url} className="btn-brand w-full" aria-label={contactCta.label}>
+                            <Link
+                                href={contactCta.url}
+                                className="btn-brand w-full"
+                                aria-label={contactCta.label}
+                            >
                                 {contactCta.label || "Get in touch"}
                             </Link>
                         </li>

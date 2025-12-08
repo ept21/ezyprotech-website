@@ -1,4 +1,4 @@
-// app/service-category/[slug]/page.js
+// app/(site)/service-category/[slug]/page.js
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -22,6 +22,17 @@ function normalizeSlug(rawSlug) {
         return rawSlug[rawSlug.length - 1] || "";
     }
     return String(rawSlug);
+}
+
+// Basic HTML entities decoder to avoid showing &amp; etc.
+function decodeHtmlEntities(str) {
+    if (!str || typeof str !== "string") return str;
+    return str
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'");
 }
 
 // Remove HTML tags & return bullet text array
@@ -114,6 +125,9 @@ function mapCategoryToUi(category) {
         chips = extractBulletsFromHtml(fields.bullets);
     }
 
+    // Decode entities like &amp;
+    chips = chips.map(decodeHtmlEntities);
+
     const hero = {
         kicker: fields.kicker || "Solutions category",
         title: fields.title || category.name,
@@ -128,20 +142,29 @@ function mapCategoryToUi(category) {
 
     const services = (category.services?.nodes || []).map((s) => {
         const serviceFields = s.serviceFields || {};
+
+        const featuredUrl = getAcfImageUrl(s.featuredImage) || null;
+        const iconUrl = getAcfImageUrl(serviceFields.serviceIcon) || null;
+
         return {
             slug: s.slug,
             title: s.title,
             excerpt: serviceFields.excerpt || "",
             kicker: serviceFields.kicker || "",
-            iconUrl: getAcfImageUrl(serviceFields.serviceIcon),
+            iconUrl,
+            imageUrl: featuredUrl,
         };
     });
+
+    const contentHtml =
+        fields.servicesCategoryContent || category.description || "";
 
     return {
         slug: category.slug,
         name: category.name,
         hero,
         services,
+        contentHtml,
     };
 }
 
@@ -255,7 +278,7 @@ export default async function ServiceCategoryPage({ params }) {
 /* ---------------- UI Template ---------------- */
 
 function ServiceCategoryTemplate({ category }) {
-    const { hero, services } = category;
+    const { hero, services, contentHtml } = category;
 
     return (
         <main className="bg-[#0D1117] text-[#C9D1D9]">
@@ -299,22 +322,12 @@ function ServiceCategoryTemplate({ category }) {
                             </p>
                         )}
 
-                        {/* Chips */}
+                        {/* Chips as inline text */}
                         {hero.chips?.length > 0 && (
-                            <div className="mt-8 flex flex-wrap gap-2">
-                <span className="px-4 py-2 rounded-full bg-[#C9D1D9] text-[#0D1117] font-semibold text-xs md:text-sm">
-                  All services
-                </span>
-
-                                {hero.chips.map((chip, idx) => (
-                                    <button
-                                        key={idx}
-                                        className="px-4 py-2 rounded-full border border-[#30363D] text-[#8B949E] hover:text-white hover:border-[#C9D1D9] transition-all text-xs md:text-sm"
-                                    >
-                                        {chip}
-                                    </button>
-                                ))}
-                            </div>
+                            <p className="mt-6 text-xs md:text-sm text-[#8B949E] max-w-2xl">
+                                <span className="font-medium text-[#C9D1D9]">Includes:</span>{" "}
+                                {hero.chips.join(", ")}
+                            </p>
                         )}
 
                         {/* CTA */}
@@ -333,15 +346,51 @@ function ServiceCategoryTemplate({ category }) {
                 </div>
             </section>
 
+            {/* Category rich content */}
+            {contentHtml && (
+                <section className="max-w-[1440px] mx-auto px-6 pt-4 md:pt-8">
+                    <article className="bg-[#161B22] border border-[#30363D] rounded-3xl p-6 md:p-8">
+                        <div
+                            className="prose prose-invert max-w-none prose-headings:text-white prose-p:text-[#C9D1D9] prose-a:text-[#0A84FF] prose-strong:text-white"
+                            dangerouslySetInnerHTML={{ __html: contentHtml }}
+                        />
+                    </article>
+                </section>
+            )}
+
             {/* Services grid */}
             <section className="max-w-[1440px] mx-auto px-6 py-16 md:py-20">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {services.map((service) => (
                         <article
                             key={service.slug}
-                            className="group bg-[#161B22] border border-[#30363D] rounded-3xl overflow-hidden flex flex-col h-full hover:border-[#00C293]/50 transition-all duration-300 hover:shadow-2xl hover:shadow-[#00C293]/5"
+                            className="group relative bg-[#0D1117] border border-[#30363D] rounded-3xl overflow-hidden flex flex-col h-full transition-all duration-300 hover:border-[#0A84FF] hover:shadow-[0_0_28px_rgba(10,132,255,0.45)]"
                         >
-                            <div className="h-40 bg-[#0D1117] relative overflow-hidden">
+                            <div className="h-40 relative overflow-hidden">
+                                {service.imageUrl && (
+                                    <div className="absolute inset-0">
+                                        <div
+                                            className="w-full h-full bg-cover bg-center scale-105 group-hover:scale-110 transition-transform duration-500"
+                                            style={{ backgroundImage: `url(${service.imageUrl})` }}
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-[#0D1117]/65 to-[#0D1117]" />
+                                    </div>
+                                )}
+
+                                {!service.imageUrl && (
+                                    <div className="absolute inset-0 bg-gradient-to-br from-[#0A84FF]/20 via-[#00C293]/10 to-[#0D1117]" />
+                                )}
+
+                                {service.iconUrl && (
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <img
+                                            src={service.iconUrl}
+                                            alt={service.title}
+                                            className="max-h-20 max-w-[70%] object-contain opacity-90 group-hover:opacity-100 transition-opacity duration-300 drop-shadow-[0_0_16px_rgba(0,194,255,0.45)]"
+                                        />
+                                    </div>
+                                )}
+
                                 {service.kicker && (
                                     <div className="absolute top-4 left-4">
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase border border-[#0A84FF]/40 bg-[#0A84FF]/10 text-[#0A84FF]">
@@ -388,8 +437,8 @@ function ServiceCategoryTemplate({ category }) {
                         </p>
                     </div>
                     <Link
-                        href={hero.cta.href}
-                        target={hero.cta.target}
+                        href={hero.cta?.href || "/contact"}
+                        target={hero.cta?.target || "_self"}
                         className="inline-flex items-center text-sm font-semibold text-white hover:text-[#0A84FF] transition-colors"
                     >
                         Book a discovery call →
