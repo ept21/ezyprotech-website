@@ -919,7 +919,7 @@ export const FRONT_PAGE_QUERY = gql`
   }
 `;
 
-/* ---------  Service Category Queries   ----------  */
+/* ---------  Service Category & Services Queries   ----------  */
 
 export const SERVICE_CATEGORY_SLUGS_QUERY = gql`
   query ServiceCategorySlugs {
@@ -1156,3 +1156,176 @@ export const SERVICES_PAGE_QUERY = gql`
 
 
 
+
+
+/* ---------  Bundles  Queries   ----------  */
+
+export const BUNDLES_PAGE_QUERY = gql`
+  query BundlesPage($slug: ID!, $firstBundles: Int = 50) {
+    page(id: $slug, idType: URI) {
+      id
+      title
+      content
+      featuredImage {
+        node {
+          mediaItemUrl
+          sourceUrl
+          altText
+        }
+      }
+
+      bundlesPageFields {
+        bundlesimage {
+          node {
+            mediaItemUrl
+            sourceUrl
+            altText
+          }
+        }
+        bundlesherobgimage {
+          node {
+            mediaItemUrl
+            sourceUrl
+            altText
+          }
+        }
+        bundlesheromobilebgimage {
+          node {
+            mediaItemUrl
+            sourceUrl
+            altText
+          }
+        }
+        kicker
+        bundelstitle
+        bundlessubtitle
+        bundlesshortdescription
+        bundlescontent
+        ctaurl1 {
+          url
+          title
+          target
+        }
+        ctaurl2 {
+          url
+          title
+          target
+        }
+      }
+
+      seoEnhancements {
+        seoKeywords
+        seoKeyphrases
+        seoContextTags
+        seoSchemaType
+        seoFaq
+      }
+      seo {
+        title
+        metaDesc
+        canonical
+        opengraphTitle
+        opengraphDescription
+        opengraphImage {
+          mediaItemUrl
+          sourceUrl
+          altText
+        }
+      }
+    }
+
+    bundles(
+      first: $firstBundles
+      where: { orderby: { field: DATE, order: DESC } }
+    ) {
+      nodes {
+        slug
+        title
+        featuredImage {
+          node {
+            mediaItemUrl
+            sourceUrl
+            altText
+          }
+        }
+        bundlesFields: bundlesfields {
+          kicker
+          title
+          price
+          textNearPriceMonthlyYearlyOrOther
+          productsIncludes
+          ctaurl1 {
+            url
+            title
+            target
+          }
+          ctaurl2 {
+            url
+            title
+            target
+          }
+        }
+      }
+    }
+  }
+`;
+
+
+
+
+
+// Single bundle
+export const BUNDLE_QUERY = gql`
+  query Bundle($slug: ID!) {
+    bundle(id: $slug, idType: SLUG) {
+      id
+      slug
+      title
+      content
+      uri
+      featuredImage {
+        node {
+          mediaItemUrl
+          sourceUrl
+          altText
+        }
+      }
+      bundlesFields: bundlesfields {
+        kicker
+        title
+        price
+        textNearPriceMonthlyYearlyOrOther
+        productsIncludes
+        ctaurl1 {
+          url
+          title
+          target
+        }
+        ctaurl2 {
+          url
+          title
+          target
+        }
+      }
+      seoEnhancements {
+        seoKeywords
+        seoKeyphrases
+        seoContextTags
+        seoSchemaType
+        seoFaq
+      }
+      seo {
+        title
+        metaDesc
+        canonical
+        opengraphTitle
+        opengraphDescription
+        opengraphImage {
+          mediaItemUrl
+          sourceUrl
+          altText
+        }
+      }
+    }
+  }
+`;
