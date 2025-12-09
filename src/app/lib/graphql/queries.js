@@ -645,11 +645,6 @@ export const CONTACT_HOME_PAGE_QUERY = gql`
   }
 `;
 
-
-
-
-
-
 export const PAGE_BY_SLUG_QUERY = gql`
   query PageBySlug($slug: ID!) {
     page(id: $slug, idType: URI) {
@@ -665,13 +660,26 @@ export const PAGE_BY_SLUG_QUERY = gql`
         }
       }
       seoEnhancements {
+        pillarTopicCluster
         seoKeywords
         seoKeyphrases
         seoContextTags
-        seoSchemaType
-        seoFaq
+        notes
+        zeroClickQuestions
       }
-      
+      authoritySchema {
+        schemaType
+        aiSummary
+        primaryEntity
+        targetAudience
+        citations
+        faqSchema
+        reviewRating
+        reviewCount
+        productPrice
+        currencyCode
+        videoUrl
+      }
       seo {
         title
         metaDesc
@@ -741,11 +749,25 @@ export const SERVICE_QUERY = gql`
         }
       }
       seoEnhancements {
+        pillarTopicCluster
         seoKeywords
         seoKeyphrases
         seoContextTags
-        seoSchemaType
-        seoFaq
+        notes
+        zeroClickQuestions
+      }
+      authoritySchema {
+        schemaType
+        aiSummary
+        primaryEntity
+        targetAudience
+        citations
+        faqSchema
+        reviewRating
+        reviewCount
+        productPrice
+        currencyCode
+        videoUrl
       }
       seo {
         title
@@ -762,7 +784,6 @@ export const SERVICE_QUERY = gql`
     }
   }
 `;
-
 
 export const PROJECT_QUERY = gql`
   query Project($slug: ID!) {
@@ -795,14 +816,11 @@ export const PROJECT_QUERY = gql`
   }
 `;
 
-// lib/graphql/queries.js
-
 export const GLOBALS_QUERY = gql`
   query Globals {
     page(id: 39, idType: DATABASE_ID) {
       id
       title
-
       globalSettings {
         sitelogo {
           node {
@@ -859,16 +877,28 @@ export const GLOBALS_QUERY = gql`
           url
         }
       }
-
       seoEnhancements {
+        pillarTopicCluster
         seoKeywords
         seoKeyphrases
         seoContextTags
-        seoSchemaType
-        seoFaq
+        notes
+        zeroClickQuestions
+      }
+      authoritySchema {
+        schemaType
+        aiSummary
+        primaryEntity
+        targetAudience
+        citations
+        faqSchema
+        reviewRating
+        reviewCount
+        productPrice
+        currencyCode
+        videoUrl
       }
     }
-
     generalSettings {
       title
       url
@@ -931,15 +961,12 @@ export const SERVICE_CATEGORY_SLUGS_QUERY = gql`
   }
 `;
 
-
-
 export const SERVICE_CATEGORY_PAGE_QUERY = gql`
   query ServiceCategoryPage($slug: ID!, $first: Int = 50) {
     serviceCategory(id: $slug, idType: SLUG) {
       name
       description
       slug
-
       servicesCategory {
         kicker
         title
@@ -973,7 +1000,6 @@ export const SERVICE_CATEGORY_PAGE_QUERY = gql`
           target
         }
       }
-
       services(first: $first) {
         nodes {
           slug
@@ -998,15 +1024,27 @@ export const SERVICE_CATEGORY_PAGE_QUERY = gql`
           }
         }
       }
-
       seoEnhancements {
+        pillarTopicCluster
         seoKeywords
         seoKeyphrases
         seoContextTags
-        seoSchemaType
-        seoFaq
+        notes
+        zeroClickQuestions
       }
-
+      authoritySchema {
+        schemaType
+        aiSummary
+        primaryEntity
+        targetAudience
+        citations
+        faqSchema
+        reviewRating
+        reviewCount
+        productPrice
+        currencyCode
+        videoUrl
+      }
       seo {
         title
         metaDesc
@@ -1022,7 +1060,6 @@ export const SERVICE_CATEGORY_PAGE_QUERY = gql`
     }
   }
 `;
-
 
 export const SERVICES_PAGE_QUERY = gql`
   query ServicesPage(
@@ -1080,11 +1117,25 @@ export const SERVICES_PAGE_QUERY = gql`
         }
       }
       seoEnhancements {
+        pillarTopicCluster
         seoKeywords
         seoKeyphrases
         seoContextTags
-        seoSchemaType
-        seoFaq
+        notes
+        zeroClickQuestions
+      }
+      authoritySchema {
+        schemaType
+        aiSummary
+        primaryEntity
+        targetAudience
+        citations
+        faqSchema
+        reviewRating
+        reviewCount
+        productPrice
+        currencyCode
+        videoUrl
       }
       seo {
         title
@@ -1099,7 +1150,6 @@ export const SERVICES_PAGE_QUERY = gql`
         }
       }
     }
-
     serviceCategories(first: $firstCategories) {
       nodes {
         slug
@@ -1117,7 +1167,6 @@ export const SERVICES_PAGE_QUERY = gql`
         }
       }
     }
-
     services(first: $firstServices) {
       nodes {
         slug
@@ -1151,13 +1200,6 @@ export const SERVICES_PAGE_QUERY = gql`
   }
 `;
 
-
-
-
-
-
-
-
 /* ---------  Bundles  Queries   ----------  */
 
 export const BUNDLES_PAGE_QUERY = gql`
@@ -1173,7 +1215,6 @@ export const BUNDLES_PAGE_QUERY = gql`
           altText
         }
       }
-
       bundlesPageFields {
         bundlesimage {
           node {
@@ -1212,13 +1253,26 @@ export const BUNDLES_PAGE_QUERY = gql`
           target
         }
       }
-
       seoEnhancements {
+        pillarTopicCluster
         seoKeywords
         seoKeyphrases
         seoContextTags
-        seoSchemaType
-        seoFaq
+        notes
+        zeroClickQuestions
+      }
+      authoritySchema {
+        schemaType
+        aiSummary
+        primaryEntity
+        targetAudience
+        citations
+        faqSchema
+        reviewRating
+        reviewCount
+        productPrice
+        currencyCode
+        videoUrl
       }
       seo {
         title
@@ -1233,7 +1287,6 @@ export const BUNDLES_PAGE_QUERY = gql`
         }
       }
     }
-
     bundles(
       first: $firstBundles
       where: { orderby: { field: DATE, order: DESC } }
@@ -1270,10 +1323,6 @@ export const BUNDLES_PAGE_QUERY = gql`
   }
 `;
 
-
-
-
-
 // Single bundle
 export const BUNDLE_QUERY = gql`
   query Bundle($slug: ID!) {
@@ -1291,11 +1340,35 @@ export const BUNDLE_QUERY = gql`
         }
       }
       bundlesFields: bundlesfields {
+        bundleIcon {
+          node {
+            mediaItemUrl
+            sourceUrl
+            altText
+          }
+        }
+        bundleHerobg {
+          node {
+            mediaItemUrl
+            sourceUrl
+            altText
+          }
+        }
+        bundleMobileHerobg {
+          node {
+            mediaItemUrl
+            sourceUrl
+            altText
+          }
+        }
         kicker
         title
+        subTitle
         price
         textNearPriceMonthlyYearlyOrOther
         productsIncludes
+        bundleShortDescription
+        bundleContent
         ctaurl1 {
           url
           title
@@ -1308,11 +1381,25 @@ export const BUNDLE_QUERY = gql`
         }
       }
       seoEnhancements {
+        pillarTopicCluster
         seoKeywords
         seoKeyphrases
         seoContextTags
-        seoSchemaType
-        seoFaq
+        notes
+        zeroClickQuestions
+      }
+      authoritySchema {
+        schemaType
+        aiSummary
+        primaryEntity
+        targetAudience
+        citations
+        faqSchema
+        reviewRating
+        reviewCount
+        productPrice
+        currencyCode
+        videoUrl
       }
       seo {
         title

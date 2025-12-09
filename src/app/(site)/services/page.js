@@ -3,48 +3,23 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { gqlRequest } from "@/app/lib/graphql/client";
-import { SERVICES_PAGE_QUERY, GLOBALS_QUERY } from "@/app/lib/graphql/queries";
+import { SERVICES_PAGE_QUERY } from "@/app/lib/graphql/queries";
 import { getAcfImageUrl } from "@/app/lib/wp";
 import { yoastToMetadata } from "@/app/lib/seo";
 import ServicesExplorer from "@/app/components/services/ServicesExplorer";
-
 
 export const revalidate = 300;
 
 const SERVICES_PAGE_URI = "/services/";
 
-/* ---------------- SEO helpers ---------------- */
+// Frontend base URL for schema
+const FRONTEND_BASE_URL =
+    (process.env.NEXT_PUBLIC_FRONTEND_URL || "https://veltiqo.com").replace(
+        /\/+$/,
+        ""
+    );
 
-// Merge SEO enhancements with override-or-fallback semantics
-function mergeSeoEnhancements(pageSeo, globalSeo) {
-    if (!pageSeo && !globalSeo) return null;
-
-    const page = pageSeo || {};
-    const global = globalSeo || {};
-
-    const normalizeLines = (value) =>
-        (value || "")
-            .split(/\r?\n/)
-            .map((l) => l.trim())
-            .filter(Boolean);
-
-    const mergeLines = (pageField, globalField) => {
-        const pageLines = normalizeLines(pageField);
-        if (pageLines.length > 0) {
-            return pageLines.join("\n"); // page overrides global
-        }
-        const globalLines = normalizeLines(globalField);
-        return globalLines.join("\n");
-    };
-
-    return {
-        seoKeywords: mergeLines(page.seoKeywords, global.seoKeywords),
-        seoKeyphrases: mergeLines(page.seoKeyphrases, global.seoKeyphrases),
-        seoContextTags: mergeLines(page.seoContextTags, global.seoContextTags),
-        seoSchemaType: page.seoSchemaType || global.seoSchemaType || "",
-        seoFaq: page.seoFaq || global.seoFaq || "",
-    };
-}
+/* ---------------- Helpers ---------------- */
 
 // Decode basic HTML entities for short text fields
 function decodeHtmlEntities(str) {
@@ -70,6 +45,179 @@ function mapAcfLink(link, fallbackHref = "/contact") {
     return { href, label, target };
 }
 
+function normalizeLines(value) {
+    return (value || "")
+        .split(/\r?\n|,/)
+        .map((l) => l.trim())
+        .filter(Boolean);
+}
+
+function parseFaqText(block) {
+    if (!block || typeof block !== "string") return [];
+
+    const lines = block
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter(Boolean);
+
+    const faqs = [];
+    let q = null;
+    let a = null;
+
+    for (const line of lines) {
+        const lower = line.toLowerCase();
+        if (lower.startsWith("q:")) {
+            if (q && a) faqs.push({ question: q, answer: a });
+            q = line.slice(2).trim();
+            a = null;
+        } else if (lower.startsWith("a:")) {
+            const part = line.slice(2).trim();
+            a = a ? `${a} ${part}` : part;
+        } else if (a) {
+            a += " " + line;
+        }
+    }
+
+    if (q && a) faqs.push({ question: q, answer: a });
+    return faqs;
+}
+
+/**
+ * Generate Authority Schema JSON-LD for the Services overview page.
+ * Uses the AuthoritySchema ACF group on the page (if filled).
+ */
+function generateAuthoritySchemaJsonForPage(page) {
+    const authority = page?.authoritySchema || null;
+    const seo = page?.seo || null;
+
+    if (!authority) return null;
+
+    const {
+        schemaType,
+        aiSummary,
+        primaryEntity,
+        targetAudience,
+        citations,
+        faqSchema,
+        reviewRating,
+        reviewCount,
+        productPrice,
+        videoUrl,
+        currencyCode,
+    } = authority;
+
+    const baseUrl = FRONTEND_BASE_URL;
+    const url = `${baseUrl}/services/`;
+
+    const fields = page.servicesPageFields || page.servicespageFields || {};
+
+    const title =
+        fields.servicestitle ||
+        page.title ||
+        "Services – Veltiqo";
+
+    const description =
+        seo?.metaDesc ||
+        aiSummary ||
+        decodeHtmlEntities(
+            fields.servicesshortdescription || page.excerpt || ""
+        ) ||
+        "Explore Veltiqo services for AI-driven growth, automation, and web systems.";
+
+    const featuredImageUrl =
+        getAcfImageUrl(fields.servicesimage) ||
+        getAcfImageUrl(page.featuredImage) ||
+        null;
+
+    const schema = {
+        "@context": "https://schema.org",
+        "@type": schemaType || "CollectionPage",
+        name: title,
+        description,
+        url,
+        image: featuredImageUrl || undefined,
+        abstract: aiSummary || undefined,
+        about: primaryEntity
+            ? {
+                "@type": "Thing",
+                name: primaryEntity,
+            }
+            : undefined,
+        provider: {
+            "@type": "Organization",
+            name: "Veltiqo",
+            url: baseUrl,
+            logo: {
+                "@type": "ImageObject",
+                url: `${baseUrl}/assets/logo-main.png`,
+            },
+        },
+        areaServed: {
+            "@type": "Place",
+            name: "Global",
+        },
+    };
+
+    if (targetAudience) {
+        schema.audience = {
+            "@type": "BusinessAudience",
+            audienceType: targetAudience,
+        };
+    }
+
+    const ratingNumeric = reviewRating ? Number(reviewRating) : 0;
+    if (!Number.isNaN(ratingNumeric) && ratingNumeric > 0) {
+        schema.aggregateRating = {
+            "@type": "AggregateRating",
+            ratingValue: ratingNumeric.toString(),
+            reviewCount: reviewCount ? String(reviewCount) : "1",
+        };
+    }
+
+    const priceNumeric = productPrice ? Number(productPrice) : 0;
+    if (
+        !Number.isNaN(priceNumeric) &&
+        priceNumeric > 0 &&
+        typeof currencyCode === "string" &&
+        currencyCode.trim() !== ""
+    ) {
+        schema.offers = {
+            "@type": "Offer",
+            price: priceNumeric.toString(),
+            priceCurrency: currencyCode.trim().toUpperCase(),
+            availability: "https://schema.org/InStock",
+            url,
+        };
+    }
+
+    const citationLines = normalizeLines(citations);
+    if (citationLines.length > 0) {
+        schema.citation = citationLines;
+    }
+
+    const faqs = parseFaqText(faqSchema);
+    if (faqs.length > 0) {
+        schema.mainEntity = faqs.map((f) => ({
+            "@type": "Question",
+            name: f.question,
+            acceptedAnswer: {
+                "@type": "Answer",
+                text: f.answer,
+            },
+        }));
+    }
+
+    if (videoUrl && typeof videoUrl === "string" && videoUrl.trim() !== "") {
+        schema.subjectOf = {
+            "@type": "VideoObject",
+            contentUrl: videoUrl.trim(),
+            name: `${title} – Services overview`,
+        };
+    }
+
+    return JSON.stringify(schema);
+}
+
 /* ---------------- Data fetch ---------------- */
 
 async function getServicesPageData() {
@@ -86,18 +234,16 @@ async function getServicesPageData() {
     };
 }
 
-/* ---------------- Metadata ---------------- */
+/* ---------------- Metadata (Yoast only) ---------------- */
 
 export async function generateMetadata() {
-    const [globalsRes, servicesRes] = await Promise.all([
-        gqlRequest(GLOBALS_QUERY),
-        gqlRequest(SERVICES_PAGE_QUERY, {
-            slug: SERVICES_PAGE_URI,
-            first: 1,
-        }),
-    ]);
+    const servicesRes = await gqlRequest(SERVICES_PAGE_QUERY, {
+        slug: SERVICES_PAGE_URI,
+        first: 1,
+    });
 
     const page = servicesRes?.page || null;
+
     if (!page) {
         return {
             title: "Services – Veltiqo",
@@ -121,39 +267,9 @@ export async function generateMetadata() {
         fallbackImage,
     });
 
-    const pageSeoEnhancements = page.seoEnhancements || null;
-    const globalSeoEnhancements = globalsRes?.page?.seoEnhancements || null;
-    const mergedSeo = mergeSeoEnhancements(
-        pageSeoEnhancements,
-        globalSeoEnhancements
-    );
-
-    const extraOther =
-        mergedSeo && (mergedSeo.seoKeywords || mergedSeo.seoKeyphrases)
-            ? {
-                "ai:keywords": mergedSeo.seoKeywords || undefined,
-                "ai:keyphrases": mergedSeo.seoKeyphrases || undefined,
-                "ai:context-tags": mergedSeo.seoContextTags || undefined,
-                "ai:schema-type": mergedSeo.seoSchemaType || undefined,
-                "ai:faq": mergedSeo.seoFaq || undefined,
-            }
-            : {};
-
-    const mergedKeywords =
-        mergedSeo?.seoKeywords?.length > 0
-            ? mergedSeo.seoKeywords
-                .split(/\r?\n|,/)
-                .map((k) => k.trim())
-                .filter(Boolean)
-            : baseMeta.keywords;
-
+    // No seoEnhancements here: internal-only, not exposed as meta.
     return {
         ...baseMeta,
-        keywords: mergedKeywords,
-        other: {
-            ...(baseMeta.other || {}),
-            ...extraOther,
-        },
     };
 }
 
@@ -216,23 +332,33 @@ export default async function ServicesPage() {
     }
 
     const ui = mapToUi(data.page, data.services);
-    return <ServicesTemplate {...ui} />;
+    const authoritySchemaJson = generateAuthoritySchemaJsonForPage(data.page);
+
+    return <ServicesTemplate {...ui} authoritySchemaJson={authoritySchemaJson} />;
 }
 
 /* ---------------- UI Template ---------------- */
 
-function ServicesTemplate({ hero, contentHtml, services }) {
+function ServicesTemplate({ hero, contentHtml, services, authoritySchemaJson }) {
     return (
         <main className="bg-[#0D1117] text-[#C9D1D9]">
+            {/* Authority Schema JSON-LD */}
+            {authoritySchemaJson && (
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: authoritySchemaJson }}
+                />
+            )}
+
             {/* Hero */}
             <section className="relative overflow-hidden border-b border-[#30363D]">
                 {hero.bgDesktop && (
                     <div className="hidden md:block absolute inset-0">
                         <div
                             className="w-full h-full bg-cover bg-center"
-                            style={{backgroundImage: `url(${hero.bgDesktop})`}}
+                            style={{ backgroundImage: `url(${hero.bgDesktop})` }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-[#0D1117]/80 to-[#0D1117]"/>
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-[#0D1117]/80 to-[#0D1117]" />
                     </div>
                 )}
 
@@ -240,9 +366,9 @@ function ServicesTemplate({ hero, contentHtml, services }) {
                     <div className="md:hidden absolute inset-0">
                         <div
                             className="w-full h-full bg-cover bg-center"
-                            style={{backgroundImage: `url(${hero.bgMobile})`}}
+                            style={{ backgroundImage: `url(${hero.bgMobile})` }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-[#0D1117]/85 to-[#0D1117]"/>
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-[#0D1117]/85 to-[#0D1117]" />
                     </div>
                 )}
 
@@ -251,10 +377,9 @@ function ServicesTemplate({ hero, contentHtml, services }) {
                         {/* Left column: text */}
                         <div className="max-w-3xl">
                             {hero.kicker && (
-                                <span
-                                    className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase border border-[#0A84FF]/40 bg-[#0A84FF]/10 text-[#0A84FF]">
-                                    {hero.kicker}
-                                </span>
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase border border-[#0A84FF]/40 bg-[#0A84FF]/10 text-[#0A84FF]">
+                  {hero.kicker}
+                </span>
                             )}
 
                             <h1 className="mt-4 text-3xl md:text-5xl font-extrabold text-white tracking-tight">
@@ -301,16 +426,14 @@ function ServicesTemplate({ hero, contentHtml, services }) {
                         {/* Right column: hero image card */}
                         {hero.heroImage && (
                             <div className="max-w-md w-full ml-auto">
-                                <div
-                                    className="relative rounded-3xl border border-[#30363D] bg-[#0D1117]/90 overflow-hidden shadow-[0_0_34px_rgba(10,132,255,0.45)]">
+                                <div className="relative rounded-3xl border border-[#30363D] bg-[#0D1117]/90 overflow-hidden shadow-[0_0_34px_rgba(10,132,255,0.45)]">
                                     <div className="relative w-full pt-[62%]">
                                         <img
                                             src={hero.heroImage}
                                             alt={hero.title || "Services visual"}
                                             className="absolute inset-0 w-full h-full object-cover"
                                         />
-                                        <div
-                                            className="absolute inset-0 bg-gradient-to-t from-[#0D1117]/80 via-transparent to-transparent"/>
+                                        <div className="absolute inset-0 bg-gradient-to-t from-[#0D1117]/80 via-transparent to-transparent" />
                                     </div>
                                     <div className="px-5 py-4 border-t border-[#30363D] bg-[#161B22]/95">
                                         <p className="text-xs text-[#8B949E]">
@@ -327,11 +450,10 @@ function ServicesTemplate({ hero, contentHtml, services }) {
             {/* Page content (servicescontent / content) */}
             <section className="max-w-[1440px] mx-auto px-6 pt-12 md:pt-16">
                 {contentHtml && (
-                    <article
-                        className="bg-[#161B22] border border-[#30363D] rounded-3xl p-6 md:p-8 mb-12 shadow-[0_0_24px_rgba(0,0,0,0.45)]">
+                    <article className="bg-[#161B22] border border-[#30363D] rounded-3xl p-6 md:p-8 mb-12 shadow-[0_0_24px_rgba(0,0,0,0.45)]">
                         <div
                             className="prose prose-invert max-w-none prose-headings:text-white prose-p:text-[#C9D1D9] prose-a:text-[#0A84FF] prose-strong:text-white prose-li:text-[#C9D1D9]"
-                            dangerouslySetInnerHTML={{__html: contentHtml}}
+                            dangerouslySetInnerHTML={{ __html: contentHtml }}
                         />
                     </article>
                 )}
@@ -339,14 +461,12 @@ function ServicesTemplate({ hero, contentHtml, services }) {
 
             {/* Services grid + filter */}
             <section className="max-w-[1440px] mx-auto px-6 pb-16 md:pb-20">
-                <ServicesExplorer services={services}/>
+                <ServicesExplorer services={services} />
             </section>
-
 
             {/* Bottom CTA */}
             <section className="max-w-[1440px] mx-auto px-6 pb-10">
-                <div
-                    className="py-6 px-6 md:px-10 rounded-2xl bg-[#161B22]/60 border border-[#30363D] flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-[0_0_26px_rgba(0,0,0,0.4)]">
+                <div className="py-6 px-6 md:px-10 rounded-2xl bg-[#161B22]/60 border border-[#30363D] flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-[0_0_26px_rgba(0,0,0,0.4)]">
                     <div>
                         <h2 className="text-base md:text-lg font-semibold text-white">
                             Not sure which services to start with?

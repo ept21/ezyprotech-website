@@ -3,46 +3,20 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { gqlRequest } from "@/app/lib/graphql/client";
-import { SERVICE_QUERY, GLOBALS_QUERY } from "@/app/lib/graphql/queries";
+import { SERVICE_QUERY } from "@/app/lib/graphql/queries";
 import { getAcfImageUrl } from "@/app/lib/wp";
 import { yoastToMetadata } from "@/app/lib/seo";
 
 export const revalidate = 300;
 
-/* ---------------- SEO helpers ---------------- */
+// Frontend base URL for schema (can be overridden via env)
+const FRONTEND_BASE_URL =
+    (process.env.NEXT_PUBLIC_FRONTEND_URL || "https://veltiqo.com").replace(
+        /\/+$/,
+        ""
+    );
 
-// Merge SEO enhancements with override-or-fallback semantics
-// - Page-level overrides globals when it has values
-// - Otherwise we fall back to global values
-function mergeSeoEnhancements(pageSeo, globalSeo) {
-    if (!pageSeo && !globalSeo) return null;
-
-    const page = pageSeo || {};
-    const global = globalSeo || {};
-
-    const normalizeLines = (value) =>
-        (value || "")
-            .split(/\r?\n/)
-            .map((l) => l.trim())
-            .filter(Boolean);
-
-    const mergeLines = (pageField, globalField) => {
-        const pageLines = normalizeLines(pageField);
-        if (pageLines.length > 0) {
-            return pageLines.join("\n"); // page overrides global
-        }
-        const globalLines = normalizeLines(globalField);
-        return globalLines.join("\n");
-    };
-
-    return {
-        seoKeywords: mergeLines(page.seoKeywords, global.seoKeywords),
-        seoKeyphrases: mergeLines(page.seoKeyphrases, global.seoKeyphrases),
-        seoContextTags: mergeLines(page.seoContextTags, global.seoContextTags),
-        seoSchemaType: page.seoSchemaType || global.seoSchemaType || "",
-        seoFaq: page.seoFaq || global.seoFaq || "",
-    };
-}
+/* ---------------- Helpers ---------------- */
 
 // Handle both object and Promise for params (Next 16 behavior)
 async function resolveParams(params) {
@@ -52,8 +26,6 @@ async function resolveParams(params) {
     }
     return params;
 }
-
-/* ---------------- Small helpers ---------------- */
 
 // Normalize ACF link fields
 function mapAcfLink(link, fallbackHref = "/contact") {
@@ -79,6 +51,173 @@ function decodeHtmlEntities(str) {
         .replace(/&#039;/g, "'");
 }
 
+function normalizeLines(value) {
+    return (value || "")
+        .split(/\r?\n|,/)
+        .map((l) => l.trim())
+        .filter(Boolean);
+}
+
+function parseFaqText(block) {
+    if (!block || typeof block !== "string") return [];
+
+    const lines = block
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter(Boolean);
+
+    const faqs = [];
+    let q = null;
+    let a = null;
+
+    for (const line of lines) {
+        const lower = line.toLowerCase();
+        if (lower.startsWith("q:")) {
+            if (q && a) faqs.push({ question: q, answer: a });
+            q = line.slice(2).trim();
+            a = null;
+        } else if (lower.startsWith("a:")) {
+            const part = line.slice(2).trim();
+            a = a ? `${a} ${part}` : part;
+        } else if (a) {
+            a += " " + line;
+        }
+    }
+
+    if (q && a) faqs.push({ question: q, answer: a });
+    return faqs;
+}
+
+/**
+ * Generate Authority Schema JSON-LD for a single service.
+ * Uses the AuthoritySchema ACF group on the service (if filled).
+ * No seoEnhancements are involved here.
+ */
+function generateAuthoritySchemaJsonForService(service) {
+    const authority = service?.authoritySchema || null;
+    const seo = service?.seo || null;
+
+    if (!authority) return null;
+
+    const {
+        schemaType,
+        aiSummary,
+        primaryEntity,
+        targetAudience,
+        citations,
+        faqSchema,
+        reviewRating,
+        reviewCount,
+        productPrice,
+        videoUrl,
+        currencyCode,
+    } = authority;
+
+    const baseUrl = FRONTEND_BASE_URL;
+    const url = `${baseUrl}/service/${service.slug}`;
+
+    const fields = service.serviceFields || {};
+
+    const title =
+        (fields.title && fields.title.trim()) ||
+        service.title ||
+        "Veltiqo Service";
+
+    const description =
+        seo?.metaDesc ||
+        aiSummary ||
+        decodeHtmlEntities(fields.excerpt || "") ||
+        "AI-powered service from Veltiqo for modern growth, automation, and web systems.";
+
+    const featuredImageUrl =
+        getAcfImageUrl(fields.herobg) ||
+        getAcfImageUrl(service.featuredImage) ||
+        null;
+
+    const schema = {
+        "@context": "https://schema.org",
+        "@type": schemaType || "Service",
+        name: title,
+        description,
+        url,
+        image: featuredImageUrl || undefined,
+        abstract: aiSummary || undefined,
+        serviceType: primaryEntity || undefined,
+        provider: {
+            "@type": "Organization",
+            name: "Veltiqo",
+            url: baseUrl,
+            logo: {
+                "@type": "ImageObject",
+                url: `${baseUrl}/assets/logo-main.png`,
+            },
+        },
+        areaServed: {
+            "@type": "Place",
+            name: "Global",
+        },
+    };
+
+    if (targetAudience) {
+        schema.audience = {
+            "@type": "BusinessAudience",
+            audienceType: targetAudience,
+        };
+    }
+
+    const ratingNumeric = reviewRating ? Number(reviewRating) : 0;
+    if (!Number.isNaN(ratingNumeric) && ratingNumeric > 0) {
+        schema.aggregateRating = {
+            "@type": "AggregateRating",
+            ratingValue: ratingNumeric.toString(),
+            reviewCount: reviewCount ? String(reviewCount) : "1",
+        };
+    }
+
+    const priceNumeric = productPrice ? Number(productPrice) : 0;
+    if (
+        !Number.isNaN(priceNumeric) &&
+        priceNumeric > 0 &&
+        typeof currencyCode === "string" &&
+        currencyCode.trim() !== ""
+    ) {
+        schema.offers = {
+            "@type": "Offer",
+            price: priceNumeric.toString(),
+            priceCurrency: currencyCode.trim().toUpperCase(),
+            availability: "https://schema.org/InStock",
+            url,
+        };
+    }
+
+    const citationLines = normalizeLines(citations);
+    if (citationLines.length > 0) {
+        schema.citation = citationLines;
+    }
+
+    const faqs = parseFaqText(faqSchema);
+    if (faqs.length > 0) {
+        schema.mainEntity = faqs.map((f) => ({
+            "@type": "Question",
+            name: f.question,
+            acceptedAnswer: {
+                "@type": "Answer",
+                text: f.answer,
+            },
+        }));
+    }
+
+    if (videoUrl && typeof videoUrl === "string" && videoUrl.trim() !== "") {
+        schema.subjectOf = {
+            "@type": "VideoObject",
+            contentUrl: videoUrl.trim(),
+            name: `${title} – Service deep dive`,
+        };
+    }
+
+    return JSON.stringify(schema);
+}
+
 /* ---------------- Data fetch ---------------- */
 
 async function getRawService(slug) {
@@ -91,7 +230,7 @@ async function getRawService(slug) {
     return data?.service || null;
 }
 
-/* ---------------- Metadata (Yoast + ACF seoEnhancements) ---------------- */
+/* ---------------- Metadata (Yoast only) ---------------- */
 
 export async function generateMetadata({ params }) {
     const resolved = await resolveParams(params);
@@ -105,11 +244,7 @@ export async function generateMetadata({ params }) {
         };
     }
 
-    const [globalsRes, serviceRes] = await Promise.all([
-        gqlRequest(GLOBALS_QUERY),
-        gqlRequest(SERVICE_QUERY, { slug }),
-    ]);
-
+    const serviceRes = await gqlRequest(SERVICE_QUERY, { slug });
     const service = serviceRes?.service || null;
 
     if (!service) {
@@ -126,43 +261,15 @@ export async function generateMetadata({ params }) {
     const baseMeta = yoastToMetadata({
         wpSeo,
         fallbackTitle: fields.title || service.title,
-        fallbackDescription: fields.excerpt || "",
+        fallbackDescription: decodeHtmlEntities(fields.excerpt || ""),
         fallbackImage,
     });
 
-    const pageSeoEnhancements = service.seoEnhancements || null;
-    const globalSeoEnhancements = globalsRes?.page?.seoEnhancements || null;
-    const mergedSeo = mergeSeoEnhancements(
-        pageSeoEnhancements,
-        globalSeoEnhancements
-    );
-
-    const extraOther =
-        mergedSeo && (mergedSeo.seoKeywords || mergedSeo.seoKeyphrases)
-            ? {
-                "ai:keywords": mergedSeo.seoKeywords || undefined,
-                "ai:keyphrases": mergedSeo.seoKeyphrases || undefined,
-                "ai:context-tags": mergedSeo.seoContextTags || undefined,
-                "ai:schema-type": mergedSeo.seoSchemaType || undefined,
-                "ai:faq": mergedSeo.seoFaq || undefined,
-            }
-            : {};
-
-    const mergedKeywords =
-        mergedSeo?.seoKeywords?.length > 0
-            ? mergedSeo.seoKeywords
-                .split(/\r?\n|,/)
-                .map((k) => k.trim())
-                .filter(Boolean)
-            : baseMeta.keywords;
+    // No seoEnhancements in metadata (internal-only).
+    // No ai:* meta attributes. Only Yoast + fallbacks.
 
     return {
         ...baseMeta,
-        keywords: mergedKeywords,
-        other: {
-            ...(baseMeta.other || {}),
-            ...extraOther,
-        },
     };
 }
 
@@ -227,18 +334,32 @@ export default async function ServicePage({ params }) {
         notFound();
     }
 
+    const authoritySchemaJson = generateAuthoritySchemaJsonForService(raw);
     const data = mapServiceToUi(raw);
 
-    return <ServiceTemplate service={data} />;
+    return (
+        <ServiceTemplate
+            service={data}
+            authoritySchemaJson={authoritySchemaJson}
+        />
+    );
 }
 
 /* ---------------- UI Template ---------------- */
 
-function ServiceTemplate({ service }) {
+function ServiceTemplate({ service, authoritySchemaJson }) {
     const { hero, content } = service;
 
     return (
         <main className="bg-[#0D1117] text-[#C9D1D9]">
+            {/* Authority Schema JSON-LD */}
+            {authoritySchemaJson && (
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: authoritySchemaJson }}
+                />
+            )}
+
             {/* Hero */}
             <section className="relative overflow-hidden border-b border-[#30363D]">
                 {hero.bgDesktop && (
@@ -423,7 +544,7 @@ function ServiceTemplate({ service }) {
 
             {/* Bottom narrow CTA */}
             <section className="max-w-[1440px] mx-auto px-6 pb-10">
-                <div className="py-6 px-6 md:px-10  flex flex-col md:flex-row justify_between items-start md:items-center gap-4 shadow-[0_0_26px_rgba(0,0,0,0.4)]">
+                <div className="py-6 px-6 md:px-10 rounded-2xl bg-[#161B22]/60 border border-[#30363D] flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-[0_0_26px_rgba(0,0,0,0.4)]">
                     <div>
                         <h2 className="text-base md:text-lg font-semibold text-white">
                             Not sure if this is the right fit?

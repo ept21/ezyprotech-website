@@ -1,3 +1,5 @@
+// app/page.js (or app/(site)/page.js – depending on your structure)
+
 export const revalidate = 60;
 
 import HeroSection from "@/app/components/sections/home/HeroSection";
@@ -40,35 +42,162 @@ const getFeaturedUrl = (node) =>
     node?.featuredImage?.node?.sourceUrl ||
     null;
 
-/** Merge page-level and global SEO enhancements */
-function mergeSeoEnhancements(pageSeo, globalSeo) {
-    if (!pageSeo && !globalSeo) return null;
+/** Normalize base site URL (ensure no trailing slash) */
+const normalizeSiteUrl = (url) =>
+    (url || "").replace(/\/+$/, "");
 
-    const page = pageSeo || {};
-    const global = globalSeo || {};
+/** Parse citations textarea into an array of URLs */
+function parseCitations(value) {
+    if (!value) return [];
+    return value
+        .split(/\r?\n|,/)
+        .map((l) => l.trim())
+        .filter(Boolean);
+}
 
-    const normalizeLines = (value) =>
-        (value || "")
-            .split(/\r?\n|,/)
+/** Parse FAQ textarea into an array of { question, answer } */
+function parseFaqSchema(value) {
+    if (!value) return [];
+
+    // Split by double line-breaks to blocks
+    const blocks = value.split(/\n{2,}/);
+    const faqs = [];
+
+    for (const block of blocks) {
+        const lines = block
+            .split(/\r?\n/)
             .map((l) => l.trim())
             .filter(Boolean);
 
-    const mergeLines = (pageField, globalField) => {
-        const pageLines = normalizeLines(pageField);
-        if (pageLines.length > 0) {
-            return pageLines.join("\n"); // override
-        }
-        const globalLines = normalizeLines(globalField);
-        return globalLines.join("\n");
+        if (lines.length === 0) continue;
+
+        // Prefer explicit Q:/A:, but fall back to first/second line
+        let qLine = lines.find((l) => /^Q[:\-]/i.test(l)) || lines[0];
+        let aLine =
+            lines.find((l) => /^A[:\-]/i.test(l)) ||
+            lines[1] ||
+            "";
+
+        const question = qLine.replace(/^Q[:\-]\s*/i, "").trim();
+        const answer = aLine.replace(/^A[:\-]\s*/i, "").trim();
+
+        if (!question || !answer) continue;
+
+        faqs.push({ question, answer });
+    }
+
+    return faqs;
+}
+
+/**
+ * Build Authority Schema JSON-LD string for a given page.
+ * This uses:
+ * - page.title
+ * - page.seo.metaDesc
+ * - page.uri
+ * - page.featuredImage
+ * - page.authoritySchema (ACF group)
+ * - siteUrl + logoUrl from globals
+ */
+function generateAuthoritySchemaJson(page, siteUrl, logoUrl) {
+    if (!page?.authoritySchema) return null;
+
+    const authority = page.authoritySchema;
+    const type = authority.schemaType || "WebPage";
+    const normalizedSiteUrl = normalizeSiteUrl(siteUrl);
+
+    const uri = page.uri || "/";
+    const fullUrl =
+        uri === "/" ? normalizedSiteUrl || undefined : `${normalizedSiteUrl}${uri}`;
+
+    const featuredNode = page.featuredImage?.node;
+    const imageUrl =
+        featuredNode?.sourceUrl || featuredNode?.mediaItemUrl || undefined;
+
+    const description =
+        page.seo?.metaDesc || authority.aiSummary || undefined;
+
+    const schema = {
+        "@context": "https://schema.org",
+        "@type": type,
+        name: page.title,
+        description,
+        url: fullUrl,
+        image: imageUrl,
+        abstract: authority.aiSummary || undefined,
+        about: authority.primaryEntity
+            ? {
+                "@type": "Thing",
+                name: authority.primaryEntity,
+            }
+            : undefined,
+        provider: {
+            "@type": "Organization",
+            name: "Veltiqo",
+            logo: {
+                "@type": "ImageObject",
+                url: logoUrl || `${normalizedSiteUrl}/assets/logo-main.png`,
+            },
+        },
     };
 
-    return {
-        seoKeywords: mergeLines(page.seoKeywords, global.seoKeywords),
-        seoKeyphrases: mergeLines(page.seoKeyphrases, global.seoKeyphrases),
-        seoContextTags: mergeLines(page.seoContextTags, global.seoContextTags),
-        seoSchemaType: page.seoSchemaType || global.seoSchemaType || "",
-        seoFaq: page.seoFaq || global.seoFaq || "",
-    };
+    if (authority.targetAudience) {
+        schema.audience = {
+            "@type": "BusinessAudience",
+            audienceType: authority.targetAudience,
+        };
+    }
+
+    // Only add aggregateRating when it is relevant and valid
+    const ratingValue = authority.reviewRating;
+    const ratingCount = authority.reviewCount;
+    if (
+        ratingValue &&
+        Number(ratingValue) > 0 &&
+        (type === "Service" || type === "Product")
+    ) {
+        schema.aggregateRating = {
+            "@type": "AggregateRating",
+            ratingValue: Number(ratingValue),
+            reviewCount: Number(ratingCount || 1),
+        };
+    }
+
+    const citations = parseCitations(authority.citations);
+    if (citations.length > 0) {
+        schema.citation = citations;
+    }
+
+    const faqItems = parseFaqSchema(authority.faqSchema);
+    if (faqItems.length > 0) {
+        schema.mainEntity = faqItems.map((item) => ({
+            "@type": "Question",
+            name: item.question,
+            acceptedAnswer: {
+                "@type": "Answer",
+                text: item.answer,
+            },
+        }));
+    }
+
+    // Product/Offer block – only for Product pages
+    if (type === "Product" && authority.productPrice) {
+        schema.offers = {
+            "@type": "Offer",
+            price: Number(authority.productPrice),
+            priceCurrency: authority.currencyCode || "USD",
+        };
+    }
+
+    if (authority.videoUrl) {
+        schema.subjectOf = {
+            "@type": "VideoObject",
+            contentUrl: authority.videoUrl,
+            name: page.title,
+        };
+    }
+
+    return JSON.stringify(schema);
 }
 
 /** Home page metadata */
@@ -80,12 +209,16 @@ export async function generateMetadata() {
     ]);
 
     const siteTitle = globalsRes?.generalSettings?.title ?? "Veltiqo";
-    const siteUrl = globalsRes?.generalSettings?.url ?? "";
+    const wpSiteUrl = globalsRes?.generalSettings?.url ?? "";
     const globalsPage = globalsRes?.page;
     const gs = globalsPage?.globalSettings;
 
     const faviconUrl = getAcfImageUrl(gs?.favicon) || "/favicon.ico";
     const defaultOg = getAcfImageUrl(gs?.defaultogimage);
+
+    // Prefer explicit frontend domain if defined (e.g. https://veltiqo.com)
+    const frontendSiteUrl =
+        process.env.NEXT_PUBLIC_SITE_URL || wpSiteUrl || "";
 
     // Find the WP page that is marked as front page
     const frontNode =
@@ -111,31 +244,19 @@ export async function generateMetadata() {
         fallbackTitle: wpSeo?.title || `${siteTitle} | AI Driven Growth`,
         fallbackDescription,
         fallbackImage: homePage?.featuredImage?.node || null,
+        siteUrl: frontendSiteUrl,
     });
-
-    const pageSeoEnhancements = homePage?.seoEnhancements || null;
-    const globalSeoEnhancements = globalsPage?.seoEnhancements || null;
-    const mergedSeo = mergeSeoEnhancements(
-        pageSeoEnhancements,
-        globalSeoEnhancements
-    );
-
-    const mergedKeywords =
-        mergedSeo?.seoKeywords && mergedSeo.seoKeywords.length > 0
-            ? mergedSeo.seoKeywords
-                .split(/\r?\n|,/)
-                .map((k) => k.trim())
-                .filter(Boolean)
-            : baseMeta.keywords;
 
     return {
         ...baseMeta,
+        // Ensure we always have sensible title/description
         title: baseMeta.title || `${siteTitle} | AI Driven Growth`,
         description: baseMeta.description || fallbackDescription,
-        keywords: mergedKeywords,
+
+        // Strengthen OG block with siteName, URL, and fallback image
         openGraph: {
             ...(baseMeta.openGraph || {}),
-            url: siteUrl,
+            url: baseMeta.openGraph?.url || frontendSiteUrl,
             siteName: siteTitle,
             images:
                 baseMeta.openGraph?.images?.length > 0
@@ -144,23 +265,16 @@ export async function generateMetadata() {
                         ? [{ url: defaultOg }]
                         : undefined,
         },
+
+        // Basic Twitter card (we are not over-optimizing this now)
         twitter: {
             ...(baseMeta.twitter || {}),
             card: baseMeta.twitter?.card || "summary_large_image",
         },
-        other: {
-            ...(baseMeta.other || {}),
-            ...(mergedSeo
-                ? {
-                    "ai:keywords": mergedSeo.seoKeywords || "",
-                    "ai:keyphrases": mergedSeo.seoKeyphrases || "",
-                    "ai:context-tags": mergedSeo.seoContextTags || "",
-                    "ai:schema-type": mergedSeo.seoSchemaType || "",
-                    "ai:faq": mergedSeo.seoFaq || "",
-                }
-                : {}),
-            "ai:tagline": "Build the Future of Your Business",
-        },
+
+        // No "keywords" field here – so no <meta name="keywords"> at all.
+        // No ai:* meta. JSON-LD is handled separately.
+
         icons: {
             icon: faviconUrl,
             shortcut: faviconUrl,
@@ -184,8 +298,15 @@ export default async function HomePage() {
         );
     }
 
-    // Globals for contact details
-    const globalsRes = await gqlRequest(GLOBALS_QUERY);
+    // Globals for contact details + site URL + logo
+    const [globalsRes, frontRes] = await Promise.all([
+        gqlRequest(GLOBALS_QUERY),
+        gqlRequest(FRONT_PAGE_QUERY),
+    ]);
+
+    const wpSiteUrl = globalsRes?.generalSettings?.url || "";
+    const siteUrl =
+        process.env.NEXT_PUBLIC_SITE_URL || wpSiteUrl || "";
     const gs = globalsRes?.page?.globalSettings;
 
     const contactGlobals = {
@@ -194,6 +315,29 @@ export default async function HomePage() {
         whatsapp: gs?.whatsapp || null,
         address: gs?.address || null,
     };
+
+    const logoUrl = getAcfImageUrl(gs?.sitelogo) || null;
+
+    // Fetch the actual front page node (for Authority Schema)
+    const frontNode =
+        frontRes?.pages?.nodes?.find((n) => n?.isFrontPage) || null;
+
+    let authoritySchemaJson = null;
+
+    if (frontNode?.uri) {
+        const homeRes = await gqlRequest(PAGE_BY_SLUG_QUERY, {
+            slug: frontNode.uri,
+        });
+        const homePage = homeRes?.page || null;
+
+        if (homePage) {
+            authoritySchemaJson = generateAuthoritySchemaJson(
+                homePage,
+                siteUrl,
+                logoUrl
+            );
+        }
+    }
 
     /* ---- HERO ---- */
     const heroData = await gqlRequest(HERO_QUERY, { id: homePageDbId });
@@ -253,8 +397,7 @@ export default async function HomePage() {
         const catKicker = fields.kicker?.trim?.() || "Category";
 
         const excerpt =
-            fields.bullets ||
-            (term.description ? term.description : "");
+            fields.bullets || (term.description ? term.description : "");
 
         const image = getAcfImageUrl(fields.serviceCategoryImage) || null;
 
@@ -599,6 +742,14 @@ export default async function HomePage() {
 
     return (
         <main>
+            {/* Authority JSON-LD */}
+            {authoritySchemaJson && (
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: authoritySchemaJson }}
+                />
+            )}
+
             {/* HERO */}
             <HeroSection
                 bgUrl={heroBgUrl}

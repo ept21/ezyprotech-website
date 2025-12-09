@@ -6,12 +6,18 @@ import { gqlRequest } from "@/app/lib/graphql/client";
 import {
     SERVICE_CATEGORY_PAGE_QUERY,
     SERVICE_CATEGORY_SLUGS_QUERY,
-    GLOBALS_QUERY,
 } from "@/app/lib/graphql/queries";
 import { getAcfImageUrl } from "@/app/lib/wp";
 import { yoastToMetadata } from "@/app/lib/seo";
 
 export const revalidate = 300;
+
+// Frontend base URL for schema
+const FRONTEND_BASE_URL =
+    (process.env.NEXT_PUBLIC_FRONTEND_URL || "https://veltiqo.com").replace(
+        /\/+$/,
+        ""
+    );
 
 /* ---------------- Helpers ---------------- */
 
@@ -63,35 +69,175 @@ function mapAcfLink(link, fallbackHref = "/contact") {
     return { href, label, target };
 }
 
-// Merge SEO enhancements with override-or-fallback semantics
-function mergeSeoEnhancements(pageSeo, globalSeo) {
-    if (!pageSeo && !globalSeo) return null;
+function normalizeLines(value) {
+    return (value || "")
+        .split(/\r?\n|,/)
+        .map((l) => l.trim())
+        .filter(Boolean);
+}
 
-    const page = pageSeo || {};
-    const global = globalSeo || {};
+function parseFaqText(block) {
+    if (!block || typeof block !== "string") return [];
 
-    const normalizeLines = (value) =>
-        (value || "")
-            .split(/\r?\n/)
-            .map((l) => l.trim())
-            .filter(Boolean);
+    const lines = block
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter(Boolean);
 
-    const mergeLines = (pageField, globalField) => {
-        const pageLines = normalizeLines(pageField);
-        if (pageLines.length > 0) {
-            return pageLines.join("\n"); // page overrides global
+    const faqs = [];
+    let q = null;
+    let a = null;
+
+    for (const line of lines) {
+        const lower = line.toLowerCase();
+        if (lower.startsWith("q:")) {
+            if (q && a) faqs.push({ question: q, answer: a });
+            q = line.slice(2).trim();
+            a = null;
+        } else if (lower.startsWith("a:")) {
+            const part = line.slice(2).trim();
+            a = a ? `${a} ${part}` : part;
+        } else if (a) {
+            a += " " + line;
         }
-        const globalLines = normalizeLines(globalField);
-        return globalLines.join("\n");
+    }
+
+    if (q && a) faqs.push({ question: q, answer: a });
+    return faqs;
+}
+
+/**
+ * Generate Authority Schema JSON-LD for a service category (taxonomy page).
+ * Uses the AuthoritySchema ACF group on the term (if filled).
+ */
+function generateAuthoritySchemaJsonForCategory(category) {
+    const authority = category?.authoritySchema || null;
+    const seo = category?.seo || null;
+
+    if (!authority) return null;
+
+    const {
+        schemaType,
+        aiSummary,
+        primaryEntity,
+        targetAudience,
+        citations,
+        faqSchema,
+        reviewRating,
+        reviewCount,
+        productPrice,
+        videoUrl,
+        currencyCode,
+    } = authority;
+
+    const baseUrl = FRONTEND_BASE_URL;
+    const url = `${baseUrl}/service-category/${category.slug}`;
+
+    const fields = category.servicesCategory || {};
+
+    const title =
+        fields.title ||
+        category.name ||
+        "Service category – Veltiqo";
+
+    const description =
+        seo?.metaDesc ||
+        aiSummary ||
+        decodeHtmlEntities(fields.subTitle || category.description || "") ||
+        "Service category from Veltiqo, grouping related AI, automation, and web services.";
+
+    const featuredImageUrl =
+        getAcfImageUrl(fields.serviceCategoryImage) ||
+        getAcfImageUrl(fields.herocategorybgimagedesktop) ||
+        null;
+
+    const schema = {
+        "@context": "https://schema.org",
+        "@type": schemaType || "CollectionPage",
+        name: title,
+        description,
+        url,
+        image: featuredImageUrl || undefined,
+        abstract: aiSummary || undefined,
+        about: primaryEntity
+            ? {
+                "@type": "Thing",
+                name: primaryEntity,
+            }
+            : undefined,
+        provider: {
+            "@type": "Organization",
+            name: "Veltiqo",
+            url: baseUrl,
+            logo: {
+                "@type": "ImageObject",
+                url: `${baseUrl}/assets/logo-main.png`,
+            },
+        },
+        areaServed: {
+            "@type": "Place",
+            name: "Global",
+        },
     };
 
-    return {
-        seoKeywords: mergeLines(page.seoKeywords, global.seoKeywords),
-        seoKeyphrases: mergeLines(page.seoKeyphrases, global.seoKeyphrases),
-        seoContextTags: mergeLines(page.seoContextTags, global.seoContextTags),
-        seoSchemaType: page.seoSchemaType || global.seoSchemaType || "",
-        seoFaq: page.seoFaq || global.seoFaq || "",
-    };
+    if (targetAudience) {
+        schema.audience = {
+            "@type": "BusinessAudience",
+            audienceType: targetAudience,
+        };
+    }
+
+    const ratingNumeric = reviewRating ? Number(reviewRating) : 0;
+    if (!Number.isNaN(ratingNumeric) && ratingNumeric > 0) {
+        schema.aggregateRating = {
+            "@type": "AggregateRating",
+            ratingValue: ratingNumeric.toString(),
+            reviewCount: reviewCount ? String(reviewCount) : "1",
+        };
+    }
+
+    const priceNumeric = productPrice ? Number(productPrice) : 0;
+    if (
+        !Number.isNaN(priceNumeric) &&
+        priceNumeric > 0 &&
+        typeof currencyCode === "string" &&
+        currencyCode.trim() !== ""
+    ) {
+        schema.offers = {
+            "@type": "Offer",
+            price: priceNumeric.toString(),
+            priceCurrency: currencyCode.trim().toUpperCase(),
+            availability: "https://schema.org/InStock",
+            url,
+        };
+    }
+
+    const citationLines = normalizeLines(citations);
+    if (citationLines.length > 0) {
+        schema.citation = citationLines;
+    }
+
+    const faqs = parseFaqText(faqSchema);
+    if (faqs.length > 0) {
+        schema.mainEntity = faqs.map((f) => ({
+            "@type": "Question",
+            name: f.question,
+            acceptedAnswer: {
+                "@type": "Answer",
+                text: f.answer,
+            },
+        }));
+    }
+
+    if (videoUrl && typeof videoUrl === "string" && videoUrl.trim() !== "") {
+        schema.subjectOf = {
+            "@type": "VideoObject",
+            contentUrl: videoUrl.trim(),
+            name: `${title} – Category overview`,
+        };
+    }
+
+    return JSON.stringify(schema);
 }
 
 /* ---------------- Data fetch ---------------- */
@@ -125,7 +271,6 @@ function mapCategoryToUi(category) {
         chips = extractBulletsFromHtml(fields.bullets);
     }
 
-    // Decode entities like &amp;
     chips = chips.map(decodeHtmlEntities);
 
     const hero = {
@@ -168,12 +313,12 @@ function mapCategoryToUi(category) {
     };
 }
 
-/* ---------------- Metadata (Yoast + ACF seoEnhancements) ---------------- */
+/* ---------------- Metadata (Yoast only) ---------------- */
 
 export async function generateMetadata({ params }) {
-    // In Next 16 params is a Promise
-    const resolved = typeof params.then === "function" ? await params : params;
-    const rawSlug = resolved.slug;
+    const resolved =
+        params && typeof params.then === "function" ? await params : params;
+    const rawSlug = resolved?.slug;
     const slug = normalizeSlug(rawSlug);
 
     if (!slug) {
@@ -183,11 +328,7 @@ export async function generateMetadata({ params }) {
         };
     }
 
-    const [globalsRes, categoryRes] = await Promise.all([
-        gqlRequest(GLOBALS_QUERY),
-        gqlRequest(SERVICE_CATEGORY_PAGE_QUERY, { slug }),
-    ]);
-
+    const categoryRes = await gqlRequest(SERVICE_CATEGORY_PAGE_QUERY, { slug });
     const category = categoryRes?.serviceCategory || null;
 
     if (!category) {
@@ -203,48 +344,16 @@ export async function generateMetadata({ params }) {
         fields.herocategorybgimagedesktop?.node ||
         null;
 
-    // Base metadata from Yoast
     const baseMeta = yoastToMetadata({
         wpSeo: category.seo,
         fallbackTitle: fields.title || category.name,
-        fallbackDescription: fields.subTitle || category.description || "",
+        fallbackDescription:
+            decodeHtmlEntities(fields.subTitle || category.description || ""),
         fallbackImage,
     });
 
-    // Merge SEO enhancements (page + global)
-    const pageSeoEnhancements = category.seoEnhancements || null;
-    const globalSeoEnhancements = globalsRes?.page?.seoEnhancements || null;
-    const mergedSeo = mergeSeoEnhancements(
-        pageSeoEnhancements,
-        globalSeoEnhancements
-    );
-
-    const extraOther =
-        mergedSeo && (mergedSeo.seoKeywords || mergedSeo.seoKeyphrases)
-            ? {
-                "ai:keywords": mergedSeo.seoKeywords || undefined,
-                "ai:keyphrases": mergedSeo.seoKeyphrases || undefined,
-                "ai:context-tags": mergedSeo.seoContextTags || undefined,
-                "ai:schema-type": mergedSeo.seoSchemaType || undefined,
-                "ai:faq": mergedSeo.seoFaq || undefined,
-            }
-            : {};
-
-    const mergedKeywords =
-        mergedSeo?.seoKeywords?.length > 0
-            ? mergedSeo.seoKeywords
-                .split(/\r?\n|,/)
-                .map((k) => k.trim())
-                .filter(Boolean)
-            : baseMeta.keywords;
-
     return {
         ...baseMeta,
-        keywords: mergedKeywords,
-        other: {
-            ...(baseMeta.other || {}),
-            ...extraOther,
-        },
     };
 }
 
@@ -262,8 +371,9 @@ export async function generateStaticParams() {
 /* ---------------- Page component ---------------- */
 
 export default async function ServiceCategoryPage({ params }) {
-    // params is a Promise in Next 16 – must await
-    const { slug: rawSlug } = await params;
+    const resolved =
+        params && typeof params.then === "function" ? await params : params;
+    const rawSlug = resolved?.slug;
 
     const rawCategory = await getRawServiceCategory(rawSlug);
     if (!rawCategory) {
@@ -271,17 +381,32 @@ export default async function ServiceCategoryPage({ params }) {
     }
 
     const data = mapCategoryToUi(rawCategory);
+    const authoritySchemaJson =
+        generateAuthoritySchemaJsonForCategory(rawCategory);
 
-    return <ServiceCategoryTemplate category={data} />;
+    return (
+        <ServiceCategoryTemplate
+            category={data}
+            authoritySchemaJson={authoritySchemaJson}
+        />
+    );
 }
 
 /* ---------------- UI Template ---------------- */
 
-function ServiceCategoryTemplate({ category }) {
+function ServiceCategoryTemplate({ category, authoritySchemaJson }) {
     const { hero, services, contentHtml } = category;
 
     return (
         <main className="bg-[#0D1117] text-[#C9D1D9]">
+            {/* Authority Schema JSON-LD */}
+            {authoritySchemaJson && (
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: authoritySchemaJson }}
+                />
+            )}
+
             {/* Hero */}
             <section className="relative overflow-hidden border-b border-[#30363D]">
                 {hero.bgDesktop && (
@@ -322,7 +447,6 @@ function ServiceCategoryTemplate({ category }) {
                             </p>
                         )}
 
-                        {/* Chips as inline text */}
                         {hero.chips?.length > 0 && (
                             <p className="mt-6 text-xs md:text-sm text-[#8B949E] max-w-2xl">
                                 <span className="font-medium text-[#C9D1D9]">Includes:</span>{" "}
@@ -330,7 +454,6 @@ function ServiceCategoryTemplate({ category }) {
                             </p>
                         )}
 
-                        {/* CTA */}
                         {hero.cta && hero.cta.label && (
                             <div className="mt-8">
                                 <Link

@@ -3,45 +3,24 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { gqlRequest } from "@/app/lib/graphql/client";
-import { BUNDLES_PAGE_QUERY, GLOBALS_QUERY } from "@/app/lib/graphql/queries";
+import { BUNDLES_PAGE_QUERY } from "@/app/lib/graphql/queries";
 import { getAcfImageUrl } from "@/app/lib/wp";
 import { yoastToMetadata } from "@/app/lib/seo";
 
 export const revalidate = 300;
 
-// if your query uses URI: const BUNDLES_PAGE_URI = "/bundles/";
-// if it uses DATABASE_ID: you can store the numeric ID instead
+// Frontend base URL for schema (can be overridden via env)
+const FRONTEND_BASE_URL =
+    (process.env.NEXT_PUBLIC_FRONTEND_URL || "https://veltiqo.com").replace(
+        /\/+$/,
+        ""
+    );
+
+// If your query uses URI: const BUNDLES_PAGE_URI = "/bundles/";
+// If it uses DATABASE_ID: you can store the numeric ID instead.
 const BUNDLES_PAGE_URI = "/bundles/";
 
-/* ---------------- SEO helpers ---------------- */
-
-function mergeSeoEnhancements(pageSeo, globalSeo) {
-    if (!pageSeo && !globalSeo) return null;
-
-    const page = pageSeo || {};
-    const global = globalSeo || {};
-
-    const normalizeLines = (value) =>
-        (value || "")
-            .split(/\r?\n/)
-            .map((l) => l.trim())
-            .filter(Boolean);
-
-    const mergeLines = (pageField, globalField) => {
-        const pageLines = normalizeLines(pageField);
-        if (pageLines.length > 0) return pageLines.join("\n");
-        const globalLines = normalizeLines(globalField);
-        return globalLines.join("\n");
-    };
-
-    return {
-        seoKeywords: mergeLines(page.seoKeywords, global.seoKeywords),
-        seoKeyphrases: mergeLines(page.seoKeyphrases, global.seoKeyphrases),
-        seoContextTags: mergeLines(page.seoContextTags, global.seoContextTags),
-        seoSchemaType: page.seoSchemaType || global.seoSchemaType || "",
-        seoFaq: page.seoFaq || global.seoFaq || "",
-    };
-}
+/* ---------------- Helpers ---------------- */
 
 function decodeHtmlEntities(str) {
     if (!str || typeof str !== "string") return "";
@@ -61,6 +40,181 @@ function mapAcfLink(link, fallbackHref = "/contact") {
     const label = link.title || "";
     const target = link.target && link.target !== "" ? link.target : "_self";
     return { href, label, target };
+}
+
+function normalizeLines(value) {
+    return (value || "")
+        .split(/\r?\n|,/)
+        .map((l) => l.trim())
+        .filter(Boolean);
+}
+
+function parseFaqText(block) {
+    if (!block || typeof block !== "string") return [];
+
+    const lines = block
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter(Boolean);
+
+    const faqs = [];
+    let q = null;
+    let a = null;
+
+    for (const line of lines) {
+        const lower = line.toLowerCase();
+        if (lower.startsWith("q:")) {
+            if (q && a) faqs.push({ question: q, answer: a });
+            q = line.slice(2).trim();
+            a = null;
+        } else if (lower.startsWith("a:")) {
+            const part = line.slice(2).trim();
+            a = a ? `${a} ${part}` : part;
+        } else if (a) {
+            a += " " + line;
+        }
+    }
+
+    if (q && a) faqs.push({ question: q, answer: a });
+    return faqs;
+}
+
+/**
+ * Generate Authority Schema JSON-LD for the Bundles overview page.
+ * Uses the AuthoritySchema ACF group on the page (if filled).
+ * This is completely independent of seoEnhancements.
+ */
+function generateAuthoritySchemaJsonForPage(page) {
+    const authority = page?.authoritySchema || null;
+    const seo = page?.seo || null;
+
+    if (!authority) return null;
+
+    const {
+        schemaType,
+        aiSummary,
+        primaryEntity,
+        targetAudience,
+        citations,
+        faqSchema,
+        reviewRating,
+        reviewCount,
+        productPrice,
+        videoUrl,
+        currencyCode,
+    } = authority;
+
+    const baseUrl = FRONTEND_BASE_URL;
+    const url = `${baseUrl}/bundles/`;
+
+    const title =
+        page?.title || "Bundles – Veltiqo"; // Fallback title if Yoast not set for schema.
+
+    const description =
+        seo?.metaDesc ||
+        aiSummary ||
+        decodeHtmlEntities(
+            page?.bundlesPageFields?.bundlesshortdescription || ""
+        ) ||
+        "AI-powered growth bundles that connect marketing, automation, web, and analytics into one system.";
+
+    const featuredImageUrl =
+        getAcfImageUrl(page?.bundlesPageFields?.bundlesimage) ||
+        getAcfImageUrl(page?.featuredImage) ||
+        null;
+
+    const schema = {
+        "@context": "https://schema.org",
+        "@type": schemaType || "CollectionPage",
+        name: title,
+        description,
+        url,
+        image: featuredImageUrl || undefined,
+        abstract: aiSummary || undefined,
+        about: primaryEntity
+            ? {
+                "@type": "Thing",
+                name: primaryEntity,
+            }
+            : undefined,
+        provider: {
+            "@type": "Organization",
+            name: "Veltiqo",
+            url: baseUrl,
+            logo: {
+                "@type": "ImageObject",
+                url: `${baseUrl}/assets/logo-main.png`,
+            },
+        },
+        areaServed: {
+            "@type": "Place",
+            name: "Global",
+        },
+    };
+
+    if (targetAudience) {
+        schema.audience = {
+            "@type": "BusinessAudience",
+            audienceType: targetAudience,
+        };
+    }
+
+    // Aggregate rating (optional).
+    // In practice this will usually be relevant on single bundle pages,
+    // but if you fill it here the schema will still be valid.
+    const ratingNumeric = reviewRating ? Number(reviewRating) : 0;
+    if (!Number.isNaN(ratingNumeric) && ratingNumeric > 0) {
+        schema.aggregateRating = {
+            "@type": "AggregateRating",
+            ratingValue: ratingNumeric.toString(),
+            reviewCount: reviewCount ? String(reviewCount) : "1",
+        };
+    }
+
+    // Offer (optional) — same note as above: typically for product pages,
+    // but kept here in case you intentionally configure it on the collection.
+    const priceNumeric = productPrice ? Number(productPrice) : 0;
+    if (
+        !Number.isNaN(priceNumeric) &&
+        priceNumeric > 0 &&
+        typeof currencyCode === "string" &&
+        currencyCode.trim() !== ""
+    ) {
+        schema.offers = {
+            "@type": "Offer",
+            price: priceNumeric.toString(),
+            priceCurrency: currencyCode.trim().toUpperCase(),
+            availability: "https://schema.org/InStock",
+            url,
+        };
+    }
+
+    const citationLines = normalizeLines(citations);
+    if (citationLines.length > 0) {
+        schema.citation = citationLines;
+    }
+
+    const faqs = parseFaqText(faqSchema);
+    if (faqs.length > 0) {
+        schema.mainEntity = faqs.map((f) => ({
+            "@type": "Question",
+            name: f.question,
+            acceptedAnswer: {
+                "@type": "Answer",
+                text: f.answer,
+            },
+        }));
+    }
+
+    if (videoUrl && typeof videoUrl === "string" && videoUrl.trim() !== "") {
+        schema.subjectOf = {
+            "@type": "VideoObject",
+            contentUrl: videoUrl.trim(),
+            name: `${title} – Bundles overview`,
+        };
+    }
+
+    return JSON.stringify(schema);
 }
 
 /* ---------------- Data fetch ---------------- */
@@ -87,13 +241,10 @@ async function getBundlesPageData() {
 /* ---------------- Metadata ---------------- */
 
 export async function generateMetadata() {
-    const [globalsRes, bundlesRes] = await Promise.all([
-        gqlRequest(GLOBALS_QUERY),
-        gqlRequest(BUNDLES_PAGE_QUERY, {
-            slug: BUNDLES_PAGE_URI,
-            firstBundles: 1,
-        }),
-    ]);
+    const bundlesRes = await gqlRequest(BUNDLES_PAGE_QUERY, {
+        slug: BUNDLES_PAGE_URI,
+        firstBundles: 1,
+    });
 
     const page = bundlesRes?.page || null;
     if (!page) {
@@ -119,39 +270,11 @@ export async function generateMetadata() {
         fallbackImage,
     });
 
-    const pageSeoEnhancements = page.seoEnhancements || null;
-    const globalSeoEnhancements = globalsRes?.page?.seoEnhancements || null;
-    const mergedSeo = mergeSeoEnhancements(
-        pageSeoEnhancements,
-        globalSeoEnhancements
-    );
-
-    const extraOther =
-        mergedSeo && (mergedSeo.seoKeywords || mergedSeo.seoKeyphrases)
-            ? {
-                "ai:keywords": mergedSeo.seoKeywords || undefined,
-                "ai:keyphrases": mergedSeo.seoKeyphrases || undefined,
-                "ai:context-tags": mergedSeo.seoContextTags || undefined,
-                "ai:schema-type": mergedSeo.seoSchemaType || undefined,
-                "ai:faq": mergedSeo.seoFaq || undefined,
-            }
-            : {};
-
-    const mergedKeywords =
-        mergedSeo?.seoKeywords?.length > 0
-            ? mergedSeo.seoKeywords
-                .split(/\r?\n|,/)
-                .map((k) => k.trim())
-                .filter(Boolean)
-            : baseMeta.keywords;
+    // No seoEnhancements used here at all – purely Yoast + minimal fallbacks.
+    // No ai:* meta and no custom keywords meta injection.
 
     return {
         ...baseMeta,
-        keywords: mergedKeywords,
-        other: {
-            ...(baseMeta.other || {}),
-            ...extraOther,
-        },
     };
 }
 
@@ -188,7 +311,7 @@ function mapToUi(page, bundlesNodes) {
             kicker: bf.kicker || "",
             price: bf.price || "",
             priceLabel: bf.textNearPriceMonthlyYearlyOrOther || "",
-            // IMPORTANT: keep HTML here so we can render it as rich list
+            // Keep HTML for rich list rendering
             productsIncludes: decodeHtmlEntities(bf.productsIncludes || ""),
             primaryCta: mapAcfLink(bf.ctaurl1, `/bundle/${b.slug}`),
             secondaryCta: mapAcfLink(bf.ctaurl2, "/contact"),
@@ -208,14 +331,27 @@ export default async function BundlesPage() {
     }
 
     const ui = mapToUi(data.page, data.bundles);
-    return <BundlesTemplate {...ui} />;
+    const authoritySchemaJson = generateAuthoritySchemaJsonForPage(data.page);
+
+    return <BundlesTemplate {...ui} authoritySchemaJson={authoritySchemaJson} />;
 }
 
 /* ---------------- UI Template ---------------- */
 
-function BundlesTemplate({ hero, contentHtml, bundles }) {
+function BundlesTemplate({ hero, contentHtml, bundles, authoritySchemaJson }) {
     return (
         <main className="bg-[#0D1117] text-[#C9D1D9]">
+            {/* Authority Schema JSON-LD
+          Note: rendered in the body, which is still valid for Google.
+          If we later want a head-only implementation, we can move this
+          into a dedicated head.js for this route. */}
+            {authoritySchemaJson && (
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: authoritySchemaJson }}
+                />
+            )}
+
             {/* Hero */}
             <section className="relative overflow-hidden border-b border-[#30363D]">
                 {hero.bgDesktop && (
@@ -385,9 +521,9 @@ function BundlesTemplate({ hero, contentHtml, bundles }) {
                                     {bundle.productsIncludes && (
                                         <div
                                             className="text-[#C9D1D9] text-sm mb-6 flex-grow space-y-1
-                                 [&_p]:mb-1
-                                 [&_ul]:list-disc [&_ul]:pl-5
-                                 [&_li]:mb-1"
+                        [&_p]:mb-1
+                        [&_ul]:list-disc [&_ul]:pl-5
+                        [&_li]:mb-1"
                                             dangerouslySetInnerHTML={{
                                                 __html: bundle.productsIncludes,
                                             }}

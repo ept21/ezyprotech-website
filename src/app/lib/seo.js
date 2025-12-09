@@ -1,6 +1,48 @@
 // src/app/lib/seo.js
 
-// Map Yoast SEO fields to Next.js Metadata object
+/**
+ * Normalize canonical URL so it always points to the frontend domain,
+ * not the WordPress CMS domain.
+ */
+function normalizeCanonical(rawCanonical, siteUrl) {
+    if (!rawCanonical || typeof rawCanonical !== "string") return undefined;
+    const trimmed = rawCanonical.trim();
+    if (!trimmed) return undefined;
+
+    try {
+        // If we have a frontend siteUrl, force the canonical to use its origin
+        if (siteUrl) {
+            const front = new URL(siteUrl);
+            const canonicalUrl = new URL(trimmed, front.origin);
+
+            // If Yoast returned a different origin (e.g. cms.veltiqo.com),
+            // we override it with the frontend origin.
+            if (canonicalUrl.origin !== front.origin) {
+                canonicalUrl.protocol = front.protocol;
+                canonicalUrl.host = front.host;
+            }
+
+            return canonicalUrl.toString();
+        }
+
+        // If we don't have siteUrl, at least return a valid URL from Yoast
+        const canonicalUrl = new URL(trimmed);
+        return canonicalUrl.toString();
+    } catch {
+        // Fallback: best-effort – return the trimmed string
+        return trimmed;
+    }
+}
+
+/**
+ * Map Yoast SEO fields to Next.js Metadata object
+ * This is used only for:
+ * - title / description
+ * - canonical (via alternates)
+ * - OpenGraph (basic)
+ *
+ * NO keywords, NO ai:* meta, NO JSON-LD here.
+ */
 export function yoastToMetadata({
                                     wpSeo,
                                     fallbackTitle = "Veltiqo | AI Driven Growth",
@@ -21,9 +63,8 @@ export function yoastToMetadata({
         fallbackDescription ||
         "";
 
-    const canonical = wpSeo?.canonical && wpSeo.canonical.trim() !== ""
-        ? wpSeo.canonical.trim()
-        : undefined;
+    // Canonical – normalized to frontend domain if possible
+    const canonical = normalizeCanonical(wpSeo?.canonical, siteUrl);
 
     // Resolve OG image URL from Yoast or fallback image node/string
     const ogNode = wpSeo?.opengraphImage || fallbackImage || null;

@@ -14,6 +14,17 @@ import FloatingContactFab from '@/app/components/layout/FloatingContactFab'
 import '@/app/styles/electric-xtra.css'
 import '@/app/styles/globals.css'
 
+// Helper to remove undefined / null / empty arrays from schema objects
+function cleanObject(obj) {
+    return Object.fromEntries(
+        Object.entries(obj).filter(([_, value]) => {
+            if (value === undefined || value === null) return false
+            if (Array.isArray(value) && value.length === 0) return false
+            return true
+        }),
+    )
+}
+
 export default async function RootLayout({ children }) {
     let globalsRes = null
     let mainRes = null
@@ -61,15 +72,62 @@ export default async function RootLayout({ children }) {
         .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
         .map((n) => ({ id: n.id, label: n.label, url: n.url }))
 
+    // Build global JSON-LD (Organization + WebSite)
+    const sameAs = [
+        gs?.facebookAddress,
+        gs?.instagramAddress,
+        gs?.tiktokAddress,
+        gs?.linkdine,
+        gs?.xAddress,
+        gs?.youtubeAddress,
+    ].filter(Boolean)
+
+    const organizationSchema = cleanObject({
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: siteTitle,
+        url: siteUrl || undefined,
+        logo: sitelogo || undefined,
+        telephone: phone || undefined,
+        sameAs: sameAs.length ? sameAs : undefined,
+    })
+
+    const websiteSchema = siteUrl
+        ? cleanObject({
+            '@context': 'https://schema.org',
+            '@type': 'WebSite',
+            url: siteUrl,
+            name: siteTitle,
+        })
+        : null
+
+    const globalSchema = [organizationSchema, websiteSchema].filter(Boolean)
+
     return (
         <html lang="en">
         <head>
-            {/* ONLY GLOBAL NON-SEO TAGS — no title/description here */}
+            {/* Global, non-page-specific tags */}
+            <meta charSet="utf-8" />
+            <meta
+                name="viewport"
+                content="width=device-width, initial-scale=1"
+            />
+
             {faviconUrl && (
                 <>
                     <link rel="icon" href={faviconUrl} />
                     <link rel="shortcut icon" href={faviconUrl} />
                 </>
+            )}
+
+            {/* Global JSON-LD (Organization + WebSite) – lives in <head>, not in <body> */}
+            {globalSchema.length > 0 && (
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{
+                        __html: JSON.stringify(globalSchema),
+                    }}
+                />
             )}
         </head>
 
@@ -98,7 +156,11 @@ export default async function RootLayout({ children }) {
             address={gs?.address}
         />
 
-        <FloatingContactFab phone={phone} whatsapp={whatsapp} showOnMobile />
+        <FloatingContactFab
+            phone={phone}
+            whatsapp={whatsapp}
+            showOnMobile
+        />
 
         <Analytics ga4Code={ga4Code} metaPixelId={metaPixelId} />
         </body>
